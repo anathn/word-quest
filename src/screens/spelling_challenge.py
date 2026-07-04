@@ -12,6 +12,12 @@ from enum import Enum
 import time
 
 from src.components.input_handler import InputHandler, InputDisplay, InputState
+from src.components.feedback_controller import (
+    FeedbackController,
+    FeedbackType,
+    FeedbackState as FeedbackScreenState,
+    create_feedback_controller
+)
 from src.utils.validators import InputValidator, AnswerValidator
 
 
@@ -71,11 +77,16 @@ class SpellingChallengeScreen:
         self.input_display: Optional[InputDisplay] = None
         self.answer_validator: Optional[AnswerValidator] = None
         
+        # Feedback system
+        self.feedback_controller: Optional[FeedbackController] = None
+        
         # Callbacks for state changes
         self.on_word_presented: Optional[Callable] = None
         self.on_input_changed: Optional[Callable] = None
         self.on_submit: Optional[Callable] = None
         self.on_invalid_input: Optional[Callable] = None
+        self.on_feedback_shown: Optional[Callable] = None
+        self.on_word_complete: Optional[Callable] = None
         
         # Performance tracking
         self.render_times: List[float] = []
@@ -105,6 +116,12 @@ class SpellingChallengeScreen:
         self.input_handler = InputHandler(max_length=remaining_length)
         self.input_display = InputDisplay(max_length=remaining_length)
         self.answer_validator = AnswerValidator(word.text, ''.join(self.starter_letters))
+        
+        # Initialize feedback controller
+        self.feedback_controller = create_feedback_controller(self.audio_system)
+        self.feedback_controller.on_feedback_shown = self._on_feedback_shown
+        self.feedback_controller.on_auto_advance = self._on_auto_advance
+        self.feedback_controller.on_hint_requested = self._on_hint_requested
         
         # Set up callbacks
         self.input_handler.on_input_changed = self._on_input_changed
@@ -175,6 +192,21 @@ class SpellingChallengeScreen:
         if self.on_submit:
             self.on_submit(is_correct, full_answer)
     
+    def _on_feedback_shown(self, feedback_type: FeedbackType):
+        """Handle feedback being shown."""
+        if self.on_feedback_shown:
+            self.on_feedback_shown(feedback_type)
+    
+    def _on_auto_advance(self):
+        """Handle auto-advance after correct answer."""
+        if self.on_word_complete:
+            self.on_word_complete(True)  # True = success
+    
+    def _on_hint_requested(self):
+        """Handle hint request after incorrect answer."""
+        # Hint escalation will be implemented in STORY-001-04
+        pass
+    
     def handle_key_input(self, key: str, unicode_char: Optional[str] = None):
         """
         Handle a key press from the student.
@@ -225,6 +257,10 @@ class SpellingChallengeScreen:
         
         # Validate using AnswerValidator
         result = self.answer_validator.validate(current_input)
+        
+        # Show feedback immediately (within 100ms target)
+        if self.feedback_controller:
+            self.feedback_controller.show_feedback(result.is_correct)
         
         self.state = ChallengeState.AWAITING_RESPONSE
         
@@ -297,6 +333,54 @@ class SpellingChallengeScreen:
             "sample_count": len(self.render_times)
         }
     
+    def update(self, current_time: float):
+        """
+        Update screen state (call each frame).
+        
+        Args:
+            current_time: Current time in seconds
+        """
+        # Update input display animations
+        if self.input_display:
+            self.input_display.update(current_time)
+        
+        # Update feedback animations
+        if self.feedback_controller:
+            self.feedback_controller.update(current_time)
+    
+    def get_feedback_message(self) -> str:
+        """
+        Get the current feedback message.
+        
+        Returns:
+            Feedback message text or empty string
+        """
+        if self.feedback_controller:
+            return self.feedback_controller.get_feedback_message()
+        return ""
+    
+    def is_feedback_active(self) -> bool:
+        """
+        Check if feedback is currently being shown.
+        
+        Returns:
+            True if feedback is active
+        """
+        if self.feedback_controller:
+            return self.feedback_controller.is_feedback_active()
+        return False
+    
+    def get_feedback_state(self) -> FeedbackScreenState:
+        """
+        Get the current feedback state.
+        
+        Returns:
+            Current FeedbackState
+        """
+        if self.feedback_controller:
+            return self.feedback_controller.get_state()
+        return FeedbackScreenState.IDLE
+    
     def reset(self):
         """Reset the screen to idle state."""
         self.state = ChallengeState.IDLE
@@ -306,6 +390,8 @@ class SpellingChallengeScreen:
         self.input_handler = None
         self.input_display = None
         self.answer_validator = None
+        if self.feedback_controller:
+            self.feedback_controller.reset()
         self.cursor_visible = True
 
 
