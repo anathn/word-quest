@@ -11,6 +11,9 @@ from dataclasses import dataclass
 from enum import Enum
 import time
 
+from src.components.input_handler import InputHandler, InputDisplay, InputState
+from src.utils.validators import InputValidator, AnswerValidator
+
 
 class ChallengeState(Enum):
     """States for the spelling challenge."""
@@ -60,16 +63,19 @@ class SpellingChallengeScreen:
         self.state = ChallengeState.IDLE
         self.current_word = None
         self.presentation: Optional[WordPresentation] = None
-        self.displayed_letters: List[str] = []  # Letters student has typed
         self.starter_letters: List[str] = []    # Pre-displayed hints
         self.presentation_start_time = 0
-        self.cursor_visible = True
-        self.cursor_blink_timer = 0
+        
+        # Input handling
+        self.input_handler: Optional[InputHandler] = None
+        self.input_display: Optional[InputDisplay] = None
+        self.answer_validator: Optional[AnswerValidator] = None
         
         # Callbacks for state changes
         self.on_word_presented: Optional[Callable] = None
         self.on_input_changed: Optional[Callable] = None
         self.on_submit: Optional[Callable] = None
+        self.on_invalid_input: Optional[Callable] = None
         
         # Performance tracking
         self.render_times: List[float] = []
@@ -87,11 +93,24 @@ class SpellingChallengeScreen:
         start_time = time.time()
         
         self.current_word = word
-        self.displayed_letters = []
         self.presentation_start_time = start_time
         
         # Extract starter letters based on difficulty
         self.starter_letters = list(word.get_starter_letters())
+        
+        # Calculate remaining letters to type
+        remaining_length = len(word.text) - len(self.starter_letters)
+        
+        # Initialize input handler for remaining letters
+        self.input_handler = InputHandler(max_length=remaining_length)
+        self.input_display = InputDisplay(max_length=remaining_length)
+        self.answer_validator = AnswerValidator(word.text, ''.join(self.starter_letters))
+        
+        # Set up callbacks
+        self.input_handler.on_input_changed = self._on_input_changed
+        self.input_handler.on_invalid_input = self._on_invalid_input
+        self.input_handler.on_submit = self._on_submit
+        self.input_handler.on_complete = self._on_input_complete
         
         # Create presentation data
         self.presentation = WordPresentation(
@@ -129,34 +148,64 @@ class SpellingChallengeScreen:
             return self.audio_system.speak(self.current_word.text, on_complete=on_complete)
         return False
     
-    def handle_key_input(self, key: str):
+    def _on_input_changed(self, input_text: str):
+        """Handle input change event."""
+        # Update input display with animation
+        if self.input_display:
+            letters = list(input_text)
+            self.input_display.set_letters(letters)
+        
+        if self.on_input_changed:
+            self.on_input_changed(input_text)
+    
+    def _on_invalid_input(self, reason):
+        """Handle invalid input event."""
+        if self.on_invalid_input:
+            self.on_invalid_input(reason)
+    
+    def _on_input_complete(self, input_text: str):
+        """Handle input completion (max length reached)."""
+        if self.on_input_changed:
+            self.on_input_changed(input_text)
+    
+    def _on_submit(self, input_text: str):
+        """Handle submit event from input handler."""
+        is_correct, full_answer = self.submit_answer()
+        
+        if self.on_submit:
+            self.on_submit(is_correct, full_answer)
+    
+    def handle_key_input(self, key: str, unicode_char: Optional[str] = None):
         """
         Handle a key press from the student.
         
         Args:
-            key: The character pressed
+            key: The pygame key constant name (e.g., 'K_a', 'K_BACKSPACE')
+            unicode_char: The actual character from event.unicode
         """
-        if self.state != ChallengeState.READY_FOR_INPUT:
+        if self.state != ChallengeState.READY_FOR_INPUT or not self.input_handler:
             return
         
-        # Add letter to displayed letters
-        self.displayed_letters.append(key.lower())
-        self.cursor_visible = True
+        self.input_handler.handle_keydown(key, unicode_char)
+    
+    def handle_virtual_key(self, character: str):
+        """
+        Handle input from on-screen keyboard.
         
-        if self.on_input_changed:
-            self.on_input_changed(self.get_current_input())
+        Args:
+            character: The character or special key name
+        """
+        if self.state != ChallengeState.READY_FOR_INPUT or not self.input_handler:
+            return
+        
+        self.input_handler.handle_virtual_key(character)
     
     def handle_backspace(self):
         """Handle backspace key press."""
-        if self.state != ChallengeState.READY_FOR_INPUT:
+        if self.state != ChallengeState.READY_FOR_INPUT or not self.input_handler:
             return
         
-        if self.displayed_letters:
-            self.displayed_letters.pop()
-            self.cursor_visible = True
-            
-            if self.on_input_changed:
-                self.on_input_changed(self.get_current_input())
+        self.input_handler.handle_keydown('K_BACKSPACE')
     
     def submit_answer(self):
         """
@@ -168,23 +217,32 @@ class SpellingChallengeScreen:
         if self.state != ChallengeState.READY_FOR_INPUT:
             return False, ""
         
-        full_answer = self.get_full_answer()
-        is_correct = self._check_answer(full_answer)
+        if not self.input_handler or not self.answer_validator:
+            return False, ""
+        
+        # Get current input
+        current_input = self.input_handler.get_input()
+        
+        # Validate using AnswerValidator
+        result = self.answer_validator.validate(current_input)
         
         self.state = ChallengeState.AWAITING_RESPONSE
         
         if self.on_submit:
-            self.on_submit(is_correct, full_answer)
+            self.on_submit(result.is_correct, result.full_answer)
         
-        return is_correct, full_answer
+        return result.is_correct, result.full_answer
     
     def get_current_input(self) -> str:
         """Get the letters currently typed by the student (excluding starters)."""
-        return ''.join(self.displayed_letters)
+        if self.input_handler:
+            return self.input_handler.get_input()
+        return ""
     
     def get_full_answer(self) -> str:
         """Get the complete answer including starter letters."""
-        return ''.join(self.starter_letters) + self.get_current_input()
+        current = self.get_current_input()
+        return ''.join(self.starter_letters) + current
     
     def _check_answer(self, answer: str) -> bool:
         """
@@ -200,7 +258,7 @@ class SpellingChallengeScreen:
             return False
         
         # Case-insensitive comparison, strip whitespace
-        return answer.strip().lower() == self.current_word.text.lower()
+        return InputValidator.validate_answer(answer, self.current_word.text)
     
     def get_word_text(self) -> str:
         """Get the target word text."""
@@ -244,8 +302,10 @@ class SpellingChallengeScreen:
         self.state = ChallengeState.IDLE
         self.current_word = None
         self.presentation = None
-        self.displayed_letters = []
         self.starter_letters = []
+        self.input_handler = None
+        self.input_display = None
+        self.answer_validator = None
         self.cursor_visible = True
 
 
