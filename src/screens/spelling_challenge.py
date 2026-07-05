@@ -14,6 +14,9 @@ import time
 from src.components.input_handler import InputHandler, InputDisplay, InputState
 from src.utils.validators import AnswerValidator
 
+# Performance threshold constants
+WORD_PRESENTATION_TIMEOUT_MS = 200  # Maximum allowed time for word presentation
+
 
 class ChallengeState(Enum):
     """States for the spelling challenge."""
@@ -134,9 +137,9 @@ class SpellingChallengeScreen:
         render_time = (time.time() - start_time) * 1000  # Convert to ms
         self.render_times.append(render_time)
         
-        # Performance check: should be under 200ms
-        if render_time > 200:
-            print(f"Warning: Word presentation took {render_time:.0f}ms (target: <200ms)")
+        # Performance check: should be under WORD_PRESENTATION_TIMEOUT_MS
+        if render_time > WORD_PRESENTATION_TIMEOUT_MS:
+            print(f"Warning: Word presentation took {render_time:.0f}ms (target: <{WORD_PRESENTATION_TIMEOUT_MS}ms)")
         
         return True
     
@@ -190,15 +193,10 @@ class SpellingChallengeScreen:
         if self.state != ChallengeState.READY_FOR_INPUT or not self.input_handler:
             return
         
+<<<<<<< HEAD
         self.input_handler.handle_keydown(key, unicode_char)
     
     def handle_virtual_key(self, character: str):
-        """
-        Handle input from on-screen keyboard.
-        
-        Args:
-            character: The character or special key name
-        """
         if self.state != ChallengeState.READY_FOR_INPUT or not self.input_handler:
             return
         

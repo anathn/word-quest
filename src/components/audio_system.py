@@ -24,14 +24,15 @@ class AudioSystem:
     - Graceful degradation when TTS unavailable
     """
     
-    def __init__(self, data_dir: str = "src/data"):
+    def __init__(self, data_dir: Optional[str] = None):
         """
         Initialize the audio system.
         
         Args:
-            data_dir: Directory containing audio assets and configuration
+            data_dir: Directory containing audio assets and configuration.
+                     Defaults to WORDQUEST_DATA_DIR env var or 'src/data'.
         """
-        self.data_dir = data_dir
+        self.data_dir = data_dir or os.environ.get('WORDQUEST_DATA_DIR', 'src/data')
         self.audio_available = True
         self.tts_engine = None
         self.tts_engine_type = None  # 'pyttsx3', 'gtts', or None
@@ -146,7 +147,15 @@ class AudioSystem:
         try:
             from gtts import gTTS
             import tempfile
-            import pygame
+            
+            # Guard pygame import - required for audio playback
+            try:
+                import pygame
+            except ImportError:
+                print("pygame required for gTTS playback. Install with: pip install pygame")
+                if on_complete:
+                    on_complete()
+                return False
             
             # Generate speech audio
             tts = gTTS(text=text, lang='en', slow=False)
@@ -156,10 +165,17 @@ class AudioSystem:
                 tmp_path = tmp.name
             tts.save(tmp_path)
             
-            # Play using pygame
-            pygame.mixer.init()
-            pygame.mixer.music.load(tmp_path)
-            pygame.mixer.music.play()
+            # Play using pygame (only init if not already initialized)
+            try:
+                if not pygame.mixer.get_init():
+                    pygame.mixer.init()
+                pygame.mixer.music.load(tmp_path)
+                pygame.mixer.music.play()
+            except Exception as e:
+                print(f"Error initializing pygame mixer: {e}")
+                if on_complete:
+                    on_complete()
+                return False
             
             # Clean up after playback
             def cleanup():
@@ -167,8 +183,8 @@ class AudioSystem:
                     pass
                 try:
                     os.unlink(tmp_path)
-                except:
-                    pass
+                except OSError:
+                    pass  # File may already be deleted
                 if on_complete:
                     on_complete()
             
@@ -234,6 +250,7 @@ class AudioSystem:
 
 # Singleton instance for global access
 _audio_system: Optional[AudioSystem] = None
+_audio_system_lock = threading.Lock()
 
 
 def get_audio_system(data_dir: str = "src/data") -> AudioSystem:
@@ -248,11 +265,14 @@ def get_audio_system(data_dir: str = "src/data") -> AudioSystem:
     """
     global _audio_system
     if _audio_system is None:
-        _audio_system = AudioSystem(data_dir)
+        with _audio_system_lock:
+            if _audio_system is None:
+                _audio_system = AudioSystem(data_dir)
     return _audio_system
 
 
 def reset_audio_system():
     """Reset the global audio system (useful for testing)."""
     global _audio_system
-    _audio_system = None
+    with _audio_system_lock:
+        _audio_system = None

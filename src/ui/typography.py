@@ -8,6 +8,7 @@ Handles font loading, text measurement, and styled text rendering.
 from typing import Optional, Tuple, List
 from dataclasses import dataclass
 import os
+import threading
 
 
 @dataclass
@@ -60,9 +61,11 @@ class Typography:
         Initialize the typography system.
         
         Args:
-            fonts_dir: Directory containing custom font files
+            fonts_dir: Directory containing custom font files.
+                      Defaults to WORDQUEST_DATA_DIR/fonts or 'assets/fonts'.
         """
-        self.fonts_dir = fonts_dir or "assets/fonts"
+        base_dir = os.environ.get('WORDQUEST_DATA_DIR', 'src/data')
+        self.fonts_dir = fonts_dir or os.path.join(base_dir, "fonts")
         self.font_cache: dict = {}
         self._pygame_loaded = False
         self._initialized = False
@@ -323,7 +326,7 @@ class Typography:
     def style_definition(self) -> TextStyle:
         """Style for definition text (28pt, light gray)."""
         return TextStyle(
-            font_size=28,
+            font_size=self.FONT_MEDIUM - 8,  # 28pt
             color=self.LIGHT_GRAY,
             shadow=False
         )
@@ -377,6 +380,7 @@ class Typography:
 
 # Singleton instance for global access
 _typography: Optional[Typography] = None
+_typography_lock = threading.Lock()
 
 
 def get_typography(fonts_dir: Optional[str] = None) -> Typography:
@@ -391,11 +395,14 @@ def get_typography(fonts_dir: Optional[str] = None) -> Typography:
     """
     global _typography
     if _typography is None:
-        _typography = Typography(fonts_dir)
+        with _typography_lock:
+            if _typography is None:
+                _typography = Typography(fonts_dir)
     return _typography
 
 
 def reset_typography():
     """Reset the global typography instance (useful for testing)."""
     global _typography
-    _typography = None
+    with _typography_lock:
+        _typography = None

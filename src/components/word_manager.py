@@ -8,6 +8,7 @@ methods including starter letter extraction based on difficulty.
 import json
 import os
 import random
+import threading
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 
@@ -122,14 +123,15 @@ class WordManager:
     - Support for custom word lists
     """
     
-    def __init__(self, data_dir: str = "src/data"):
+    def __init__(self, data_dir: Optional[str] = None):
         """
         Initialize the word manager.
         
         Args:
-            data_dir: Directory containing word list JSON files
+            data_dir: Directory containing word list JSON files.
+                     Defaults to WORDQUEST_DATA_DIR env var or 'src/data'.
         """
-        self.data_dir = data_dir
+        self.data_dir = data_dir or os.environ.get('WORDQUEST_DATA_DIR', 'src/data')
         self.word_lists: Dict[str, WordList] = {}
         self.all_words: List[SpellingWord] = []
         self._load_word_lists()
@@ -286,9 +288,10 @@ class WordManager:
 
 # Singleton instance for global access
 _word_manager: Optional[WordManager] = None
+_word_manager_lock = threading.Lock()
 
 
-def get_word_manager(data_dir: str = "src/data") -> WordManager:
+def get_word_manager(data_dir: Optional[str] = None) -> WordManager:
     """
     Get or create the global word manager instance.
     
@@ -300,11 +303,14 @@ def get_word_manager(data_dir: str = "src/data") -> WordManager:
     """
     global _word_manager
     if _word_manager is None:
-        _word_manager = WordManager(data_dir)
+        with _word_manager_lock:
+            if _word_manager is None:
+                _word_manager = WordManager(data_dir)
     return _word_manager
 
 
 def reset_word_manager():
     """Reset the global word manager (useful for testing)."""
     global _word_manager
-    _word_manager = None
+    with _word_manager_lock:
+        _word_manager = None
