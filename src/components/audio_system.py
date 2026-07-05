@@ -11,6 +11,9 @@ import queue
 from typing import Optional, Callable
 import json
 import os
+import math
+import wave
+import struct
 
 
 class AudioSystem:
@@ -246,6 +249,63 @@ class AudioSystem:
             True if audio works, False otherwise
         """
         return self.speak("Test audio.", on_complete=lambda: None)
+    
+    def play_sfx(self, sfx_name: str, volume: float = 1.0) -> bool:
+        """
+        Play a sound effect from asset file.
+        
+        Args:
+            sfx_name: Name of the SFX file (without extension)
+            volume: Volume level (0.0 to 1.0)
+            
+        Returns:
+            True if playback started successfully
+        """
+        # Try pygame first
+        try:
+            import pygame
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
+            
+            # Construct file path
+            sfx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'audio', f'{sfx_name}.ogg')
+            
+            if not os.path.exists(sfx_path):
+                print(f"Warning: SFX file not found: {sfx_path}")
+                return False
+            
+            # Load and play
+            sound = pygame.mixer.Sound(sfx_path)
+            sound.set_volume(volume)
+            sound.play()
+            
+            return True
+        except Exception as e:
+            print(f"Error playing SFX '{sfx_name}': {e}")
+            return False
+    
+    def generate_tone(self, filename: str, frequency: float, duration: float, volume: float = 0.7, sample_rate: int = 44100):
+        """
+        Generate a simple sine wave tone and save to WAV file.
+        
+        Args:
+            filename: Output filename
+            frequency: Frequency in Hz
+            duration: Duration in seconds
+            volume: Volume level (0.0 to 1.0)
+            sample_rate: Sample rate in Hz
+        """
+        num_samples = int(sample_rate * duration)
+        
+        with wave.open(filename, 'w') as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(sample_rate)
+            
+            for i in range(num_samples):
+                # Sine wave
+                value = int(volume * 32767 * math.sin(2 * math.pi * frequency * i / sample_rate))
+                wav_file.writeframes(struct.pack('<h', value))
 
 
 # Singleton instance for global access
