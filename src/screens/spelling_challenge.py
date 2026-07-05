@@ -139,6 +139,10 @@ class SpellingChallengeScreen:
         if self.state != ChallengeState.READY_FOR_INPUT:
             return
         
+        # Validate input - only allow A-Z characters
+        if not key or not key.isalpha() or len(key) != 1:
+            return  # Reject non-alphabetic or multi-character input
+        
         # Add letter to displayed letters
         self.displayed_letters.append(key.lower())
         self.cursor_visible = True

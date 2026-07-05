@@ -8,6 +8,7 @@ methods including starter letter extraction based on difficulty.
 import json
 import os
 import random
+import threading
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 
@@ -286,6 +287,7 @@ class WordManager:
 
 # Singleton instance for global access
 _word_manager: Optional[WordManager] = None
+_word_manager_lock = threading.Lock()
 
 
 def get_word_manager(data_dir: str = "src/data") -> WordManager:
@@ -300,11 +302,14 @@ def get_word_manager(data_dir: str = "src/data") -> WordManager:
     """
     global _word_manager
     if _word_manager is None:
-        _word_manager = WordManager(data_dir)
+        with _word_manager_lock:
+            if _word_manager is None:
+                _word_manager = WordManager(data_dir)
     return _word_manager
 
 
 def reset_word_manager():
     """Reset the global word manager (useful for testing)."""
     global _word_manager
-    _word_manager = None
+    with _word_manager_lock:
+        _word_manager = None
