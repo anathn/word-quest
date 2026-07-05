@@ -193,7 +193,6 @@ class SpellingChallengeScreen:
         if self.state != ChallengeState.READY_FOR_INPUT or not self.input_handler:
             return
         
-<<<<<<< HEAD
         self.input_handler.handle_keydown(key, unicode_char)
     
     def handle_virtual_key(self, character: str):
