@@ -44,6 +44,10 @@ class FeedbackConfig:
     
     # Auto-advance
     auto_advance_on_success: bool = True
+    
+    # Performance mode
+    enable_animations: bool = True  # Disable for performance mode
+    enable_particles: bool = True   # Disable particle effects
 
 
 class FeedbackController:
@@ -82,6 +86,15 @@ class FeedbackController:
         # Animation state
         self.animation_progress: float = 0.0
         self.animation_active: bool = False
+        self._auto_advance_triggered: bool = False  # Track if auto-advance has fired
+        
+        # Rendering
+        self.render_center_x: int = 400  # Default, should be set by screen
+        self.render_center_y: int = 300
+        
+        # Celebration animation with render capability
+        self.celebration = CelebrationAnimation(enable_particles=config.enable_particles if config else True)
+        self.retry_indicator = RetryIndicator()
     
     def show_feedback(self, is_correct: bool) -> bool:
         """
@@ -109,14 +122,14 @@ class FeedbackController:
     def _show_success(self) -> bool:
         """Display success feedback."""
         self.state = FeedbackState.SHOWING_SUCCESS
+        self._auto_advance_triggered = False  # Reset trigger flag
         
         # Play success audio
         if self.audio_system:
             self._play_success_sound()
         
-        # Set auto-advance timer
-        if self.config.auto_advance_on_success:
-            self.auto_advance_timer = self.feedback_start_time + self.config.success_display_duration
+        # Note: Auto-advance is now handled in update() method
+        # No need to set auto_advance_timer here
         
         # Notify listeners
         if self.on_feedback_shown:
@@ -145,11 +158,15 @@ class FeedbackController:
     def _play_success_sound(self):
         """Play success chime audio."""
         try:
-            # Success chime: ascending C-E-G chord
+            # Try to play actual chime first
+            if self.audio_system and hasattr(self.audio_system, 'play_sfx'):
+                if self.audio_system.play_sfx('success_chime', self.config.success_volume):
+                    return  # Success, exit early
+            
+            # Fallback to TTS if SFX unavailable
             def on_complete():
                 pass
             
-            # Use TTS for success message as fallback
             self.audio_system.speak(
                 self.config.success_message,
                 on_complete=on_complete
@@ -160,7 +177,12 @@ class FeedbackController:
     def _play_retry_sound(self):
         """Play retry tone audio."""
         try:
-            # Gentle retry message
+            # Try to play actual tone first
+            if self.audio_system and hasattr(self.audio_system, 'play_sfx'):
+                if self.audio_system.play_sfx('retry_tone', self.config.retry_volume):
+                    return  # Success, exit early
+            
+            # Fallback to TTS if SFX unavailable
             def on_complete():
                 pass
             
@@ -185,6 +207,12 @@ class FeedbackController:
         elapsed = current_time - self.feedback_start_time
         
         if self.state == FeedbackState.SHOWING_SUCCESS:
+            # Check for auto-advance BEFORE fade out
+            if elapsed >= self.config.success_display_duration and not self._auto_advance_triggered:
+                self._auto_advance_triggered = True
+                if self.on_auto_advance:
+                    self.on_auto_advance()
+            
             # Fade in quickly, then hold
             if elapsed < self.config.feedback_transition_time:
                 self.animation_progress = elapsed / self.config.feedback_transition_time
@@ -212,10 +240,8 @@ class FeedbackController:
         if self.on_feedback_complete:
             self.on_feedback_complete(self.current_feedback)
         
-        # Trigger auto-advance for success
-        if self.auto_advance_timer and time.time() >= self.auto_advance_timer:
-            if self.on_auto_advance:
-                self.on_auto_advance()
+        # Note: Auto-advance is triggered separately in update()
+        # This method only handles feedback completion
     
     def force_complete(self):
         """Force feedback to complete (for incorrect answers)."""
@@ -246,6 +272,62 @@ class FeedbackController:
         """Set the audio system for feedback sounds."""
         self.audio_system = audio_system
     
+    def set_render_position(self, x: int, y: int):
+        """Set the center position for rendering feedback."""
+        self.render_center_x = x
+        self.render_center_y = y
+    
+    def render(self, screen):
+        """
+        Render feedback on screen.
+        
+        Args:
+            screen: Pygame surface to render to
+        """
+        if not self.config.enable_animations:
+            return  # Skip rendering in performance mode
+        
+        if self.state == FeedbackState.SHOWING_SUCCESS:
+            self.celebration.render(screen, self.render_center_x, self.render_center_y)
+            
+            # Render success message
+            if self.animation_progress > 0:
+                self._render_message(screen, self.get_feedback_message())
+        
+        elif self.state == FeedbackState.SHOWING_RETRY:
+            # Render retry indicator pulse
+            intensity = self.retry_indicator.get_pulse_intensity(
+                time.time() - self.feedback_start_time
+            )
+            self._render_retry_indicator(screen, intensity)
+    
+    def _render_message(self, screen, message: str):
+        """Render feedback message text."""
+        import pygame
+        
+        # Create font (should be configurable)
+        font = pygame.font.Font(None, 72)  # 72pt
+        
+        # Calculate alpha based on animation progress
+        alpha = int(255 * self.animation_progress)
+        
+        # Render text
+        text_surf = font.render(message, True, (0, 200, 83))  # Green
+        
+        # Apply transparency
+        text_surf.set_alpha(alpha)
+        
+        # Center on screen
+        text_rect = text_surf.get_rect(center=(self.render_center_x, self.render_center_y - 50))
+        
+        screen.blit(text_surf, text_rect)
+    
+    def _render_retry_indicator(self, screen, intensity: float):
+        """Render retry indicator with pulse intensity."""
+        # Placeholder - actual implementation depends on screen layout
+        # Could draw a pulsing border around input area
+        pass
+    
     def reset(self):
         """Reset the feedback controller to idle state."""
         self.state = FeedbackState.IDLE
@@ -254,6 +336,17 @@ class FeedbackController:
         self.auto_advance_timer = None
         self.animation_active = False
         self.animation_progress = 0.0
+        self._auto_advance_triggered = False
+
+
+# Celebration animation constants
+CELEBRATION_PARTICLE_COUNT = 20
+CELEBRATION_PARTICLE_COLORS = [
+    (255, 215, 0),   # Gold
+    (255, 255, 255), # White
+    (0, 200, 83),    # Green
+    (255, 153, 0),   # Orange
+]
 
 
 class CelebrationAnimation:
@@ -266,12 +359,17 @@ class CelebrationAnimation:
     - Text animation
     """
     
-    def __init__(self):
-        """Initialize the celebration animation."""
+    def __init__(self, enable_particles: bool = True):
+        """Initialize the celebration animation.
+        
+        Args:
+            enable_particles: Whether to show particle effects (for performance mode)
+        """
         self.active = False
         self.particles: list = []
         self.start_time = 0
         self.duration = 1.0
+        self.enable_particles = enable_particles
     
     def start(self):
         """Start the celebration animation."""
@@ -281,15 +379,18 @@ class CelebrationAnimation:
     
     def _create_particles(self):
         """Create particle effects for celebration."""
+        if not self.enable_particles:
+            return  # Skip particle creation in performance mode
+        
         # Simple particle system
-        for i in range(20):
+        for i in range(CELEBRATION_PARTICLE_COUNT):
             self.particles.append({
                 'x': 0,  # Will be set by renderer
                 'y': 0,
                 'vx': (i - 10) * 2,  # Spread horizontally
                 'vy': -10 - (i % 10),  # Upward velocity
                 'life': 1.0,
-                'color': self._get_particle_color(i)
+                'color': CELEBRATION_PARTICLE_COLORS[i % len(CELEBRATION_PARTICLE_COLORS)]
             })
     
     def _get_particle_color(self, index: int) -> tuple:
@@ -329,6 +430,37 @@ class CelebrationAnimation:
         """Stop the animation."""
         self.active = False
         self.particles = []
+    
+    def render(self, screen, center_x: int, center_y: int):
+        """
+        Render the celebration animation on screen.
+        
+        Args:
+            screen: Pygame surface to render to
+            center_x: X position of animation center
+            center_y: Y position of animation center
+        """
+        if not self.active or not self.enable_particles:
+            return
+        
+        import pygame
+        
+        for particle in self.particles:
+            if particle['life'] > 0:
+                # Calculate position relative to center
+                x = center_x + particle['x']
+                y = center_y + particle['y']
+                
+                # Calculate alpha based on life
+                alpha = int(255 * particle['life'])
+                
+                # Create particle surface with transparency
+                particle_surf = pygame.Surface((8, 8), pygame.SRCALPHA)
+                color = (*particle['color'], alpha)
+                pygame.draw.circle(particle_surf, color, (4, 4), 4)
+                
+                # Blit to screen
+                screen.blit(particle_surf, (x - 4, y - 4))
 
 
 class RetryIndicator:
