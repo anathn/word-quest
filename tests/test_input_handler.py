@@ -341,6 +341,71 @@ class TestInputDisplay(unittest.TestCase):
         """Test letters are converted to lowercase."""
         self.display.add_letter('A')
         self.assertEqual(self.display.get_display_letters(), ['a'])
+    
+    def test_trigger_shake(self):
+        """Test shake animation is triggered."""
+        self.display.trigger_shake()
+        self.assertTrue(self.display.shake_active)
+        self.assertEqual(self.display.shake_progress, 0.0)
+    
+    def test_shake_offset_initial(self):
+        """Test initial shake offset is non-zero."""
+        self.display.trigger_shake()
+        offset = self.display.get_shake_offset(current_time=self.display.shake_start_time + 0.05)
+        # Should have some offset during shake
+        self.assertIsInstance(offset, tuple)
+        self.assertEqual(len(offset), 2)
+    
+    def test_shake_offset_after_completion(self):
+        """Test shake offset is zero after animation completes."""
+        self.display.trigger_shake()
+        # After duration has passed, call update to process completion
+        self.display.update(current_time=self.display.shake_start_time + 1.0)
+        offset = self.display.get_shake_offset()
+        self.assertEqual(offset, (0, 0))
+        self.assertFalse(self.display.shake_active)
+    
+    def test_shake_offset_when_inactive(self):
+        """Test shake offset is zero when not active."""
+        offset = self.display.get_shake_offset()
+        self.assertEqual(offset, (0, 0))
+    
+    def test_shake_updates_with_time(self):
+        """Test shake progress updates correctly."""
+        start_time = 100.0
+        self.display.shake_start_time = start_time
+        self.display.trigger_shake()
+        
+        # At 50% through the animation
+        offset1 = self.display.get_shake_offset(current_time=start_time + 0.15)
+        
+        # At 75% through the animation (should have less intensity due to fade out)
+        offset2 = self.display.get_shake_offset(current_time=start_time + 0.225)
+        
+        # Both should be tuples
+        self.assertIsInstance(offset1, tuple)
+        self.assertIsInstance(offset2, tuple)
+
+
+class TestInputDisplayShakeAnimation(unittest.TestCase):
+    """Additional tests for InputDisplay shake animation."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.display = InputDisplay(max_length=5)
+    
+    def test_shake_triggers_and_resets(self):
+        """Test that shake animation triggers and completes."""
+        # Trigger shake
+        self.display.trigger_shake()
+        self.assertTrue(self.display.shake_active)
+        
+        # Simulate time passing beyond duration
+        self.display.update(current_time=self.display.shake_start_time + 0.5)
+        
+        # Should be inactive after completion
+        self.assertFalse(self.display.shake_active)
+        self.assertEqual(self.display.shake_progress, 0.0)
 
 
 class TestInputEvent(unittest.TestCase):

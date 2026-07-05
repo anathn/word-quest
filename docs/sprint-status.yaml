@@ -67,7 +67,7 @@ epics:
         started_date: "2026-07-04"
         completed_date: "2026-07-04"
         branch: "EPIC-001-STORY-002"
-        notes: "All 145 tests passing. ASCII-only validation implemented."
+        notes: "All 145 tests passing. ASCII-only validation implemented. On-screen keyboard component created for touch devices."
         acceptance_criteria:
           - "Case-insensitive comparison"
           - "Trailing spaces ignored"

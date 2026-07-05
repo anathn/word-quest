@@ -254,6 +254,7 @@ class InputDisplay:
     - Letter rendering with animations
     - Cursor blinking
     - Placeholder display
+    - Shake animation for invalid input feedback
     """
     
     def __init__(self, max_length: int, letter_spacing: int = 10):
@@ -273,6 +274,13 @@ class InputDisplay:
         
         # Animation state
         self.animating_letters: List[dict] = []  # Letters with animation state
+        
+        # Shake animation state
+        self.shake_active = False
+        self.shake_progress = 0.0
+        self.shake_duration = 0.3  # 300ms
+        self.shake_intensity = 5  # pixels
+        self.shake_start_time = 0
     
     def update(self, current_time: float):
         """
@@ -290,6 +298,14 @@ class InputDisplay:
         for anim in self.animating_letters:
             if anim.get('type') == 'fade_in':
                 anim['progress'] = min(1.0, anim['progress'] + 0.1)
+        
+        # Update shake animation
+        if self.shake_active:
+            elapsed = current_time - self.shake_start_time
+            self.shake_progress = elapsed / self.shake_duration
+            if self.shake_progress >= 1.0:
+                self.shake_active = False
+                self.shake_progress = 0.0
     
     def set_letters(self, letters: List[str]):
         """
@@ -344,6 +360,51 @@ class InputDisplay:
     def get_placeholder_count(self) -> int:
         """Get the number of placeholder slots remaining."""
         return max(0, self.max_length - len(self.letters))
+    
+    def trigger_shake(self):
+        """
+        Trigger a shake animation for invalid input feedback.
+        
+        This creates a subtle shake effect to indicate that
+        the user's input was invalid or rejected.
+        """
+        self.shake_active = True
+        self.shake_progress = 0.0
+        import time
+        self.shake_start_time = time.time()
+    
+    def get_shake_offset(self, current_time: float = None) -> tuple:
+        """
+        Get the current shake offset for rendering.
+        
+        Args:
+            current_time: Current time in seconds (optional, uses time.time() if not provided)
+            
+        Returns:
+            Tuple of (offset_x, offset_y) for applying to render position
+        """
+        if not self.shake_active:
+            return (0, 0)
+        
+        if current_time is None:
+            import time
+            current_time = time.time()
+        
+        # Calculate progress (0 to 1)
+        elapsed = current_time - self.shake_start_time
+        progress = elapsed / self.shake_duration
+        
+        if progress >= 1.0:
+            return (0, 0)
+        
+        # Calculate shake offset using sine wave for smooth oscillation
+        # Multiple oscillations within the shake duration
+        import math
+        oscillations = 3  # Number of back-and-forth movements
+        angle = progress * math.pi * 2 * oscillations
+        offset_x = math.sin(angle) * self.shake_intensity * (1 - progress)  # Fade out intensity
+        
+        return (offset_x, 0)
 
 
 # Factory function

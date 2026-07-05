@@ -12,7 +12,7 @@ from enum import Enum
 import time
 
 from src.components.input_handler import InputHandler, InputDisplay, InputState
-from src.utils.validators import InputValidator, AnswerValidator
+from src.utils.validators import AnswerValidator
 
 
 class ChallengeState(Enum):
@@ -160,6 +160,10 @@ class SpellingChallengeScreen:
     
     def _on_invalid_input(self, reason):
         """Handle invalid input event."""
+        # Trigger shake animation for visual feedback
+        if self.input_display:
+            self.input_display.trigger_shake()
+        
         if self.on_invalid_input:
             self.on_invalid_input(reason)
     
@@ -243,22 +247,6 @@ class SpellingChallengeScreen:
         """Get the complete answer including starter letters."""
         current = self.get_current_input()
         return ''.join(self.starter_letters) + current
-    
-    def _check_answer(self, answer: str) -> bool:
-        """
-        Check if the answer matches the target word.
-        
-        Args:
-            answer: The student's answer
-            
-        Returns:
-            True if correct, False otherwise
-        """
-        if not self.current_word:
-            return False
-        
-        # Case-insensitive comparison, strip whitespace
-        return InputValidator.validate_answer(answer, self.current_word.text)
     
     def get_word_text(self) -> str:
         """Get the target word text."""
