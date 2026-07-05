@@ -124,12 +124,13 @@ class FeedbackController:
         self.state = FeedbackState.SHOWING_SUCCESS
         self._auto_advance_triggered = False  # Reset trigger flag
         
+        # Set auto-advance timer only if enabled
+        if self.config.auto_advance_on_success:
+            self.auto_advance_timer = self.feedback_start_time + self.config.success_display_duration
+        
         # Play success audio
         if self.audio_system:
             self._play_success_sound()
-        
-        # Note: Auto-advance is now handled in update() method
-        # No need to set auto_advance_timer here
         
         # Notify listeners
         if self.on_feedback_shown:
