@@ -61,9 +61,11 @@ class Typography:
         Initialize the typography system.
         
         Args:
-            fonts_dir: Directory containing custom font files
+            fonts_dir: Directory containing custom font files.
+                      Defaults to WORDQUEST_DATA_DIR/fonts or 'assets/fonts'.
         """
-        self.fonts_dir = fonts_dir or "assets/fonts"
+        base_dir = os.environ.get('WORDQUEST_DATA_DIR', 'src/data')
+        self.fonts_dir = fonts_dir or os.path.join(base_dir, "fonts")
         self.font_cache: dict = {}
         self._pygame_loaded = False
         self._initialized = False

@@ -11,6 +11,9 @@ from dataclasses import dataclass
 from enum import Enum
 import time
 
+# Performance threshold constants
+WORD_PRESENTATION_TIMEOUT_MS = 200  # Maximum allowed time for word presentation
+
 
 class ChallengeState(Enum):
     """States for the spelling challenge."""
@@ -115,9 +118,9 @@ class SpellingChallengeScreen:
         render_time = (time.time() - start_time) * 1000  # Convert to ms
         self.render_times.append(render_time)
         
-        # Performance check: should be under 200ms
-        if render_time > 200:
-            print(f"Warning: Word presentation took {render_time:.0f}ms (target: <200ms)")
+        # Performance check: should be under WORD_PRESENTATION_TIMEOUT_MS
+        if render_time > WORD_PRESENTATION_TIMEOUT_MS:
+            print(f"Warning: Word presentation took {render_time:.0f}ms (target: <{WORD_PRESENTATION_TIMEOUT_MS}ms)")
         
         return True
     

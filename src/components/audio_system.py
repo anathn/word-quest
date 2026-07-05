@@ -24,14 +24,15 @@ class AudioSystem:
     - Graceful degradation when TTS unavailable
     """
     
-    def __init__(self, data_dir: str = "src/data"):
+    def __init__(self, data_dir: Optional[str] = None):
         """
         Initialize the audio system.
         
         Args:
-            data_dir: Directory containing audio assets and configuration
+            data_dir: Directory containing audio assets and configuration.
+                     Defaults to WORDQUEST_DATA_DIR env var or 'src/data'.
         """
-        self.data_dir = data_dir
+        self.data_dir = data_dir or os.environ.get('WORDQUEST_DATA_DIR', 'src/data')
         self.audio_available = True
         self.tts_engine = None
         self.tts_engine_type = None  # 'pyttsx3', 'gtts', or None
@@ -151,7 +152,7 @@ class AudioSystem:
             try:
                 import pygame
             except ImportError:
-                print("Error: pygame required for gTTS playback but not installed")
+                print("pygame required for gTTS playback. Install with: pip install pygame")
                 if on_complete:
                     on_complete()
                 return False
@@ -182,8 +183,8 @@ class AudioSystem:
                     pass
                 try:
                     os.unlink(tmp_path)
-                except:
-                    pass
+                except OSError:
+                    pass  # File may already be deleted
                 if on_complete:
                     on_complete()
             
