@@ -130,8 +130,7 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         """Test screen starts in IDLE state."""
         self.assertEqual(self.screen.state, ChallengeState.IDLE)
         self.assertIsNone(self.screen.current_word)
-        self.assertEqual(self.screen.displayed_letters, [])
-        self.assertEqual(self.screen.starter_letters, [])
+        self.assertIsNone(self.screen.input_handler)
     
     def test_present_word_basic(self):
         """Test basic word presentation."""
@@ -192,10 +191,10 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         word = self.word_manager.get_word_by_id("w001")
         self.screen.present_word(word)
         
-        self.screen.handle_key_input("a")
+        self.screen.handle_key_input('K_a', 'a')
         self.assertEqual(self.screen.get_current_input(), "a")
         
-        self.screen.handle_key_input("u")
+        self.screen.handle_key_input('K_u', 'u')
         self.assertEqual(self.screen.get_current_input(), "au")
     
     def test_handle_key_input_case_insensitive(self):
@@ -203,7 +202,7 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         word = self.word_manager.get_word_by_id("w001")
         self.screen.present_word(word)
         
-        self.screen.handle_key_input("A")
+        self.screen.handle_key_input('K_A', 'A')
         self.assertEqual(self.screen.get_current_input(), "a")
     
     def test_handle_backspace(self):
@@ -211,8 +210,8 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         word = self.word_manager.get_word_by_id("w001")
         self.screen.present_word(word)
         
-        self.screen.handle_key_input("a")
-        self.screen.handle_key_input("u")
+        self.screen.handle_key_input('K_a', 'a')
+        self.screen.handle_key_input('K_u', 'u')
         self.assertEqual(self.screen.get_current_input(), "au")
         
         self.screen.handle_backspace()
@@ -234,10 +233,10 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         word = self.word_manager.get_word_by_id("w001")  # because
         self.screen.present_word(word)
         
-        self.screen.handle_key_input("a")
-        self.screen.handle_key_input("u")
-        self.screen.handle_key_input("s")
-        self.screen.handle_key_input("e")
+        self.screen.handle_key_input('K_a', 'a')
+        self.screen.handle_key_input('K_u', 'u')
+        self.screen.handle_key_input('K_s', 's')
+        self.screen.handle_key_input('K_e', 'e')
         
         self.assertEqual(self.screen.get_full_answer(), "because")
     
@@ -248,7 +247,7 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         
         # Type remaining letters
         for char in "ause":
-            self.screen.handle_key_input(char)
+            self.screen.handle_key_input(f'K_{char}', char)
         
         is_correct, answer = self.screen.submit_answer()
         
@@ -262,7 +261,7 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         
         # Type wrong letters
         for char in "xyz":
-            self.screen.handle_key_input(char)
+            self.screen.handle_key_input(f'K_{char}', char)
         
         is_correct, answer = self.screen.submit_answer()
         
@@ -278,7 +277,7 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         
         # Type and submit
         for char in "ause":
-            self.screen.handle_key_input(char)
+            self.screen.handle_key_input(f'K_{char}', char)
         
         self.screen.submit_answer()
         
@@ -312,15 +311,14 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         self.screen.present_word(word)
         
         # Add some input
-        self.screen.handle_key_input("a")
+        self.screen.handle_key_input('K_a', 'a')
         
         # Reset
         self.screen.reset()
         
         self.assertEqual(self.screen.state, ChallengeState.IDLE)
         self.assertIsNone(self.screen.current_word)
-        self.assertEqual(self.screen.displayed_letters, [])
-        self.assertEqual(self.screen.starter_letters, [])
+        self.assertIsNone(self.screen.input_handler)
     
     def test_state_transitions(self):
         """Test state transitions during gameplay."""

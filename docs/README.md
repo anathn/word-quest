@@ -1,6 +1,8 @@
 # Word Quest: Spelling Adventure
 ## Complete Game Design Document Index
 
+[![Tests](https://github.com/anathn/word-quest/actions/workflows/test.yml/badge.svg)](https://github.com/anathn/word-quest/actions/workflows/test.yml)
+
 ---
 
 ## Quick Reference
