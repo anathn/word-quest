@@ -1,0 +1,147 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-07-04",
+  "word_lists": [
+    {
+      "id": "planet-1",
+      "name": "Mercury - Basic Words",
+      "difficulty": 1,
+      "words": [
+        {
+          "id": "w001",
+          "text": "because",
+          "definition": "for the reason that",
+          "context_sentence": "I stayed inside because it was raining.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w002",
+          "text": "friend",
+          "definition": "a person you like and who likes you",
+          "context_sentence": "Sarah is my best friend at school.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w003",
+          "text": "people",
+          "definition": "human beings in general or a particular group",
+          "context_sentence": "Many people came to the party.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w004",
+          "text": "water",
+          "definition": "a clear liquid that falls from the sky as rain",
+          "context_sentence": "I drink water every day.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w005",
+          "text": "always",
+          "definition": "at all times; on every occasion",
+          "context_sentence": "I always brush my teeth before bed.",
+          "difficulty": 1,
+          "starter_letters": 3
+        }
+      ]
+    },
+    {
+      "id": "planet-2",
+      "name": "Venus - Intermediate Words",
+      "difficulty": 2,
+      "words": [
+        {
+          "id": "w006",
+          "text": "beautiful",
+          "definition": "very pleasing to look at",
+          "context_sentence": "The sunset was beautiful.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w007",
+          "text": "different",
+          "definition": "not the same as another",
+          "context_sentence": "Each snowflake is different.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w008",
+          "text": "important",
+          "definition": "having great meaning or value",
+          "context_sentence": "It is important to be kind.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w009",
+          "text": "yesterday",
+          "definition": "the day before today",
+          "context_sentence": "We went to the park yesterday.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w010",
+          "text": "together",
+          "definition": "with each other; in one group",
+          "context_sentence": "We worked together on the project.",
+          "difficulty": 2,
+          "starter_letters": 2
+        }
+      ]
+    },
+    {
+      "id": "planet-3",
+      "name": "Earth - Advanced Words",
+      "difficulty": 3,
+      "words": [
+        {
+          "id": "w011",
+          "text": "accomplish",
+          "definition": "to succeed in doing or completing something",
+          "context_sentence": "I can accomplish my goals with practice.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w012",
+          "text": "celebration",
+          "definition": "a special activity or event to show happiness",
+          "context_sentence": "The birthday party was a big celebration.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w013",
+          "text": "environment",
+          "definition": "the natural world around us",
+          "context_sentence": "We should protect the environment.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w014",
+          "text": "information",
+          "definition": "facts or details about something",
+          "context_sentence": "The book has lots of information.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w015",
+          "text": "neighborhood",
+          "definition": "a part of a town or city where people live",
+          "context_sentence": "I like to walk around my neighborhood.",
+          "difficulty": 3,
+          "starter_letters": 1
+        }
+      ]
+    }
+  ]
+}

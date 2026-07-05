@@ -1,0 +1,969 @@
+# Word Quest Sprint Status
+# Last Updated: July 3, 2026
+# Based on PRD v1.0
+
+current_sprint:
+  number: 1
+  name: "MVP Foundation"
+  start_date: "2026-07-06"
+  end_date: "2026-07-17"
+  goal: "Build core spelling mechanics and progress tracking foundation"
+  completed_stories: []
+  in_progress_stories: []
+  planned_stories:
+    - "STORY-001-01"  # Word presentation with audio and visual
+    - "STORY-001-02"  # Keyboard input validation
+    - "STORY-001-03"  # Feedback system
+    - "STORY-001-04"  # Hint escalation system
+    - "STORY-001-05"  # Planet completion logic
+    - "STORY-001-06"  # Progression between planets
+    - "STORY-002-01"  # Session data collection
+    - "STORY-002-02"  # Data persistence (JSON)
+    - "STORY-002-03"  # Words mastered counter
+    - "STORY-002-04"  # Accuracy rate calculation
+    - "STORY-002-05"  # Words needing practice list
+    - "STORY-002-06"  # Progress graph (fluency trend) - moved back to Sprint 1
+
+epics:
+  - id: EPIC-001
+    name: "Core Gameplay"
+    priority: P0
+    description: "Foundation spelling mechanics and progression"
+    status: "ready-for-dev"
+    progress_percent: 0
+    dependencies: []
+    blockers: []
+    notes: "Foundational epic - no dependencies"
+    target_sprint: 1
+    estimated_points: 26
+    completed_points: 0
+    stories:
+      - id: STORY-001-01
+        title: "Word presentation with audio and visual"
+        description: "Display word with audio pronunciation and starter letters"
+        priority: P0
+        status: "approved"
+        assignee: "agent"
+        started_date: "2026-07-04"
+        completed_date: "2026-07-04"
+        branch: "EPIC-001-STORY-001"
+        notes: "All 69 tests passing. Implementation complete with WCAG compliance."
+        acceptance_criteria:
+          - "Word is spoken aloud via text-to-speech"
+          - "Word is displayed visually on screen"
+          - "First 2-3 letters shown as starter hints"
+          - "Definition or context sentence displayed"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-001-02
+        title: "Keyboard input validation"
+        description: "Handle student input and validate spelling"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Case-insensitive comparison"
+          - "Trailing spaces ignored"
+          - "Real-time letter display with animation"
+          - "Submit answer on enter or button press"
+        complexity: "Low"
+        points: 3
+        blockers: []
+        notes: ""
+
+      - id: STORY-001-03
+        title: "Feedback system (correct/incorrect)"
+        description: "Provide immediate visual and audio feedback"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Correct answer triggers celebration animation"
+          - "Correct answer plays success chime"
+          - "Incorrect answer shows gentle retry cue"
+          - "Feedback occurs within 1 second of response"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-001-04
+        title: "Hint escalation system"
+        description: "Progressive hints when student struggles"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "First hint: show letter count"
+          - "Second hint: reveal next letter"
+          - "Continue letter-by-letter until answer"
+          - "No penalty for using hints"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-001-05
+        title: "Planet completion logic"
+        description: "Track 5-word sets and mastery threshold"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "5 words per planet"
+          - "4/5 correct unlocks next planet"
+          - "2-3/5 correct replays same planet"
+          - "0-1/5 correct triggers parent notification"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-001-06
+        title: "Progression between planets"
+        description: "Navigate to next planet on mastery"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Animation showing rocket traveling to next planet"
+          - "Planet name/number displayed"
+          - "Progress bar updates"
+        complexity: "Low"
+        points: 3
+        blockers: []
+        notes: ""
+
+  - id: EPIC-002
+    name: "Progress Tracking"
+    priority: P0
+    description: "Data collection, storage, and visualization"
+    status: "ready-for-dev"
+    progress_percent: 0
+    dependencies: ["EPIC-001"]
+    blockers: []
+    notes: "Depends on Core Gameplay for events to track"
+    target_sprint: 1
+    estimated_points: 28
+    completed_points: 0
+    stories:
+      - id: STORY-002-01
+        title: "Session data collection"
+        description: "Track all relevant metrics per session"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Track words attempted"
+          - "Track first-attempt accuracy per word"
+          - "Track total attempts per word"
+          - "Track time spent on each word"
+          - "Track hint usage frequency"
+          - "Track session duration"
+          - "Track streak lengths"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-002-02
+        title: "Data persistence (JSON)"
+        description: "Save progress to local JSON files"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Auto-save after each word completion"
+          - "Store in data/progress.json"
+          - "Load existing data on startup"
+          - "Handle missing/corrupt files gracefully"
+        complexity: "Low"
+        points: 3
+        blockers: []
+        notes: ""
+
+      - id: STORY-002-03
+        title: "Words mastered counter"
+        description: "Display cumulative mastered word count"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Track mastered words list"
+          - "Display as 'X/Y words' format"
+          - "Update in real-time"
+        complexity: "Low"
+        points: 2
+        blockers: []
+        notes: ""
+
+      - id: STORY-002-04
+        title: "Accuracy rate calculation"
+        description: "Calculate and display accuracy with trends"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Calculate percentage accuracy"
+          - "Show trend arrow (improving/stable/declining)"
+          - "Compare to previous session/week"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-002-05
+        title: "Words needing practice list"
+        description: "Identify and display words requiring more work"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Track words with multiple attempts"
+          - "Display list with attempt counts"
+          - "Sort by attempts (most first)"
+        complexity: "Low"
+        points: 3
+        blockers: []
+        notes: ""
+
+      - id: STORY-002-06
+        title: "Progress graph (fluency trend)"
+        description: "Visual line graph showing attempts over time"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Line graph showing attempts per word"
+          - "X-axis: weeks"
+          - "Y-axis: average attempts"
+          - "Trend line showing improvement"
+        complexity: "High"
+        points: 8
+        blockers: []
+        notes: "Moved back to Sprint 1 as it's critical for parent visibility"
+
+  - id: EPIC-003
+    name: "Parent Dashboard"
+    priority: P0
+    description: "Parent-facing management and monitoring"
+    status: "planning"
+    progress_percent: 0
+    dependencies: ["EPIC-002"]
+    blockers: []
+    notes: "Depends on Progress Tracking for data to display"
+    target_sprint: 2
+    estimated_points: 21
+    completed_points: 0
+    stories:
+      - id: STORY-003-01
+        title: "Parent authentication"
+        description: "Password protection for parent settings"
+        priority: P0
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Password prompt on Parent Settings access"
+          - "First-time setup allows password creation"
+          - "Password stored securely (hashed)"
+          - "Forgot password recovery option"
+        complexity: "Low"
+        points: 3
+        blockers: []
+        notes: ""
+
+      - id: STORY-003-02
+        title: "Student profile management"
+        description: "Create and edit student profiles"
+        priority: P0
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Enter student name"
+          - "Choose avatar from preset options"
+          - "Support multiple student profiles"
+          - "Switch between profiles"
+        complexity: "Low"
+        points: 3
+        blockers: []
+        notes: ""
+
+      - id: STORY-003-03
+        title: "Word list CRUD operations"
+        description: "Add, edit, remove spelling words"
+        priority: P0
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Add new word manually"
+          - "Edit existing word"
+          - "Remove word from list"
+          - "Tag word by difficulty level"
+          - "Changes persist to data/word_lists.json"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-003-04
+        title: "CSV import for word lists"
+        description: "Import words from CSV files"
+        priority: P0
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Upload CSV file"
+          - "Parse word and difficulty columns"
+          - "Validate imported data"
+          - "Merge with existing lists or replace"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-003-05
+        title: "Weekly summary view"
+        description: "Dashboard showing weekly progress summary"
+        priority: P0
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Words mastered this week"
+          - "Words needing more practice"
+          - "Accuracy trend (improving/stable/needs attention)"
+          - "Time spent practicing"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-003-06
+        title: "Email notification config"
+        description: "Configure weekly email reports"
+        priority: P2
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Enable/disable email reports"
+          - "Select day of week for delivery"
+          - "Enter parent email address"
+          - "Test email button"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: "P2 feature - may be deferred"
+
+  - id: EPIC-004
+    name: "Motivation Systems"
+    priority: P1
+    description: "Rewards, streaks, and character interaction"
+    status: "planning"
+    progress_percent: 0
+    dependencies: ["EPIC-001"]
+    blockers: []
+    notes: "Depends on Core Gameplay for event triggers"
+    target_sprint: 3
+    estimated_points: 27
+    completed_points: 0
+    stories:
+      - id: STORY-004-01
+        title: "Streak counter"
+        description: "Track consecutive correct answers"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Increment on correct answer"
+          - "Reset on incorrect answer"
+          - "Display current streak on screen"
+          - "No penalty for streak break"
+        complexity: "Low"
+        points: 2
+        blockers: []
+        notes: ""
+
+      - id: STORY-004-02
+        title: "Streak bonus animations"
+        description: "Visual rewards for streak milestones"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "3-word streak: golden rocket boost"
+          - "5-word streak: special planet discovery"
+          - "Animation plays immediately on milestone"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-004-03
+        title: "Achievement badge system"
+        description: "Unlock badges for milestones"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Define badge types (Speed Speller, Perseverance, Perfect Planet)"
+          - "Track unlock conditions"
+          - "Display unlocked badges"
+          - "Show progress toward next badge"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-004-04
+        title: "Captain Cosmos character"
+        description: "Mascot character with voice lines"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Captain Cosmos sprite/animation"
+          - "Voice lines for encouragement"
+          - "Guidance during tutorial"
+          - "Celebration dialogue on achievements"
+        complexity: "High"
+        points: 8
+        blockers: []
+        notes: "May use TTS for MVP, upgrade later"
+
+      - id: STORY-004-05
+        title: "Rocket customization"
+        description: "Allow students to choose rocket color"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Color picker or preset options"
+          - "Apply selected color to rocket"
+          - "Persist choice to profile"
+        complexity: "Low"
+        points: 2
+        blockers: []
+        notes: ""
+
+      - id: STORY-004-06
+        title: "Sticker collection"
+        description: "Space-themed badge rewards"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Define sticker types"
+          - "Unlock on achievements"
+          - "Display collection in student view"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+  - id: EPIC-005
+    name: "Visual & Audio Polish"
+    priority: P1
+    description: "Game aesthetics and feedback"
+    status: "planning"
+    progress_percent: 0
+    dependencies: ["EPIC-001"]
+    blockers: []
+    notes: "Depends on Core Gameplay for game states"
+    target_sprint: 3
+    estimated_points: 31
+    completed_points: 0
+    stories:
+      - id: STORY-005-01
+        title: "Space theme visuals"
+        description: "Deep blue background with stars and planets"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Deep space blue background (#1a1a3e)"
+          - "Star field with twinkling effect"
+          - "Planet sprites for each level"
+          - "Consistent color palette"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-005-02
+        title: "Rocket sprite with animations"
+        description: "Animated rocket ship with engine flames"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Rocket sprite (multiple frames)"
+          - "Engine flame animation"
+          - "Movement animation between planets"
+          - "Customizable color"
+        complexity: "High"
+        points: 8
+        blockers: []
+        notes: ""
+
+      - id: STORY-005-03
+        title: "Success/failure SFX"
+        description: "Sound effects for game events"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Correct answer: ascending chime (C-E-G)"
+          - "Incorrect: gentle descending tone"
+          - "Streak bonus: layered celebratory sounds"
+          - "Planet completion: victory fanfare"
+          - "Volume controls"
+        complexity: "Low"
+        points: 3
+        blockers: []
+        notes: ""
+
+      - id: STORY-005-04
+        title: "Background music"
+        description: "Ambient space music"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Looping ambient space track"
+          - "Low volume by default"
+          - "On/off toggle"
+          - "Fade in/out on state change"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-005-05
+        title: "Letter animations"
+        description: "Appearing letters with effects"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Fade-in effect"
+          - "Bounce animation"
+          - "Smooth letter-by-letter appearance"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-005-06
+        title: "Planet bloom on completion"
+        description: "Visual reward when planet cleared"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Planet surface blooms with flowers/crystals"
+          - "Sparkle effect"
+          - "Animation plays on word 5 correct"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+  - id: EPIC-006
+    name: "Accessibility"
+    priority: P1
+    description: "Inclusive design features"
+    status: "planning"
+    progress_percent: 0
+    dependencies: ["EPIC-005"]
+    blockers: []
+    notes: "Depends on Visual & Audio for content to make accessible"
+    target_sprint: 4
+    estimated_points: 19
+    completed_points: 0
+    stories:
+      - id: STORY-006-01
+        title: "Color-blind safe palette"
+        description: "Avoid red-green combinations"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Review all color combinations"
+          - "Add patterns to color-coded elements"
+          - "Test with color blindness simulators"
+        complexity: "Low"
+        points: 2
+        blockers: []
+        notes: ""
+
+      - id: STORY-006-02
+        title: "Text-to-speech engine"
+        description: "Audio pronunciation for all words"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Integrate TTS library"
+          - "Adjustable speech speed"
+          - "On-demand pronunciation button"
+          - "Closed captions backup"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-006-03
+        title: "Closed captions"
+        description: "Text backup for all audio"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "All voice lines have text"
+          - "Toggle captions on/off"
+          - "Caption style customizable"
+        complexity: "Low"
+        points: 3
+        blockers: []
+        notes: ""
+
+      - id: STORY-006-04
+        title: "Keyboard navigation"
+        description: "Full game playable without mouse"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Tab navigation between elements"
+          - "Enter/Space to activate"
+          - "Arrow keys for letter selection"
+          - "Focus indicators visible"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-006-05
+        title: "OpenDyslexic font"
+        description: "Optional dyslexia-friendly font"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Include OpenDyslexic font files"
+          - "Toggle in settings"
+          - "Apply to all text elements"
+        complexity: "Low"
+        points: 2
+        blockers: []
+        notes: ""
+
+      - id: STORY-006-06
+        title: "High contrast mode"
+        description: "Toggle for improved visibility"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "High contrast color scheme"
+          - "Toggle in settings"
+          - "Minimum 4.5:1 contrast ratio"
+        complexity: "Low"
+        points: 2
+        blockers: []
+        notes: ""
+
+  - id: EPIC-007
+    name: "Student Progress View"
+    priority: P1
+    description: "Kid-friendly progress visualization"
+    status: "planning"
+    progress_percent: 0
+    dependencies: ["EPIC-002", "EPIC-004"]
+    blockers: []
+    notes: "Depends on Progress Tracking and Motivation Systems"
+    target_sprint: 4
+    estimated_points: 16
+    completed_points: 0
+    stories:
+      - id: STORY-007-01
+        title: "Personal space map"
+        description: "Visual map showing planets visited"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Map view of solar system"
+          - "Visited planets highlighted"
+          - "Current planet indicated"
+          - "Locked planets grayed out"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-007-02
+        title: "Achievement badge display"
+        description: "Collection view of earned badges"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Grid view of badges"
+          - "Locked badges show lock icon"
+          - "Hover/click shows badge details"
+        complexity: "Low"
+        points: 3
+        blockers: []
+        notes: ""
+
+      - id: STORY-007-03
+        title: "Progress journal"
+        description: "Readable text summaries for students"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Weekly summary text"
+          - "Age-appropriate language"
+          - "Encouraging tone"
+          - "Examples: 'This week you mastered: ...'"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-007-04
+        title: "Simple progress stats"
+        description: "Age-appropriate metrics display"
+        priority: P1
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Words mastered count"
+          - "Best streak display"
+          - "Time practiced (simple format)"
+          - "Encouraging messages"
+        complexity: "Low"
+        points: 3
+        blockers: []
+        notes: ""
+
+  - id: EPIC-008
+    name: "Email Reports"
+    priority: P2
+    description: "Automated parent notifications"
+    status: "planning"
+    progress_percent: 0
+    dependencies: ["EPIC-003", "EPIC-002"]
+    blockers: []
+    notes: "Depends on Parent Dashboard and Progress Tracking"
+    target_sprint: 5
+    estimated_points: 17
+    completed_points: 0
+    stories:
+      - id: STORY-008-01
+        title: "Email service integration"
+        description: "Send weekly progress summaries"
+        priority: P2
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Integrate email service (SMTP/API)"
+          - "Compose email with progress data"
+          - "Handle delivery errors gracefully"
+          - "GDPR-compliant data handling"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-008-02
+        title: "Report template design"
+        description: "Email template with progress visuals"
+        priority: P2
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Clean, readable layout"
+          - "Key metrics highlighted"
+          - "Branded with Word Quest logo"
+          - "Link to full dashboard"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-008-03
+        title: "Scheduling system"
+        description: "Configure report delivery schedule"
+        priority: P2
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Select day of week"
+          - "Select time of day"
+          - "Timezone handling"
+          - "Background job scheduler"
+        complexity: "Medium"
+        points: 5
+        blockers: []
+        notes: ""
+
+      - id: STORY-008-04
+        title: "Unsubscribe handling"
+        description: "Opt-out functionality in emails"
+        priority: P2
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
+        acceptance_criteria:
+          - "Unsubscribe link in email"
+          - "Update preferences on click"
+          - "Confirmation message"
+          - "Respect opt-out in future sends"
+        complexity: "Low"
+        points: 2
+        blockers: []
+        notes: ""
+
+---
+
+## Sprint History
+
+### Sprint 0 (Planning)
+- **Dates:** July 3, 2026 - July 5, 2026
+- **Goal:** PRD creation and sprint planning
+- **Completed:**
+  - PRD.md created
+  - Sprint status initialized
+  - All epics and stories defined
+- **Velocity:** N/A (planning sprint)
+- **Carry Over:** None
+- **Retrospective Notes:** "Planning complete. Ready for development."
+
+---
+
+## Sprint Template (Copy for new sprints)
+
+```yaml
+- sprint_number: <N>
+  name: "<Sprint Name>"
+  dates: "<YYYY-MM-DD - YYYY-MM-DD>"
+  goal: "<Sprint goal>"
+  completed_stories: [<list of STORY-XXX-XX IDs>]
+  carried_over: [<list from previous sprint>]
+  velocity: <points completed>
+  retrospective_notes: "<Key learnings>"
+```
+
+---
+
+## Status Definitions
+
+| Status | Meaning |
+|--------|---------|
+| `planning` | Story defined but not yet refined |
+| `ready-for-dev` | Requirements clear, ready for development |
+| `in-progress` | Actively being developed |
+| `review` | Development complete, awaiting review |
+| `done` | Tested and merged |
+| `blocked` | Cannot proceed due to external dependency |
+
+---
+
+## Notes
+
+- Total estimated points: 150 across all epics
+- Sprint 1 scope: 46 points (EPIC-001 + EPIC-002 core stories)
+- STORY-002-06 deferred from Sprint 1 due to complexity
+- All stories start in `planning` status
+- Stories move to `ready-for-dev` after refinement
+- Update progress regularly as work advances
