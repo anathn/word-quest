@@ -123,14 +123,15 @@ class WordManager:
     - Support for custom word lists
     """
     
-    def __init__(self, data_dir: str = "src/data"):
+    def __init__(self, data_dir: Optional[str] = None):
         """
         Initialize the word manager.
         
         Args:
-            data_dir: Directory containing word list JSON files
+            data_dir: Directory containing word list JSON files.
+                     Defaults to WORDQUEST_DATA_DIR env var or 'src/data'.
         """
-        self.data_dir = data_dir
+        self.data_dir = data_dir or os.environ.get('WORDQUEST_DATA_DIR', 'src/data')
         self.word_lists: Dict[str, WordList] = {}
         self.all_words: List[SpellingWord] = []
         self._load_word_lists()
@@ -290,7 +291,7 @@ _word_manager: Optional[WordManager] = None
 _word_manager_lock = threading.Lock()
 
 
-def get_word_manager(data_dir: str = "src/data") -> WordManager:
+def get_word_manager(data_dir: Optional[str] = None) -> WordManager:
     """
     Get or create the global word manager instance.
     
