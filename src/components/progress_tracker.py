@@ -5,9 +5,11 @@ Tracks student progress including hint usage, attempts, and session data.
 This component will be expanded in STORY-002-01 for full session tracking.
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Callable
 from dataclasses import dataclass, field
 import time
+from unittest.mock import MagicMock
+from src.components.planet_manager import PlanetManager, PlanetResult
 
 
 @dataclass
@@ -23,6 +25,17 @@ class WordAttempt:
 
 
 @dataclass
+class PlanetData:
+    """Data for a planet's word set."""
+    planet_id: str
+    planet_name: str
+    words_completed: int = 0
+    first_attempt_correct: int = 0
+    total_attempts: int = 0
+    word_results: List[Dict] = field(default_factory=list)
+
+
+@dataclass
 class SessionData:
     """Data for a practice session."""
     session_id: str
@@ -32,6 +45,8 @@ class SessionData:
     words_correct: int = 0
     total_hints_used: int = 0
     word_attempts: List[WordAttempt] = field(default_factory=list)
+    current_planet_id: Optional[str] = None
+    planets_completed: List[PlanetData] = field(default_factory=list)
 
 
 class ProgressTracker:
@@ -42,6 +57,10 @@ class ProgressTracker:
     - Track hint usage per word
     - Track attempts per word
     - Basic session data collection
+    
+    Features (STORY-001-05):
+    - Planet-level tracking
+    - Mastery threshold detection
     
     Features (Future - STORY-002-01):
     - Full session metrics
@@ -60,9 +79,15 @@ class ProgressTracker:
         self.current_word_id: Optional[str] = None
         self.current_word_start_time: Optional[float] = None
         
+        # Planet tracking (STORY-001-05)
+        self.current_planet_id: Optional[str] = None
+        self.current_planet_name: Optional[str] = None
+        self.planet_word_results: List[Dict] = []
+        
         # Callbacks for analytics
-        self.on_hint_used: Optional[callable] = None
-        self.on_word_complete: Optional[callable] = None
+        self.on_hint_used: Optional[Callable[[Dict], None]] = None
+        self.on_word_complete: Optional[Callable[[Dict], None]] = None
+        self.on_planet_complete: Optional[Callable[[Dict], None]] = None
     
     def start_session(self, session_id: str) -> SessionData:
         """
@@ -260,6 +285,111 @@ class ProgressTracker:
             'sessions_completed': len(self.sessions)
         }
     
+    def start_planet(self, planet_id: str, planet_name: str):
+        """
+        Start tracking a new planet.
+        
+        Args:
+            planet_id: Unique identifier for the planet
+            planet_name: Display name for the planet
+        """
+        self.current_planet_id = planet_id
+        self.current_planet_name = planet_name
+        self.planet_word_results.clear()
+        
+        if self.current_session:
+            self.current_session.current_planet_id = planet_id
+    
+    def record_planet_word_result(self, word_id: str, word_text: str, correct: bool, attempts: int):
+        """
+        Record a word result for the current planet.
+        
+        Args:
+            word_id: The word identifier
+            word_text: The word text
+            correct: Whether the word was spelled correctly
+            attempts: Number of attempts
+        """
+        result = {
+            'word_id': word_id,
+            'word_text': word_text,
+            'correct': correct,
+            'attempts': attempts,
+            'first_attempt': attempts == 1
+        }
+        self.planet_word_results.append(result)
+        
+        # Check if planet is complete (5 words)
+        if len(self.planet_word_results) >= 5:
+            self._complete_planet()
+    
+    def _complete_planet(self):
+        """
+        Process planet completion and determine mastery.
+        
+        Uses PlanetManager logic to determine completion status,
+        avoiding duplication of mastery threshold calculations.
+        """
+        if not self.current_planet_id:
+            return
+        
+        # Create a temporary PlanetManager to determine status
+        # This avoids duplicating the mastery threshold logic
+        # We pass a dummy word list to satisfy the constructor's validation
+        # since we only need the status calculation logic.
+        temp_manager = PlanetManager(
+            self.current_planet_id,
+            self.current_planet_name or '',
+            [MagicMock()]  # Dummy word to avoid ValueError
+        )
+        
+        # Manually set word results to match what was tracked
+        # We need to create WordResult objects for the calculation
+        from src.components.planet_manager import WordResult
+        word_results = []
+        for r in self.planet_word_results:
+            word_results.append(WordResult(
+                word_id=r['word_id'],
+                word_text=r['word_text'],
+                correct=r['correct'],
+                attempts=r['attempts']
+            ))
+        temp_manager.word_results = word_results
+        
+        # Get completion status from PlanetManager (single source of truth)
+        planet_result: PlanetResult = temp_manager.get_completion_status()
+        
+        # Create planet data for session tracking
+        planet_data = PlanetData(
+            planet_id=self.current_planet_id,
+            planet_name=self.current_planet_name or '',
+            words_completed=len(self.planet_word_results),
+            first_attempt_correct=planet_result.first_attempt_correct,
+            total_attempts=sum(r['attempts'] for r in self.planet_word_results),
+            word_results=self.planet_word_results.copy()
+        )
+        
+        if self.current_session:
+            self.current_session.planets_completed.append(planet_data)
+        
+        # Notify callback with status from PlanetManager
+        if self.on_planet_complete:
+            self.on_planet_complete({
+                'planet_id': self.current_planet_id,
+                'planet_name': self.current_planet_name,
+                'status': planet_result.status.value,
+                'first_attempt_correct': planet_result.first_attempt_correct,
+                'total_words': 5,
+                'unlock_next': planet_result.unlock_next,
+                'notify_parent': planet_result.notify_parent,
+                'word_results': self.planet_word_results
+            })
+        
+        # Reset planet tracking
+        self.current_planet_id = None
+        self.current_planet_name = None
+        self.planet_word_results.clear()
+    
     def reset(self):
         """Reset the tracker (useful for testing)."""
         self.current_session = None
@@ -267,6 +397,9 @@ class ProgressTracker:
         self.sessions.clear()
         self.current_word_id = None
         self.current_word_start_time = None
+        self.current_planet_id = None
+        self.current_planet_name = None
+        self.planet_word_results.clear()
 
 
 # Factory function

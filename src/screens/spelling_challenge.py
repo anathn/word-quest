@@ -19,6 +19,7 @@ from src.components.feedback_controller import (
     create_feedback_controller
 )
 from src.components.hint_manager import HintManager, create_hint_manager
+from src.components.planet_manager import PlanetManager, create_planet_manager
 from src.ui.hint_display import HintDisplay, create_hint_display
 from src.utils.validators import InputValidator, AnswerValidator
 
@@ -56,9 +57,10 @@ class SpellingChallengeScreen:
     - Display definition and context sentence
     - Audio replay capability
     - Real-time letter display with animation
+    - Planet completion tracking (STORY-001-05)
     """
     
-    def __init__(self, word_manager, audio_system, typography):
+    def __init__(self, word_manager, audio_system, typography, progress_tracker=None):
         """
         Initialize the spelling challenge screen.
         
@@ -66,16 +68,23 @@ class SpellingChallengeScreen:
             word_manager: WordManager instance for word data
             audio_system: AudioSystem instance for TTS
             typography: Typography instance for text rendering
+            progress_tracker: ProgressTracker instance for tracking progress
         """
         self.word_manager = word_manager
         self.audio_system = audio_system
         self.typography = typography
+        self.progress_tracker = progress_tracker
         
         self.state = ChallengeState.IDLE
         self.current_word = None
         self.presentation: Optional[WordPresentation] = None
         self.starter_letters: List[str] = []    # Pre-displayed hints
         self.presentation_start_time = 0
+        
+        # Planet tracking (STORY-001-05)
+        self.current_planet_id: Optional[str] = None
+        self.current_planet_name: Optional[str] = None
+        self.planet_manager: Optional[PlanetManager] = None
         
         # Input handling
         self.input_handler: Optional[InputHandler] = None
@@ -97,16 +106,19 @@ class SpellingChallengeScreen:
         self.on_feedback_shown: Optional[Callable] = None
         self.on_word_complete: Optional[Callable] = None
         self.on_hint_used: Optional[Callable] = None  # For analytics tracking
+        self.on_planet_complete: Optional[Callable] = None  # STORY-001-05
         
         # Performance tracking
         self.render_times: List[float] = []
     
-    def present_word(self, word):
+    def present_word(self, word, planet_id: Optional[str] = None, planet_name: Optional[str] = None):
         """
         Present a word with audio and starter hints.
         
         Args:
             word: SpellingWord object to present
+            planet_id: Optional planet identifier for tracking
+            planet_name: Optional planet name for tracking
             
         Returns:
             True if presentation started successfully
@@ -115,6 +127,17 @@ class SpellingChallengeScreen:
         
         self.current_word = word
         self.presentation_start_time = start_time
+        
+        # Initialize planet manager if new planet
+        if planet_id and (not self.planet_manager or self.current_planet_id != planet_id):
+            self.current_planet_id = planet_id
+            self.current_planet_name = planet_name or planet_id
+            # Get all words for this planet from word_manager
+            planet_words = self.word_manager.get_words_for_planet(planet_id)
+            self.planet_manager = create_planet_manager(planet_id, self.current_planet_name, planet_words)
+            
+            # Set up planet completion callback
+            self.planet_manager.on_planet_complete = self._on_planet_complete
         
         # Extract starter letters based on difficulty
         self.starter_letters = list(word.get_starter_letters())
@@ -140,6 +163,10 @@ class SpellingChallengeScreen:
         self.hint_display = create_hint_display(self.typography, hint_manager=self.hint_manager)
         self.hint_display.set_word(word.text)
         self.hint_display.on_help_clicked = self._request_hint
+        
+        # Update progress tracker with planet info (STORY-001-05)
+        if self.progress_tracker and planet_id:
+            self.progress_tracker.start_planet(planet_id, self.current_planet_name)
         
         # Set up callbacks
         self.input_handler.on_input_changed = self._on_input_changed
@@ -221,6 +248,21 @@ class SpellingChallengeScreen:
     
     def _on_auto_advance(self):
         """Handle auto-advance after correct answer."""
+        # Record word result for planet tracking (STORY-001-05)
+        if self.planet_manager and self.current_word:
+            # Get attempts from input handler
+            attempts = 1  # Default to 1, will be updated if hints were used
+            if self.hint_manager:
+                hint_analytics = self.hint_manager.get_analytics()
+                attempts = hint_analytics.get('hints_used', 0) + 1  # hints + original attempt
+            
+            self.planet_manager.record_word_result(
+                word_id=self.current_word.id,
+                word_text=self.current_word.text,
+                correct=True,
+                attempts=attempts
+            )
+        
         if self.on_word_complete:
             self.on_word_complete(True)  # True = success
     
@@ -247,6 +289,27 @@ class SpellingChallengeScreen:
             )
             # Also update the word display with revealed letters
             self._update_word_display_with_hints()
+    
+    def _on_planet_complete(self, planet_result):
+        """
+        Handle planet completion event.
+        
+        Args:
+            planet_result: PlanetResult from PlanetManager
+        """
+        # Also record in progress tracker
+        if self.progress_tracker and self.current_planet_id:
+            for word_result in planet_result.word_results:
+                self.progress_tracker.record_planet_word_result(
+                    word_id=word_result.word_id,
+                    word_text=word_result.word_text,
+                    correct=word_result.correct,
+                    attempts=word_result.attempts
+                )
+        
+        # Notify callback
+        if self.on_planet_complete:
+            self.on_planet_complete(planet_result)
     
     def _request_hint(self):
         """Handle student clicking the 'Need Help?' button."""
@@ -460,6 +523,11 @@ class SpellingChallengeScreen:
             self.hint_manager.reset()
         if self.hint_display:
             self.hint_display.reset()
+        # Reset planet tracking (STORY-001-05)
+        if self.planet_manager:
+            self.planet_manager.reset()
+        self.current_planet_id = None
+        self.current_planet_name = None
         self.cursor_visible = True
     
     def get_hint_analytics(self) -> dict:
@@ -559,7 +627,8 @@ class HintRenderer:
 def create_spelling_challenge_screen(
     word_manager=None,
     audio_system=None,
-    typography=None
+    typography=None,
+    progress_tracker=None
 ):
     """
     Create a SpellingChallengeScreen with dependencies.
@@ -568,6 +637,7 @@ def create_spelling_challenge_screen(
         word_manager: Optional WordManager instance
         audio_system: Optional AudioSystem instance
         typography: Optional Typography instance
+        progress_tracker: Optional ProgressTracker instance
         
     Returns:
         Configured SpellingChallengeScreen instance
@@ -579,5 +649,6 @@ def create_spelling_challenge_screen(
     return SpellingChallengeScreen(
         word_manager=word_manager or get_word_manager(),
         audio_system=audio_system or get_audio_system(),
-        typography=typography or get_typography()
+        typography=typography or get_typography(),
+        progress_tracker=progress_tracker
     )

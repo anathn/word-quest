@@ -220,18 +220,41 @@ class WordManager:
             return None
         return random.choice(words)
     
-    def get_words_for_planet(self, planet_id: str) -> List[SpellingWord]:
+    def get_words_for_planet(self, planet_id: str, max_words: int = 5) -> List[SpellingWord]:
         """
-        Get all words for a specific planet.
+        Get words for a specific planet (up to max_words).
         
         Args:
             planet_id: The planet identifier (e.g., 'planet-1')
+            max_words: Maximum number of words to return (default 5)
             
         Returns:
-            List of SpellingWord objects for that planet
+            List of SpellingWord objects for that planet (up to max_words)
         """
         word_list = self.get_word_list(planet_id)
-        return word_list.words if word_list else []
+        if not word_list:
+            return []
+        return word_list.words[:max_words]
+    
+    def get_planet_info(self, planet_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get planet information including name and word count.
+        
+        Args:
+            planet_id: The planet identifier
+            
+        Returns:
+            Dictionary with planet info or None
+        """
+        word_list = self.get_word_list(planet_id)
+        if not word_list:
+            return None
+        return {
+            'planet_id': planet_id,
+            'planet_name': word_list.name,
+            'difficulty': word_list.difficulty,
+            'word_count': len(word_list.words)
+        }
     
     def add_word(self, word: SpellingWord, planet_id: Optional[str] = None):
         """
@@ -251,6 +274,19 @@ class WordManager:
     def get_total_word_count(self) -> int:
         """Get the total number of words available."""
         return len(self.all_words)
+    
+    def get_planet_count(self) -> int:
+        """Get the total number of planets."""
+        return len(self.word_lists)
+    
+    def get_all_planet_ids(self) -> List[str]:
+        """
+        Get all planet IDs.
+        
+        Returns:
+            List of planet identifiers
+        """
+        return list(self.word_lists.keys())
     
     def get_difficulty_distribution(self) -> Dict[int, int]:
         """
