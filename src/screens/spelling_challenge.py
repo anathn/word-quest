@@ -18,6 +18,8 @@ from src.components.feedback_controller import (
     FeedbackState as FeedbackScreenState,
     create_feedback_controller
 )
+from src.components.hint_manager import HintManager, create_hint_manager
+from src.ui.hint_display import HintDisplay, create_hint_display
 from src.utils.validators import InputValidator, AnswerValidator
 
 # Performance threshold constants
@@ -83,6 +85,10 @@ class SpellingChallengeScreen:
         # Feedback system
         self.feedback_controller: Optional[FeedbackController] = None
         
+        # Hint system
+        self.hint_manager: Optional[HintManager] = None
+        self.hint_display: Optional[HintDisplay] = None
+        
         # Callbacks for state changes
         self.on_word_presented: Optional[Callable] = None
         self.on_input_changed: Optional[Callable] = None
@@ -90,6 +96,7 @@ class SpellingChallengeScreen:
         self.on_invalid_input: Optional[Callable] = None
         self.on_feedback_shown: Optional[Callable] = None
         self.on_word_complete: Optional[Callable] = None
+        self.on_hint_used: Optional[Callable] = None  # For analytics tracking
         
         # Performance tracking
         self.render_times: List[float] = []
@@ -125,6 +132,14 @@ class SpellingChallengeScreen:
         self.feedback_controller.on_feedback_shown = self._on_feedback_shown
         self.feedback_controller.on_auto_advance = self._on_auto_advance
         self.feedback_controller.on_hint_requested = self._on_hint_requested
+        
+        # Initialize hint system
+        self.hint_manager = create_hint_manager(word.text)
+        self.hint_manager.on_hint_shown = self._on_hint_shown
+        
+        self.hint_display = create_hint_display(self.typography, hint_manager=self.hint_manager)
+        self.hint_display.set_word(word.text)
+        self.hint_display.on_help_clicked = self._request_hint
         
         # Set up callbacks
         self.input_handler.on_input_changed = self._on_input_changed
@@ -211,8 +226,68 @@ class SpellingChallengeScreen:
     
     def _on_hint_requested(self):
         """Handle hint request after incorrect answer."""
-        # Hint escalation will be implemented in STORY-001-04
-        pass
+        # Enable the help button for student-requested hints
+        if self.hint_display:
+            self.hint_display.enable_help_button()
+    
+    def _on_hint_shown(self, hint_data):
+        """Handle hint being shown (for analytics)."""
+        if self.on_hint_used:
+            self.on_hint_used(hint_data)
+        
+        # Update hint display
+        if self.hint_display and self.hint_manager:
+            # Get encouragement message for enhanced user experience
+            encouragement = self.hint_manager.get_encouragement_message()
+            
+            self.hint_display.show_hint(
+                hint_data.message,
+                hint_data.revealed_indices,
+                encouragement_message=encouragement
+            )
+            # Also update the word display with revealed letters
+            self._update_word_display_with_hints()
+    
+    def _request_hint(self):
+        """Handle student clicking the 'Need Help?' button."""
+        if self.hint_manager:
+            hint = self.hint_manager.get_next_hint()
+            if hint and self.hint_display:
+                # Get encouragement message for enhanced user experience
+                encouragement = self.hint_manager.get_encouragement_message()
+                
+                self.hint_display.show_hint(
+                    hint.message,
+                    hint.revealed_indices,
+                    encouragement_message=encouragement
+                )
+                self._update_word_display_with_hints()
+                # Disable button after use until next incorrect answer
+                self.hint_display.disable_help_button()
+    
+    def _update_word_display_with_hints(self):
+        """Update the word display to show revealed hint letters."""
+        if not self.hint_manager or not self.input_display or not self.current_word:
+            return
+        
+        # Get revealed indices from hint manager
+        revealed_indices = self.hint_manager.get_revealed_indices()
+        
+        # Build the full display list merging starter letters with revealed hint letters
+        full_display = []
+        for i, letter in enumerate(self.current_word.text):
+            if i < len(self.starter_letters):
+                # Starter letter
+                full_display.append(('starter', letter))
+            elif i in revealed_indices:
+                # Hint-revealed letter
+                full_display.append(('hint', letter))
+            else:
+                # Hidden letter
+                full_display.append(('hidden', '_'))
+        
+        # Actually update the display with the full state
+        self.input_display.set_full_display(full_display)
     
     def handle_key_input(self, key: str, unicode_char: Optional[str] = None):
         """
@@ -332,6 +407,10 @@ class SpellingChallengeScreen:
         # Update feedback animations
         if self.feedback_controller:
             self.feedback_controller.update(current_time)
+        
+        # Update hint display animations
+        if self.hint_display:
+            self.hint_display.update(current_time)
     
     def get_feedback_message(self) -> str:
         """
@@ -377,7 +456,37 @@ class SpellingChallengeScreen:
         self.answer_validator = None
         if self.feedback_controller:
             self.feedback_controller.reset()
+        if self.hint_manager:
+            self.hint_manager.reset()
+        if self.hint_display:
+            self.hint_display.reset()
         self.cursor_visible = True
+    
+    def get_hint_analytics(self) -> dict:
+        """
+        Get hint usage analytics for progress tracking.
+        
+        Returns:
+            Dictionary with hint usage statistics
+        """
+        if self.hint_manager:
+            return self.hint_manager.get_analytics()
+        return {}
+    
+    def handle_mouse_click(self, x: int, y: int) -> bool:
+        """
+        Handle mouse click for hint button.
+        
+        Args:
+            x: Mouse X position
+            y: Mouse Y position
+            
+        Returns:
+            True if hint button was clicked
+        """
+        if self.hint_display:
+            return self.hint_display.check_button_click(x, y)
+        return False
 
 
 class HintRenderer:
