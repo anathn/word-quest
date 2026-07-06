@@ -137,7 +137,7 @@ class SpellingChallengeScreen:
         self.hint_manager = create_hint_manager(word.text)
         self.hint_manager.on_hint_shown = self._on_hint_shown
         
-        self.hint_display = create_hint_display(self.typography)
+        self.hint_display = create_hint_display(self.typography, hint_manager=self.hint_manager)
         self.hint_display.set_word(word.text)
         self.hint_display.on_help_clicked = self._request_hint
         
@@ -237,9 +237,13 @@ class SpellingChallengeScreen:
         
         # Update hint display
         if self.hint_display and self.hint_manager:
+            # Get encouragement message for enhanced user experience
+            encouragement = self.hint_manager.get_encouragement_message()
+            
             self.hint_display.show_hint(
                 hint_data.message,
-                hint_data.revealed_indices
+                hint_data.revealed_indices,
+                encouragement_message=encouragement
             )
             # Also update the word display with revealed letters
             self._update_word_display_with_hints()
@@ -249,26 +253,31 @@ class SpellingChallengeScreen:
         if self.hint_manager:
             hint = self.hint_manager.get_next_hint()
             if hint and self.hint_display:
-                self.hint_display.show_hint(hint.message, hint.revealed_indices)
+                # Get encouragement message for enhanced user experience
+                encouragement = self.hint_manager.get_encouragement_message()
+                
+                self.hint_display.show_hint(
+                    hint.message,
+                    hint.revealed_indices,
+                    encouragement_message=encouragement
+                )
                 self._update_word_display_with_hints()
                 # Disable button after use until next incorrect answer
                 self.hint_display.disable_help_button()
     
     def _update_word_display_with_hints(self):
         """Update the word display to show revealed hint letters."""
-        if not self.hint_manager or not self.input_display:
+        if not self.hint_manager or not self.input_display or not self.current_word:
             return
         
-        # Get the full word with revealed letters
-        revealed_pattern = self.hint_manager.get_revealed_pattern()
+        # Get revealed indices from hint manager
         revealed_indices = self.hint_manager.get_revealed_indices()
         
-        # Show revealed letters in the input display
-        # This merges starter letters with revealed hint letters
+        # Build the full display list merging starter letters with revealed hint letters
         full_display = []
-        for i, letter in enumerate(self.current_word.text if self.current_word else ""):
+        for i, letter in enumerate(self.current_word.text):
             if i < len(self.starter_letters):
-                # Starter letter - already shown
+                # Starter letter
                 full_display.append(('starter', letter))
             elif i in revealed_indices:
                 # Hint-revealed letter
@@ -276,6 +285,9 @@ class SpellingChallengeScreen:
             else:
                 # Hidden letter
                 full_display.append(('hidden', '_'))
+        
+        # Actually update the display with the full state
+        self.input_display.set_full_display(full_display)
     
     def handle_key_input(self, key: str, unicode_char: Optional[str] = None):
         """

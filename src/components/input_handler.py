@@ -268,6 +268,7 @@ class InputDisplay:
         self.max_length = max_length
         self.letter_spacing = letter_spacing
         self.letters: List[str] = []
+        self.display_styles: List[str] = []  # Style for each letter: 'starter', 'hint', 'hidden'
         self.cursor_visible = True
         self.cursor_blink_rate = 1.0  # Hz
         self.last_blink_time = 0
@@ -320,6 +321,27 @@ class InputDisplay:
         self.animating_letters = [
             {'letter': letter, 'progress': 0.0, 'type': 'fade_in'}
             for letter in self.letters
+        ]
+    
+    def set_full_display(self, display_items: List[tuple]):
+        """
+        Set the full display with styled letters.
+        
+        This method accepts a list of (style, letter) tuples where style indicates
+        the visual treatment (e.g., 'starter', 'hint', 'hidden') and letter is the
+        character to display (or '_' for hidden letters).
+        
+        Args:
+            display_items: List of (style, letter) tuples
+        """
+        # Extract letters and styles from display items
+        self.letters = [letter for _, letter in display_items[:self.max_length]]
+        self.display_styles = [style for style, _ in display_items[:self.max_length]]
+        
+        # Add fade-in animation for new letters with style info
+        self.animating_letters = [
+            {'letter': letter, 'progress': 0.0, 'type': 'fade_in', 'style': style}
+            for style, letter in zip(self.display_styles, self.letters)
         ]
     
     def add_letter(self, letter: str):

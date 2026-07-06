@@ -386,6 +386,47 @@ class TestReset:
         assert display.word_text == ""
 
 
+class TestEncouragementMessage:
+    """Test encouragement message feature."""
+    
+    def test_show_hint_with_encouragement(self):
+        """Test showing hint with encouragement message."""
+        typography = MagicMock()
+        display = HintDisplay(typography)
+        display.set_word("hello")
+        
+        display.show_hint(
+            "The 1st letter is 'H'",
+            {0},
+            encouragement_message="You're getting closer!"
+        )
+        
+        assert display.current_hint_text == "The 1st letter is 'H'"
+        assert display.encouragement_message == "You're getting closer!"
+        assert 0 in display.revealed_indices
+    
+    def test_show_hint_without_encouragement(self):
+        """Test showing hint without encouragement message (backward compatibility)."""
+        typography = MagicMock()
+        display = HintDisplay(typography)
+        display.set_word("hello")
+        
+        display.show_hint("Test hint", {0})
+        
+        assert display.current_hint_text == "Test hint"
+        assert display.encouragement_message == ""  # Empty string when not provided
+    
+    def test_encouragement_message_empty_string(self):
+        """Test that empty encouragement message is handled."""
+        typography = MagicMock()
+        display = HintDisplay(typography)
+        display.set_word("hello")
+        
+        display.show_hint("Test", {0}, encouragement_message="")
+        
+        assert display.encouragement_message == ""
+
+
 class TestAcceptanceCriteria:
     """Test specific acceptance criteria from STORY-001-04."""
     

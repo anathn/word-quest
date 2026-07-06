@@ -108,7 +108,6 @@ epics:
         completed_date: null
         branch: "EPIC-001-STORY-004"
         pr: null
-        notes: "All 90 tests passing. Implementation complete with hint escalation from letter count to letter-by-letter reveal."
         acceptance_criteria:
           - "First hint: show letter count"
           - "Second hint: reveal next letter"
@@ -117,7 +116,7 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "All 250 tests passing. Critical UI bug fixed - revealed letters now display correctly in input area. Type hints corrected (Callable). Code duplication removed by having HintDisplay use HintManager.get_revealed_pattern()."
 
       - id: STORY-001-05
         title: "Planet completion logic"

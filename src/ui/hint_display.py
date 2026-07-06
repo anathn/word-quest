@@ -5,7 +5,7 @@ Renders hint text and revealed letters with animations.
 Provides visual feedback for the hint escalation system.
 """
 
-from typing import Optional, List, Tuple, Set
+from typing import Optional, List, Tuple, Set, Callable
 from dataclasses import dataclass
 import time
 import math
@@ -45,7 +45,7 @@ class HintDisplay:
     - Accessibility-friendly sizing
     """
     
-    def __init__(self, typography, screen_width: int = 800, screen_height: int = 600):
+    def __init__(self, typography, screen_width: int = 800, screen_height: int = 600, hint_manager=None):
         """
         Initialize the hint display.
         
@@ -53,10 +53,12 @@ class HintDisplay:
             typography: Typography instance for text rendering
             screen_width: Screen width in pixels
             screen_height: Screen height in pixels
+            hint_manager: Optional HintManager instance to use for pattern building
         """
         self.typography = typography
         self.screen_width = screen_width
         self.screen_height = screen_height
+        self.hint_manager = hint_manager  # Reference to HintManager for pattern building
         
         # Layout
         self.hint_area_y = 350  # Y position for hint text
@@ -83,7 +85,7 @@ class HintDisplay:
         self.button_pressed = False
         
         # Callbacks
-        self.on_help_clicked: Optional[callable] = None
+        self.on_help_clicked: Optional[Callable[[], None]] = None
     
     def set_word(self, word_text: str):
         """
@@ -96,18 +98,30 @@ class HintDisplay:
         self.revealed_indices.clear()
         # Build pattern with spaces between characters
         self.revealed_pattern = ' '.join(['_'] * len(word_text))
+        
+        # If hint_manager is available, sync with it
+        if self.hint_manager:
+            # HintManager already has the word, no need to set it again
+            pass
     
-    def show_hint(self, hint_text: str, revealed_indices: Set[int]):
+    def show_hint(self, hint_text: str, revealed_indices: Set[int], encouragement_message: str = None):
         """
         Display a new hint with animation.
         
         Args:
             hint_text: The hint message to display
             revealed_indices: Set of letter indices that are now revealed
+            encouragement_message: Optional encouraging message to display
         """
         self.current_hint_text = hint_text
+        self.encouragement_message = encouragement_message or ""
         self.revealed_indices = revealed_indices.copy()
-        self.revealed_pattern = self._build_revealed_pattern()
+        
+        # Use HintManager's pattern if available, otherwise build locally
+        if self.hint_manager:
+            self.revealed_pattern = self.hint_manager.get_revealed_pattern()
+        else:
+            self.revealed_pattern = self._build_revealed_pattern()
         
         # Start fade-in animation
         self.animation_active = True
@@ -220,9 +234,23 @@ class HintDisplay:
         
         rendered = []
         
-        # Create semi-transparent background
+        # Calculate total height needed for hint + encouragement
+        style = self.typography.style_body_text
+        font = style.font
+        
+        # Split hint text into lines if needed
+        hint_lines = self._wrap_text(self.current_hint_text, font, self.screen_width - 60)
+        hint_height = len(hint_lines) * (font.get_height() + 5)
+        
+        # Add height for encouragement message if present
+        encouragement_height = 0
+        if self.encouragement_message:
+            enc_lines = self._wrap_text(self.encouragement_message, font, self.screen_width - 60)
+            encouragement_height = len(enc_lines) * (font.get_height() + 5) + 10
+        
+        # Create semi-transparent background with enough space
         bg_width = self.screen_width - 40
-        bg_height = 80
+        bg_height = hint_height + encouragement_height + 40
         bg_x = 20
         bg_y = self.hint_area_y - 20
         
@@ -232,12 +260,6 @@ class HintDisplay:
         rendered.append((bg_surf, (bg_x, bg_y)))
         
         # Render hint text
-        style = self.typography.style_body_text
-        font = style.font
-        
-        # Split text into lines if needed
-        hint_lines = self._wrap_text(self.current_hint_text, font, bg_width - 20)
-        
         y_offset = bg_y + 20
         for line in hint_lines:
             text_surf = font.render(line, True, HINT_TEXT_COLOR)
@@ -247,6 +269,22 @@ class HintDisplay:
             text_x = bg_x + (bg_width - text_surf.get_width()) // 2
             rendered.append((text_surf, (text_x, y_offset)))
             y_offset += font.get_height() + 5
+        
+        # Render encouragement message if present
+        if self.encouragement_message:
+            # Add spacing
+            y_offset += 5
+            
+            # Render encouragement in a slightly different style (italic or lighter)
+            enc_lines = self._wrap_text(self.encouragement_message, font, self.screen_width - 60)
+            for line in enc_lines:
+                text_surf = font.render(line, True, (200, 200, 200))  # Lighter gray color
+                text_surf.set_alpha(self.hint_alpha)
+                
+                # Center horizontally
+                text_x = bg_x + (bg_width - text_surf.get_width()) // 2
+                rendered.append((text_surf, (text_x, y_offset)))
+                y_offset += font.get_height() + 5
         
         return rendered
     
@@ -346,6 +384,7 @@ class HintDisplay:
     def reset(self):
         """Reset the hint display to initial state."""
         self.current_hint_text = ""
+        self.encouragement_message = ""
         self.revealed_pattern = ""
         self.revealed_indices.clear()
         self.hint_alpha = 0
@@ -358,7 +397,7 @@ class HintDisplay:
 
 
 # Factory function
-def create_hint_display(typography, screen_width: int = 800, screen_height: int = 600) -> HintDisplay:
+def create_hint_display(typography, screen_width: int = 800, screen_height: int = 600, hint_manager=None) -> HintDisplay:
     """
     Create a HintDisplay instance.
     
@@ -366,8 +405,9 @@ def create_hint_display(typography, screen_width: int = 800, screen_height: int 
         typography: Typography instance
         screen_width: Screen width
         screen_height: Screen height
+        hint_manager: Optional HintManager instance for pattern building
         
     Returns:
         Configured HintDisplay instance
     """
-    return HintDisplay(typography, screen_width, screen_height)
+    return HintDisplay(typography, screen_width, screen_height, hint_manager)
