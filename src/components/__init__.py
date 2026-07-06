@@ -12,6 +12,9 @@ from .feedback_controller import (
     RetryIndicator,
     create_feedback_controller
 )
+from .hint_manager import HintManager, HintData, create_hint_manager
+from .progress_tracker import ProgressTracker, WordAttempt, SessionData, create_progress_tracker
+from .planet_manager import PlanetManager, PlanetStatus, PlanetResult, WordResult, create_planet_manager
 
 __all__ = [
     'AudioSystem',
@@ -32,5 +35,17 @@ __all__ = [
     'FeedbackConfig',
     'CelebrationAnimation',
     'RetryIndicator',
-    'create_feedback_controller'
+    'create_feedback_controller',
+    'HintManager',
+    'HintData',
+    'create_hint_manager',
+    'ProgressTracker',
+    'WordAttempt',
+    'SessionData',
+    'create_progress_tracker',
+    'PlanetManager',
+    'PlanetStatus',
+    'PlanetResult',
+    'WordResult',
+    'create_planet_manager'
 ]

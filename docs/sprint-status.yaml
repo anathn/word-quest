@@ -122,10 +122,12 @@ epics:
         title: "Planet completion logic"
         description: "Track 5-word sets and mastery threshold"
         priority: P0
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
+        status: "review"
+        assignee: "agent"
+        started_date: "2026-07-06"
         completed_date: null
+        branch: "EPIC-001-STORY-005"
+        pr: null
         acceptance_criteria:
           - "5 words per planet"
           - "4/5 correct unlocks next planet"
@@ -134,7 +136,7 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "Implementation complete. PlanetManager and PlanetResultsScreen created. Integrated with SpellingChallengeScreen. Ready for testing and code review."
 
       - id: STORY-001-06
         title: "Progression between planets"
