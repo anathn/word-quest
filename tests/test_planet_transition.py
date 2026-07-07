@@ -67,7 +67,7 @@ class TestStarField:
     
     def test_star_field_init(self):
         """Test StarField initialization."""
-        from src.screens.planet_transition import StarField
+        from src.ui.animations import StarField
         
         star_field = StarField(width=800, height=600, num_stars=50)
         
@@ -77,7 +77,7 @@ class TestStarField:
     
     def test_star_field_updates(self):
         """Test that star field updates with motion."""
-        from src.screens.planet_transition import StarField
+        from src.ui.animations import StarField
         
         star_field = StarField(width=800, height=600, num_stars=50)
         initial_offset = star_field.motion_offset
@@ -85,12 +85,13 @@ class TestStarField:
         # Simulate animation update
         star_field.update(progress=0.5, delta_time=0.016)
         
-        # Motion offset should change or at least not crash
-        assert True  # Test passes if no exception
+        # Motion offset should have increased
+        assert star_field.motion_offset > initial_offset, \
+            "Motion offset should increase with animation progress"
     
     def test_star_field_generate_twinkle(self):
         """Test that stars have twinkle properties."""
-        from src.screens.planet_transition import StarField
+        from src.ui.animations import StarField
         
         star_field = StarField(width=800, height=600, num_stars=50)
         
@@ -190,11 +191,13 @@ class TestLetterAnimator:
         animator = LetterAnimator()
         animator.start(current_time=0.0)
         
-        # At halfway point, alpha should be ~128
+        # At halfway point (0.25s of 0.5s duration), alpha should be ~128
         animator.update(current_time=0.25)
         
         alpha = animator.get_alpha()
-        assert 100 <= alpha <= 160  # Allow some variance
+        expected_alpha = 128  # 255 * 0.5
+        assert abs(alpha - expected_alpha) <= 10, \
+            f"Alpha at halfway should be ~128, got {alpha}"
 
 
 class TestSuccessAnimator:
@@ -243,19 +246,22 @@ class TestSuccessAnimator:
         from src.ui.animations import SuccessAnimator
         
         animator = SuccessAnimator()
-        animator.duration = 0.1  # Short duration for testing'sake)
+        animator.duration = 0.1  # Short duration for testing
         
-        animator.trigger(center_x=400, center_y=300)
-        
-        # Simulate time past duration
-        import time
-        start = time.time()
-        while time.time() - start < 0.15:
-            animator.update(delta_time=0.05)
-            time.sleep(0.01)
-        
-        # Animation should be inactive
-        assert animator.active == False or len(animator.particles) == 0
+        # Patch time.time to simulate time passing
+        with patch('src.ui.animations.time.time') as mock_time:
+            mock_time.side_effect = [0.0, 0.15]  # Trigger at 0.0, update at 0.15
+            
+            animator.trigger(center_x=400, center_y=300)
+            assert animator.active == True
+            assert len(animator.particles) > 0
+            
+            # Simulate time past duration
+            animator.update(delta_time=0.15)
+            
+            # Animation should be inactive after duration
+            assert animator.active == False or len(animator.particles) == 0, \
+                "Success animation should expire after duration elapses"
 
 
 class TestRetryAnimator:
@@ -301,10 +307,10 @@ class TestProgressTrackerGalaxyProgress:
         
         progress = GalaxyProgress()
         
-        assert progress.total_planets == 12
+        assert progress.total_planets == 0  # Must be explicitly configured
         assert progress.completed_planets == 0
         assert progress.current_planet_number == 1
-        assert progress.unlocked_planets == 1
+        assert progress.unlocked_planets == 0  # No planets unlocked until configured
     
     def test_update_galaxy_progress(self):
         """Test updating galaxy progress."""

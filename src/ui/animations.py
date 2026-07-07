@@ -129,6 +129,82 @@ class RocketAnimator:
             screen.blit(rocket_surface, rect.topleft)
 
 
+class StarField:
+    """
+    Star field background with motion blur effect.
+    
+    Creates a space background with twinkling stars that
+    appear to move during rocket travel.
+    """
+    
+    def __init__(self, width: int = 800, height: int = 600, num_stars: int = 100):
+        """
+        Initialize the star field.
+        
+        Args:
+            width: Screen width
+            height: Screen height
+            num_stars: Number of stars to generate
+        """
+        self.width = width
+        self.height = height
+        self.stars = []
+        self.motion_offset = 0
+        self.twinkle_timer = 0
+        
+        # Generate random stars
+        import random
+        for _ in range(num_stars):
+            self.stars.append({
+                'x': random.randint(0, width),
+                'y': random.randint(0, height),
+                'size': random.randint(1, 3),
+                'brightness': random.random(),
+                'twinkle_speed': random.uniform(0.01, 0.05)
+            })
+    
+    def update(self, progress: float, delta_time: float):
+        """
+        Update star field for motion effect.
+        
+        Args:
+            progress: Animation progress (0.0 to 1.0)
+            delta_time: Time since last update in seconds
+        """
+        # Create motion blur effect based on progress
+        self.motion_offset += progress * 2 * delta_time
+        
+        # Update twinkle
+        self.twinkle_timer += delta_time
+        for star in self.stars:
+            star['brightness'] += star['twinkle_speed']
+            if star['brightness'] >= 1.0 or star['brightness'] <= 0.3:
+                star['twinkle_speed'] *= -1
+    
+    def draw(self, screen):
+        """
+        Draw the star field.
+        
+        Args:
+            screen: Pygame screen surface
+        """
+        # Draw space background
+        screen.fill((26, 26, 62))  # Deep space blue
+        
+        # Draw stars with motion blur and twinkle
+        for star in self.stars:
+            # Apply motion offset
+            x = (star['x'] - self.motion_offset) % self.width
+            y = star['y']
+            
+            # Calculate brightness
+            brightness = int(255 * star['brightness'])
+            color = (brightness, brightness, brightness + 50)
+            
+            # Draw star
+            pygame.draw.circle(screen, color, (int(x), int(y)), star['size'])
+
+
 class LetterAnimator:
     """
     Handles letter appearance animations.
@@ -435,6 +511,11 @@ class RetryAnimator:
 def create_rocket_animator(color: Tuple[int, int, int] = (200, 200, 200)) -> RocketAnimator:
     """Create a rocket animator instance."""
     return RocketAnimator(color)
+
+
+def create_star_field(width: int = 800, height: int = 600, num_stars: int = 100) -> StarField:
+    """Create a star field instance."""
+    return StarField(width, height, num_stars)
 
 
 def create_letter_animator(animation_type: str = "fade") -> LetterAnimator:

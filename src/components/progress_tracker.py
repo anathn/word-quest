@@ -52,10 +52,10 @@ class SessionData:
 @dataclass
 class GalaxyProgress:
     """Galaxy/solar system progress tracking."""
-    total_planets: int = 12  # Total planets in the galaxy
+    total_planets: int = 0  # Must be explicitly configured from word list metadata
     completed_planets: int = 0
     current_planet_number: int = 1
-    unlocked_planets: int = 1  # Number of accessible planets
+    unlocked_planets: int = 0  # Begins locked until total_planets is set
 
 
 class ProgressTracker:

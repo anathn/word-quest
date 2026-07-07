@@ -18,6 +18,7 @@ import pygame
 
 from src.components.audio_system import AudioSystem
 from src.ui.typography import Typography
+from src.ui.animations import RocketAnimator, StarField, ProgressBarAnimator
 
 
 @dataclass
@@ -27,186 +28,6 @@ class PlanetInfo:
     planet_name: str
     planet_number: int
     total_planets: int
-
-
-class RocketAnimator:
-    """
-    Handles rocket sprite movement and visual effects.
-    
-    Creates a simple rocket ship with engine flame animation
-    using pygame drawing primitives.
-    """
-    
-    def __init__(self, color: Tuple[int, int, int] = (200, 200, 200)):
-        """
-        Initialize the rocket animator.
-        
-        Args:
-            color: Rocket body color (RGB tuple)
-        """
-        self.color = color
-        self.flame_offset = 0.0
-        self.flame_direction = 1
-        self.rocket_width = 60
-        self.rocket_height = 120
-        
-        # Animation timing
-        self.last_frame_time = 0
-        self.frame_interval = 0.1  # 100ms per frame
-    
-    def update(self, current_time: float):
-        """
-        Update animation state.
-        
-        Args:
-            current_time: Current time in seconds
-        """
-        # Animate flame
-        if current_time - self.last_frame_time >= self.frame_interval:
-            self.flame_offset += 0.5 * self.flame_direction
-            if self.flame_offset >= 1.0 or self.flame_offset <= 0.0:
-                self.flame_direction *= -1
-            self.last_frame_time = current_time
-    
-    def draw(self, screen, x: int, y: int, angle: float = 0):
-        """
-        Draw the rocket at the given position.
-        
-        Args:
-            screen: Pygame screen surface
-            x: X position (center)
-            y: Y position (center)
-            angle: Rotation angle in radians (optional)
-        """
-        # Create a surface for the rocket
-        rocket_surface = pygame.Surface((self.rocket_width, self.rocket_height), pygame.SRCALPHA)
-        
-        # Rocket body (ellipse)
-        body_color = self.color
-        pygame.draw.ellipse(rocket_surface, body_color, (5, 20, 50, 80))
-        
-        # Rocket nose cone
-        nose_points = [
-            (30, 0),   # Top center
-            (55, 35),  # Right base
-            (5, 35)    # Left base
-        ]
-        pygame.draw.polygon(rocket_surface, (220, 220, 220), nose_points)
-        
-        # Rocket fins
-        left_fin_points = [
-            (5, 60),
-            (0, 90),
-            (15, 70)
-        ]
-        right_fin_points = [
-            (55, 60),
-            (60, 90),
-            (45, 70)
-        ]
-        pygame.draw.polygon(rocket_surface, (180, 180, 180), left_fin_points)
-        pygame.draw.polygon(rocket_surface, (180, 180, 180), right_fin_points)
-        
-        # Window
-        window_color = (135, 206, 235)  # Sky blue
-        pygame.draw.circle(rocket_surface, window_color, (30, 50), 15)
-        pygame.draw.circle(rocket_surface, (200, 200, 200), (30, 50), 15, 3)
-        
-        # Engine flame
-        flame_width = 20
-        flame_height = int(30 * (0.5 + 0.5 * (1 - abs(self.flame_offset))))
-        flame_points = [
-            (30 - flame_width // 2, 100),
-            (30, 100 + flame_height),
-            (30 + flame_width // 2, 100)
-        ]
-        flame_color = (255, int(100 * self.flame_offset + 100), 0)
-        pygame.draw.polygon(rocket_surface, flame_color, flame_points)
-        
-        # Rotate if needed
-        if angle != 0:
-            rotated_surface = pygame.transform.rotate(rocket_surface, math.degrees(angle))
-            rect = rotated_surface.get_rect(center=(x, y))
-            screen.blit(rotated_surface, rect.topleft)
-        else:
-            rect = rocket_surface.get_rect(center=(x, y))
-            screen.blit(rocket_surface, rect.topleft)
-
-
-class StarField:
-    """
-    Star field background with motion blur effect.
-    
-    Creates a space background with twinkling stars that
-    appear to move during rocket travel.
-    """
-    
-    def __init__(self, width: int = 800, height: int = 600, num_stars: int = 100):
-        """
-        Initialize the star field.
-        
-        Args:
-            width: Screen width
-            height: Screen height
-            num_stars: Number of stars to generate
-        """
-        self.width = width
-        self.height = height
-        self.stars = []
-        self.motion_offset = 0
-        self.twinkle_timer = 0
-        
-        # Generate random stars
-        import random
-        for _ in range(num_stars):
-            self.stars.append({
-                'x': random.randint(0, width),
-                'y': random.randint(0, height),
-                'size': random.randint(1, 3),
-                'brightness': random.random(),
-                'twinkle_speed': random.uniform(0.01, 0.05)
-            })
-    
-    def update(self, progress: float, delta_time: float):
-        """
-        Update star field for motion effect.
-        
-        Args:
-            progress: Animation progress (0.0 to 1.0)
-            delta_time: Time since last update in seconds
-        """
-        # Create motion blur effect based on progress
-        self.motion_offset += progress * 2 * delta_time
-        
-        # Update twinkle
-        self.twinkle_timer += delta_time
-        for star in self.stars:
-            star['brightness'] += star['twinkle_speed']
-            if star['brightness'] >= 1.0 or star['brightness'] <= 0.3:
-                star['twinkle_speed'] *= -1
-    
-    def draw(self, screen):
-        """
-        Draw the star field.
-        
-        Args:
-            screen: Pygame screen surface
-        """
-        # Draw space background
-        screen.fill((26, 26, 62))  # Deep space blue
-        
-        # Draw stars with motion blur and twinkle
-        for star in self.stars:
-            # Apply motion offset
-            x = (star['x'] - self.motion_offset) % self.width
-            y = star['y']
-            
-            # Calculate brightness
-            brightness = int(255 * star['brightness'])
-            color = (brightness, brightness, brightness + 50)
-            
-            # Draw star
-            pygame.draw.circle(screen, color, (int(x), int(y)), star['size'])
 
 
 class PlanetTransitionScreen:
@@ -236,8 +57,9 @@ class PlanetTransitionScreen:
         self.is_running = False
         self.animation_progress = 0.0  # 0.0 to 1.0
         self.skip_requested = False
+        self._skip_lock = False  # Prevents multiple skip triggers until animation completes
         self.start_time = 0
-        
+
         # Planets
         self.from_planet: Optional[PlanetInfo] = None
         self.to_planet: Optional[PlanetInfo] = None
@@ -248,9 +70,10 @@ class PlanetTransitionScreen:
         # Components
         self.star_field: Optional[StarField] = None
         self.rocket_animator: Optional[RocketAnimator] = None
+        self.progress_bar_animator: Optional[ProgressBarAnimator] = None
         
         # Configuration
-        self.animation_duration = 2.0  # 2 seconds
+        self.animation_duration = 2.0  # 2 seconds (can be configured via game settings)
         self.width = 800
         self.height = 600
         
@@ -279,6 +102,12 @@ class PlanetTransitionScreen:
             galaxy_progress: Overall galaxy completion (0.0 to 1.0)
             skip: If True, skip animation and go directly to end
         """
+        # Validate destination planet exists
+        if to_planet.planet_number > to_planet.total_planets:
+            # Galaxy is complete - no next planet available
+            self._handle_galaxy_complete()
+            return
+        
         self.from_planet = from_planet
         self.to_planet = to_planet
         self.galaxy_progress = galaxy_progress
@@ -290,6 +119,10 @@ class PlanetTransitionScreen:
         # Initialize components
         self.star_field = StarField(self.width, self.height)
         self.rocket_animator = RocketAnimator()
+        self.progress_bar_animator = ProgressBarAnimator()
+        
+        # Reset skip lock for new transition
+        self._skip_lock = False
         
         # Play transition sound
         self._play_transition_audio()
@@ -310,6 +143,18 @@ class PlanetTransitionScreen:
                     f"Traveling to Planet {self.to_planet.planet_name}"
                 )
     
+    def _handle_galaxy_complete(self):
+        """Handle the case where galaxy is complete and no next planet exists."""
+        # Notify callback that galaxy is complete
+        if self.on_transition_complete:
+            # Pass a flag or special data to indicate galaxy complete
+            # For now, just call the callback - the parent screen can handle it
+            self.on_transition_complete()
+        
+        # Reset state
+        self.is_running = False
+        self.animation_progress = 1.0
+    
     def handle_events(self, events):
         """
         Handle pygame events.
@@ -317,13 +162,19 @@ class PlanetTransitionScreen:
         Args:
             events: List of pygame events
         """
+        # Only handle skip events if lock is not active
+        if self._skip_lock:
+            return
+            
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     self.skip_requested = True
+                    self._skip_lock = True  # Lock until animation completes
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 # Click to skip
                 self.skip_requested = True
+                self._skip_lock = True  # Lock until animation completes
     
     def update(self, delta_time: float):
         """
@@ -341,6 +192,12 @@ class PlanetTransitionScreen:
             self._complete_transition()
             return
         
+        # Check if skip was requested
+        if self.skip_requested:
+            self.animation_progress = 1.0
+            self._complete_transition()
+            return
+        
         # Update animation progress
         self.animation_progress += delta_time / self.animation_duration
         self.animation_progress = min(1.0, self.animation_progress)
@@ -353,10 +210,14 @@ class PlanetTransitionScreen:
             self.star_field.update(self.animation_progress, delta_time)
         if self.rocket_animator:
             self.rocket_animator.update(self.start_time + delta_time)
+        if self.progress_bar_animator:
+            self.progress_bar_animator.set_target(self.galaxy_progress)
+            self.progress_bar_animator.update(delta_time)
     
     def _complete_transition(self):
         """Complete the transition and notify callback."""
         self.is_running = False
+        self._skip_lock = False  # Release skip lock when complete
         if self.on_transition_complete:
             self.on_transition_complete()
     
@@ -395,8 +256,10 @@ class PlanetTransitionScreen:
             arc_offset = math.sin(self.animation_progress * math.pi) * 50
             rocket_y = int(self.height * 0.5 - arc_offset)
             
-            # Angle based on progress
-            angle = 0  # Could add rotation for realism
+            # Calculate rotation angle based on trajectory
+            # Rocket tilts up in the middle of the arc, levels out at start/end
+            # Use derivative of the arc function to get angle
+            angle = math.cos(self.animation_progress * math.pi) * 0.3  # ~17 degrees max tilt
             
             self.rocket_animator.draw(screen, rocket_x, rocket_y, angle)
         
@@ -469,13 +332,9 @@ class PlanetTransitionScreen:
         bar_x = (self.width - bar_width) // 2
         bar_y = self.height - 80
         
-        # Background
-        pygame.draw.rect(screen, (60, 60, 80), (bar_x, bar_y, bar_width, bar_height))
-        pygame.draw.rect(screen, self.white, (bar_x, bar_y, bar_width, bar_height), 2)
-        
-        # Fill
-        fill_width = int(bar_width * self.galaxy_progress)
-        pygame.draw.rect(screen, self.green, (bar_x, bar_y, fill_width, bar_height))
+        # Use the ProgressBarAnimator for smooth animation
+        if self.progress_bar_animator:
+            self.progress_bar_animator.draw(screen, bar_x, bar_y, bar_width, bar_height)
         
         # Progress text
         font = self.typography.get_font(
@@ -517,16 +376,27 @@ class PlanetTransitionScreen:
         """Get current animation progress (0.0 to 1.0)."""
         return self.animation_progress
     
+    def set_animation_duration(self, duration: float):
+        """
+        Set the animation duration.
+        
+        Args:
+            duration: Duration in seconds
+        """
+        self.animation_duration = max(0.5, min(5.0, duration))  # Clamp between 0.5 and 5 seconds
+    
     def reset(self):
         """Reset the transition screen to initial state."""
         self.is_running = False
         self.animation_progress = 0.0
         self.skip_requested = False
+        self._skip_lock = False
         self.from_planet = None
         self.to_planet = None
         self.galaxy_progress = 0.0
         self.star_field = None
         self.rocket_animator = None
+        self.progress_bar_animator = None
 
 
 # Factory function
