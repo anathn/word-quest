@@ -49,6 +49,15 @@ class SessionData:
     planets_completed: List[PlanetData] = field(default_factory=list)
 
 
+@dataclass
+class GalaxyProgress:
+    """Galaxy/solar system progress tracking."""
+    total_planets: int = 12  # Total planets in the galaxy
+    completed_planets: int = 0
+    current_planet_number: int = 1
+    unlocked_planets: int = 1  # Number of accessible planets
+
+
 class ProgressTracker:
     """
     Tracks student progress for analytics.
@@ -83,6 +92,9 @@ class ProgressTracker:
         self.current_planet_id: Optional[str] = None
         self.current_planet_name: Optional[str] = None
         self.planet_word_results: List[Dict] = []
+        
+        # Galaxy tracking (STORY-001-06)
+        self.galaxy_progress = GalaxyProgress()
         
         # Callbacks for analytics
         self.on_hint_used: Optional[Callable[[Dict], None]] = None
@@ -385,6 +397,15 @@ class ProgressTracker:
                 'word_results': self.planet_word_results
             })
         
+        # Update galaxy progress if planet was completed (STORY-001-06)
+        if planet_result.unlock_next:
+            self.galaxy_progress.completed_planets += 1
+            self.galaxy_progress.current_planet_number = self.galaxy_progress.completed_planets + 1
+            self.galaxy_progress.unlocked_planets = min(
+                self.galaxy_progress.completed_planets + 1,
+                self.galaxy_progress.total_planets
+            )
+        
         # Reset planet tracking
         self.current_planet_id = None
         self.current_planet_name = None
@@ -400,6 +421,71 @@ class ProgressTracker:
         self.current_planet_id = None
         self.current_planet_name = None
         self.planet_word_results.clear()
+        self.galaxy_progress.completed_planets = 0
+        self.galaxy_progress.current_planet_number = 1
+        self.galaxy_progress.unlocked_planets = 1
+    
+    # Galaxy Progress Methods (STORY-001-06)
+    
+    def update_galaxy_progress(self, planets_completed: int, total_planets: int):
+        """
+        Update galaxy progress based on completed planets.
+        
+        Args:
+            planets_completed: Number of planets successfully completed
+            total_planets: Total number of planets in the galaxy
+        """
+        self.galaxy_progress.completed_planets = planets_completed
+        self.galaxy_progress.total_planets = total_planets
+        self.galaxy_progress.current_planet_number = planets_completed + 1
+        self.galaxy_progress.unlocked_planets = min(planets_completed + 1, total_planets)
+    
+    def get_galaxy_progress_percent(self) -> float:
+        """
+        Get overall galaxy progress as a percentage.
+        
+        Returns:
+            Progress percentage (0.0 to 1.0)
+        """
+        if self.galaxy_progress.total_planets == 0:
+            return 0.0
+        return self.galaxy_progress.completed_planets / self.galaxy_progress.total_planets
+    
+    def get_current_planet_number(self) -> int:
+        """
+        Get the current planet number.
+        
+        Returns:
+            Current planet number (1-indexed)
+        """
+        return self.galaxy_progress.current_planet_number
+    
+    def get_total_planets(self) -> int:
+        """
+        Get the total number of planets in the galaxy.
+        
+        Returns:
+            Total planet count
+        """
+        return self.galaxy_progress.total_planets
+    
+    def get_unlocked_planets(self) -> int:
+        """
+        Get the number of unlocked planets.
+        
+        Returns:
+            Number of accessible planets
+        """
+        return self.galaxy_progress.unlocked_planets
+    
+    def set_total_planets(self, total: int):
+        """
+        Set the total number of planets.
+        
+        Args:
+            total: Total planet count
+        """
+        self.galaxy_progress.total_planets = total
 
 
 # Factory function

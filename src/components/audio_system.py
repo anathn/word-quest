@@ -267,11 +267,18 @@ class AudioSystem:
             if not pygame.mixer.get_init():
                 pygame.mixer.init()
             
-            # Construct file path
-            sfx_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'audio', f'{sfx_name}.ogg')
+            # Construct file paths (try .ogg first, then .wav)
+            assets_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'audio')
+            ogg_path = os.path.join(assets_dir, f'{sfx_name}.ogg')
+            wav_path = os.path.join(assets_dir, f'{sfx_name}.wav')
             
-            if not os.path.exists(sfx_path):
-                print(f"Warning: SFX file not found: {sfx_path}")
+            # Determine which file to use
+            sfx_path = ogg_path if os.path.exists(ogg_path) else (
+                wav_path if os.path.exists(wav_path) else None
+            )
+            
+            if not sfx_path:
+                print(f"Warning: SFX file not found: {ogg_path} or {wav_path}")
                 return False
             
             # Load and play

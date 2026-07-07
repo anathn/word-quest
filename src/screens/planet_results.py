@@ -41,6 +41,7 @@ class PlanetResultsScreen:
     - Provide appropriate next action button
     - Play appropriate audio feedback
     - Support accessibility (visual + audio)
+    - Trigger planet transition on successful completion (STORY-001-06)
     """
     
     def __init__(self, typography: Typography, audio_system: AudioSystem):
@@ -59,10 +60,15 @@ class PlanetResultsScreen:
         self.word_displays: List[WordResultDisplay] = []
         self.results_start_time = 0
         
+        # Planet info for transition (STORY-001-06)
+        self.current_planet_number: int = 0
+        self.total_planets: int = 12
+        
         # Callbacks
         self.on_continue: Optional[Callable[[], None]] = None
         self.on_retry: Optional[Callable[[], None]] = None
         self.on_practice: Optional[Callable[[], None]] = None
+        self.on_transition_to_next_planet: Optional[Callable[[str, str, int, int, float], None]] = None  # from_planet, to_planet, from_num, to_num, progress
         
         # UI element positions (will be set by game)
         self.title_position = (400, 100)
@@ -183,7 +189,21 @@ class PlanetResultsScreen:
         status = self.planet_result.status
         
         if status == PlanetStatus.COMPLETED:
-            if self.on_continue:
+            # Trigger transition to next planet (STORY-001-06)
+            if self.on_transition_to_next_planet and self.planet_result.unlock_next:
+                # Calculate planet numbers
+                from_planet_num = self.current_planet_number
+                to_planet_num = from_planet_num + 1
+                progress = to_planet_num / self.total_planets
+                
+                self.on_transition_to_next_planet(
+                    self.planet_result.planet_name,
+                    f"Planet {self.planet_result.planet_name}",  # to_planet name
+                    from_planet_num,
+                    to_planet_num,
+                    progress
+                )
+            elif self.on_continue:
                 self.on_continue()
         elif status == PlanetStatus.RETRY:
             if self.on_retry:
@@ -221,6 +241,17 @@ class PlanetResultsScreen:
         if not self.planet_result or self.planet_result.total_words == 0:
             return 0.0
         return self.planet_result.first_attempt_correct / self.planet_result.total_words
+    
+    def set_planet_info(self, planet_number: int, total_planets: int):
+        """
+        Set planet information for transition tracking.
+        
+        Args:
+            planet_number: Current planet number (1-indexed)
+            total_planets: Total planets in the galaxy
+        """
+        self.current_planet_number = planet_number
+        self.total_planets = total_planets
     
     def update(self, current_time: float):
         """
