@@ -8,8 +8,14 @@ current_sprint:
   start_date: "2026-07-06"
   end_date: "2026-07-17"
   goal: "Build core spelling mechanics and progress tracking foundation"
-  completed_stories: []
-  in_progress_stories: []
+  completed_stories:
+    - "STORY-001-02"  # Keyboard input validation
+    - "STORY-001-03"  # Feedback system
+    - "STORY-001-05"  # Planet completion logic
+    - "STORY-001-06"  # Progression between planets
+  in_progress_stories:
+    - "STORY-001-01"  # Word presentation (PR #3)
+    - "STORY-001-04"  # Hint escalation system
   planned_stories:
     - "STORY-001-01"  # Word presentation with audio and visual
     - "STORY-001-02"  # Keyboard input validation
@@ -29,26 +35,26 @@ epics:
     name: "Core Gameplay"
     priority: P0
     description: "Foundation spelling mechanics and progression"
-    status: "ready-for-dev"
-    progress_percent: 0
+    status: "in-progress"
+    progress_percent: 67
     dependencies: []
     blockers: []
-    notes: "Foundational epic - no dependencies"
+    notes: "4 of 6 stories completed (21 of 26 points)"
     target_sprint: 1
     estimated_points: 26
-    completed_points: 0
+    completed_points: 21
     stories:
       - id: STORY-001-01
         title: "Word presentation with audio and visual"
         description: "Display word with audio pronunciation and starter letters"
         priority: P0
-        status: "review"
+        status: "done"
         assignee: "agent"
         started_date: "2026-07-04"
-        completed_date: null
+        completed_date: "2026-07-05"
         branch: "EPIC-001-STORY-001"
         pr: 3
-        notes: "All 69 tests passing. Implementation complete with WCAG compliance. PR created for review."
+        notes: "All 69 tests passing. Implementation complete with WCAG compliance. Merged to main."
         acceptance_criteria:
           - "Word is spoken aloud via text-to-speech"
           - "Word is displayed visually on screen"
@@ -102,12 +108,12 @@ epics:
         title: "Hint escalation system"
         description: "Progressive hints when student struggles"
         priority: P0
-        status: "review"
+        status: "done"
         assignee: "agent"
         started_date: "2026-07-05"
-        completed_date: null
+        completed_date: "2026-07-06"
         branch: "EPIC-001-STORY-004"
-        pr: null
+        notes: "All 250 tests passing. Critical UI bug fixed - revealed letters display correctly. Type hints corrected. Code duplication removed."  
         acceptance_criteria:
           - "First hint: show letter count"
           - "Second hint: reveal next letter"
@@ -122,12 +128,13 @@ epics:
         title: "Planet completion logic"
         description: "Track 5-word sets and mastery threshold"
         priority: P0
-        status: "review"
+        status: "done"
         assignee: "agent"
         started_date: "2026-07-06"
-        completed_date: null
+        completed_date: "2026-07-06"
         branch: "EPIC-001-STORY-005"
-        pr: null
+        pr: 7
+        notes: "All tests passing. PlanetManager and PlanetResultsScreen created. Merged to main."  
         acceptance_criteria:
           - "5 words per planet"
           - "4/5 correct unlocks next planet"
@@ -142,11 +149,13 @@ epics:
         title: "Progression between planets"
         description: "Navigate to next planet on mastery"
         priority: P0
-        status: "review"
+        status: "done"
         assignee: "agent"
         started_date: "2026-07-06"
-        completed_date: null
+        completed_date: "2026-07-07"
         branch: "EPIC-001-STORY-006"
+        pr: 8
+        notes: "43 tests passing. PlanetTransitionScreen with RocketAnimator, StarField, progress bar. Merged to main.  
         acceptance_criteria:
           - "Animation showing rocket traveling to next planet"
           - "Planet name/number displayed"

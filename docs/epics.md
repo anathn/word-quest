@@ -27,13 +27,27 @@
 ## EPIC-001: Core Gameplay
 
 **Priority:** P0 (Must Have)  
-**Status:** ready-for-dev  
-**Progress:** 0%  
+**Status:** in-progress  
+**Progress:** 67% (21 of 26 points)
 **Estimated Points:** 26  
 **Target Sprint:** Sprint 1
 
 ### Description
 Foundation spelling mechanics and progression system that enables the core game loop.
+
+### Status
+
+**Overall Progress:** 67% (21 of 26 points complete)
+
+#### Completed Stories
+- ✅ STORY-001-01 - Word presentation with audio and visual (5pts) - PR #3 merged
+- ✅ STORY-001-02 - Keyboard input validation (3pts) - Merged
+- ✅ STORY-001-03 - Feedback system (correct/incorrect) (5pts) - Merged
+- ✅ STORY-001-04 - Hint escalation system (5pts) - Merged
+- ✅ STORY-001-05 - Planet completion logic (5pts) - PR #7 merged
+- ✅ STORY-001-06 - Progression between planets (3pts) - PR #8 merged
+
+*All 6 stories complete. Epic ready for acceptance testing.*
 
 ### Goal
 Enable students to spell words, receive immediate feedback, and progress through planets as they master words. This is the heart of the game—without it, there is no product.
@@ -61,7 +75,7 @@ Enable students to spell words, receive immediate feedback, and progress through
 | STORY-001-03 | Feedback system (correct/incorrect) | ready-for-dev | 5 |
 | STORY-001-04 | Hint escalation system | ready-for-dev | 5 |
 | STORY-001-05 | Planet completion logic | ready-for-dev | 5 |
-| STORY-001-06 | Progression between planets | ready-for-dev | 3 |
+| STORY-001-06 | Progression between planets | done | 3 |
 
 ### Dependencies
 - **None** - This is the foundational epic with no dependencies
