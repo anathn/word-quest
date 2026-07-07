@@ -2,7 +2,7 @@
 Progress Tracker Component
 
 Tracks student progress including hint usage, attempts, and session data.
-This component will be expanded in STORY-002-01 for full session tracking.
+Integrates SessionTracker from STORY-002-01 for comprehensive session metrics.
 """
 
 from typing import Dict, List, Optional, Set, Callable
@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 import time
 from unittest.mock import MagicMock
 from src.components.planet_manager import PlanetManager, PlanetResult
+from src.components.session_tracker import SessionTracker, create_session_tracker
 
 
 @dataclass
@@ -71,15 +72,24 @@ class ProgressTracker:
     - Planet-level tracking
     - Mastery threshold detection
     
-    Features (Future - STORY-002-01):
-    - Full session metrics
+    Features (STORY-001-06):
+    - Galaxy progress tracking
+    
+    Features (STORY-002-01):
+    - Full session metrics via SessionTracker
     - Accuracy rate calculation
     - Time spent tracking
     - Streak tracking
     """
     
-    def __init__(self):
-        """Initialize the progress tracker."""
+    def __init__(self, student_id: str = "student_1"):
+        """
+        Initialize the progress tracker.
+        
+        Args:
+            student_id: Unique identifier for the student
+        """
+        # Legacy session tracking (maintained for compatibility)
         self.current_session: Optional[SessionData] = None
         self.word_history: Dict[str, WordAttempt] = {}
         self.sessions: List[SessionData] = []
@@ -95,6 +105,9 @@ class ProgressTracker:
         
         # Galaxy tracking (STORY-001-06)
         self.galaxy_progress = GalaxyProgress()
+        
+        # Session tracker (STORY-002-01)
+        self.session_tracker = create_session_tracker(student_id=student_id)
         
         # Callbacks for analytics
         self.on_hint_used: Optional[Callable[[Dict], None]] = None
@@ -116,6 +129,10 @@ class ProgressTracker:
             start_time=time.time()
         )
         self.sessions.append(self.current_session)
+        
+        # Initialize SessionTracker (STORY-002-01)
+        self.session_tracker.start_session(session_id=session_id)
+        
         return self.current_session
     
     def end_session(self):
@@ -123,6 +140,9 @@ class ProgressTracker:
         if self.current_session:
             self.current_session.end_time = time.time()
             self.current_session = None
+            
+            # Complete session in SessionTracker (STORY-002-01)
+            self.session_tracker.complete_session()
     
     def start_word(self, word_id: str, word_text: str):
         """
@@ -145,6 +165,9 @@ class ProgressTracker:
                 word_id=word_id,
                 word_text=word_text
             )
+        
+        # Track with SessionTracker (STORY-002-01)
+        self.session_tracker.start_word(word_id, word_text)
     
     def record_attempt(self, is_correct: bool):
         """
@@ -166,6 +189,9 @@ class ProgressTracker:
             self.current_session.words_attempted += 1
             if is_correct:
                 self.current_session.words_correct += 1
+        
+        # Track with SessionTracker (STORY-002-01)
+        self.session_tracker.record_attempt(is_correct)
     
     def record_hint_usage(self, hint_count: int = 1):
         """
@@ -183,6 +209,10 @@ class ProgressTracker:
         if self.current_session:
             self.current_session.total_hints_used += hint_count
         
+        # Track with SessionTracker (STORY-002-01)
+        for _ in range(hint_count):
+            self.session_tracker.record_hint()
+        
         # Notify callback
         if self.on_hint_used:
             self.on_hint_used({
@@ -199,6 +229,9 @@ class ProgressTracker:
         """
         self.record_attempt(is_correct)
         self._complete_word_tracking()
+        
+        # Track with SessionTracker (STORY-002-01)
+        self.session_tracker.complete_word(is_correct)
         
         # Notify callback
         if self.on_word_complete and self.current_word_id:
@@ -424,6 +457,9 @@ class ProgressTracker:
         self.galaxy_progress.completed_planets = 0
         self.galaxy_progress.current_planet_number = 1
         self.galaxy_progress.unlocked_planets = 1
+        
+        # Reset SessionTracker (STORY-002-01)
+        self.session_tracker.reset()
     
     # Galaxy Progress Methods (STORY-001-06)
     
@@ -489,11 +525,14 @@ class ProgressTracker:
 
 
 # Factory function
-def create_progress_tracker() -> ProgressTracker:
+def create_progress_tracker(student_id: str = "student_1") -> ProgressTracker:
     """
     Create a ProgressTracker instance.
     
+    Args:
+        student_id: Student identifier
+        
     Returns:
         Configured ProgressTracker instance
     """
-    return ProgressTracker()
+    return ProgressTracker(student_id=student_id)

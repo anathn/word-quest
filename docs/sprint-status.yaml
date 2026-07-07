@@ -15,9 +15,9 @@ current_sprint:
     - "STORY-001-04"  # Hint escalation system (PR #9)
     - "STORY-001-05"  # Planet completion logic (PR #7)
     - "STORY-001-06"  # Progression between planets (PR #8)
-  in_progress_stories: []
-  planned_stories:
+  in_progress_stories:
     - "STORY-002-01"  # Session data collection
+  planned_stories:
     - "STORY-002-02"  # Data persistence (JSON)
     - "STORY-002-03"  # Words mastered counter
     - "STORY-002-04"  # Accuracy rate calculation
@@ -190,10 +190,11 @@ epics:
         title: "Session data collection"
         description: "Track all relevant metrics per session"
         priority: P0
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-07"
         completed_date: null
+        branch: "EPIC-002-STORY-001"
         acceptance_criteria:
           - "Track words attempted"
           - "Track first-attempt accuracy per word"
@@ -205,7 +206,7 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "SessionTracker component created and integrated with ProgressTracker. Tests passing."
 
       - id: STORY-002-02
         title: "Data persistence (JSON)"

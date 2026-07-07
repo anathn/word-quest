@@ -168,6 +168,10 @@ class SpellingChallengeScreen:
         if self.progress_tracker and planet_id:
             self.progress_tracker.start_planet(planet_id, self.current_planet_name)
         
+        # Start tracking the word (STORY-002-01)
+        if self.progress_tracker:
+            self.progress_tracker.start_word(word.id, word.text)
+        
         # Set up callbacks
         self.input_handler.on_input_changed = self._on_input_changed
         self.input_handler.on_invalid_input = self._on_invalid_input
@@ -243,6 +247,10 @@ class SpellingChallengeScreen:
     
     def _on_feedback_shown(self, feedback_type: FeedbackType):
         """Handle feedback being shown."""
+        # Record incorrect attempt when retry feedback shown (STORY-002-01)
+        if feedback_type == FeedbackType.RETRY and self.progress_tracker:
+            self.progress_tracker.record_attempt(False)
+        
         if self.on_feedback_shown:
             self.on_feedback_shown(feedback_type)
     
@@ -263,6 +271,10 @@ class SpellingChallengeScreen:
                 attempts=attempts
             )
         
+        # Complete word tracking (STORY-002-01)
+        if self.progress_tracker:
+            self.progress_tracker.complete_word(True)
+        
         if self.on_word_complete:
             self.on_word_complete(True)  # True = success
     
@@ -276,6 +288,10 @@ class SpellingChallengeScreen:
         """Handle hint being shown (for analytics)."""
         if self.on_hint_used:
             self.on_hint_used(hint_data)
+        
+        # Record hint usage in progress tracker (STORY-002-01)
+        if self.progress_tracker:
+            self.progress_tracker.record_hint_usage()
         
         # Update hint display
         if self.hint_display and self.hint_manager:
@@ -316,6 +332,10 @@ class SpellingChallengeScreen:
         if self.hint_manager:
             hint = self.hint_manager.get_next_hint()
             if hint and self.hint_display:
+                # Record hint usage in progress tracker (STORY-002-01)
+                if self.progress_tracker:
+                    self.progress_tracker.record_hint_usage()
+                
                 # Get encouragement message for enhanced user experience
                 encouragement = self.hint_manager.get_encouragement_message()
                 
