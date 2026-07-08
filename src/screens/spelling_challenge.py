@@ -284,8 +284,19 @@ class SpellingChallengeScreen:
             )
         
         # Complete word tracking (STORY-002-01)
+        just_mastered = False
         if self.progress_tracker:
+            # Check if word was just mastered BEFORE completing (to capture the transition)
+            if self.progress_display:
+                self._last_mastered_count = self.progress_tracker.get_mastered_count()
+            
             self.progress_tracker.complete_word(True)
+            
+            # Trigger mastery flash if word was just mastered (STORY-002-03)
+            if self.progress_display:
+                current_count = self.progress_tracker.get_mastered_count()
+                if current_count > self._last_mastered_count:
+                    self.progress_display.trigger_mastery_flash()
         
         if self.on_word_complete:
             self.on_word_complete(True)  # True = success
@@ -326,12 +337,6 @@ class SpellingChallengeScreen:
             screen: Pygame surface to render on
         """
         if self.progress_display and self.progress_tracker:
-            # Trigger flash if a word was just mastered
-            current_mastered = self.progress_tracker.get_mastered_count()
-            if self._last_mastered_count is not None and current_mastered > self._last_mastered_count:
-                self.progress_display.trigger_mastery_flash()
-            self._last_mastered_count = current_mastered
-            
             self.progress_display.render(screen)
     
     def _on_planet_complete(self, planet_result):

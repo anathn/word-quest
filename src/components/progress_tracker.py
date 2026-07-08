@@ -138,6 +138,17 @@ class ProgressTracker:
         self.mastered_words: Set[str] = set()
         self.total_words_in_list: int = 0
         
+        # Load persisted data from DataStore (STORY-002-02 integration)
+        if self.data_store:
+            load_result = self.data_store.load(student_id)
+            if load_result.data:
+                # Load mastered words from persistence
+                if 'mastered_words' in load_result.data:
+                    self.mastered_words = set(load_result.data['mastered_words'])
+                # Load total words count from persistence (avoid reset to 0)
+                if 'total_words_in_list' in load_result.data:
+                    self.total_words_in_list = load_result.data['total_words_in_list']
+        
         # Callbacks for analytics
         self.on_hint_used: Optional[Callable[[Dict], None]] = None
         self.on_word_complete: Optional[Callable[[Dict], None]] = None
@@ -520,7 +531,18 @@ class ProgressTracker:
         """
         if word_id not in self.mastered_words:
             self.mastered_words.add(word_id)
-            # TODO: Persist to data_store once STORY-002-02 integration is complete
+            
+            # Persist to data store if available (STORY-002-02 integration)
+            if self.data_store:
+                # Get current progress data from SessionTracker
+                progress_data = {
+                    'student_id': self.session_tracker.student_id,
+                    'sessions': self.session_tracker.sessions,
+                    'mastered_words': list(self.mastered_words),
+                    'needs_practice': list(self.session_tracker.needs_practice)
+                }
+                self.data_store.save(self.session_tracker.student_id, progress_data)
+            
             return True
         return False
     
@@ -550,6 +572,17 @@ class ProgressTracker:
             total: Total word count
         """
         self.total_words_in_list = total
+        
+        # Persist total words count if data_store available (STORY-002-02)
+        if self.data_store and self.session_tracker:
+            progress_data = {
+                'student_id': self.session_tracker.student_id,
+                'sessions': self.session_tracker.sessions,
+                'mastered_words': list(self.mastered_words),
+                'needs_practice': list(self.session_tracker.needs_practice),
+                'total_words_in_list': self.total_words_in_list
+            }
+            self.data_store.save(self.session_tracker.student_id, progress_data)
     
     def get_progress_text(self) -> str:
         """
