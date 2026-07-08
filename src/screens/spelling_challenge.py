@@ -21,6 +21,7 @@ from src.components.feedback_controller import (
 from src.components.hint_manager import HintManager, create_hint_manager
 from src.components.planet_manager import PlanetManager, create_planet_manager
 from src.ui.hint_display import HintDisplay, create_hint_display
+from src.ui.progress_display import ProgressDisplay, create_progress_display
 from src.utils.validators import InputValidator, AnswerValidator
 
 # Performance threshold constants
@@ -98,6 +99,10 @@ class SpellingChallengeScreen:
         self.hint_manager: Optional[HintManager] = None
         self.hint_display: Optional[HintDisplay] = None
         
+        # Progress display (STORY-002-03)
+        self.progress_display: Optional[ProgressDisplay] = None
+        self._last_mastered_count: int = 0
+        
         # Callbacks for state changes
         self.on_word_presented: Optional[Callable] = None
         self.on_input_changed: Optional[Callable] = None
@@ -167,6 +172,13 @@ class SpellingChallengeScreen:
         # Update progress tracker with planet info (STORY-001-05)
         if self.progress_tracker and planet_id:
             self.progress_tracker.start_planet(planet_id, self.current_planet_name)
+            
+            # Initialize progress display (STORY-002-03)
+            if not self.progress_display:
+                self.progress_display = create_progress_display(self.progress_tracker)
+                # Update word total from word manager
+                total_words = self.word_manager.get_total_word_count()
+                self.progress_tracker.set_total_words(total_words)
         
         # Start tracking the word (STORY-002-01)
         if self.progress_tracker:
@@ -272,8 +284,19 @@ class SpellingChallengeScreen:
             )
         
         # Complete word tracking (STORY-002-01)
+        just_mastered = False
         if self.progress_tracker:
+            # Check if word was just mastered BEFORE completing (to capture the transition)
+            if self.progress_display:
+                self._last_mastered_count = self.progress_tracker.get_mastered_count()
+            
             self.progress_tracker.complete_word(True)
+            
+            # Trigger mastery flash if word was just mastered (STORY-002-03)
+            if self.progress_display:
+                current_count = self.progress_tracker.get_mastered_count()
+                if current_count > self._last_mastered_count:
+                    self.progress_display.trigger_mastery_flash()
         
         if self.on_word_complete:
             self.on_word_complete(True)  # True = success
@@ -305,6 +328,16 @@ class SpellingChallengeScreen:
             )
             # Also update the word display with revealed letters
             self._update_word_display_with_hints()
+    
+    def render_progress_display(self, screen):
+        """
+        Render the words mastered counter on the screen (STORY-002-03).
+        
+        Args:
+            screen: Pygame surface to render on
+        """
+        if self.progress_display and self.progress_tracker:
+            self.progress_display.render(screen)
     
     def _on_planet_complete(self, planet_result):
         """
@@ -550,6 +583,9 @@ class SpellingChallengeScreen:
         self.current_planet_id = None
         self.current_planet_name = None
         self.cursor_visible = True
+        
+        # Reset progress display tracking (STORY-002-03)
+        self._last_mastered_count = 0
     
     def get_hint_analytics(self) -> dict:
         """
