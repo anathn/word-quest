@@ -94,6 +94,12 @@ class ProgressTracker:
     - Words mastered tracking (100% first-attempt accuracy)
     - Progress display in "X/Y words" format
     - Real-time counter updates
+    
+    Features (STORY-002-04):
+    - Accuracy rate calculation
+    - Trend analysis (improving/stable/declining)
+    - Session comparison
+    - Weekly average comparison
     """
     
     def __init__(
@@ -615,6 +621,177 @@ class ProgressTracker:
             True if word is mastered, False otherwise
         """
         return word_id in self.mastered_words
+    
+    # Accuracy Rate Calculation Methods (STORY-002-04)
+    
+    def calculate_accuracy(self, session_id: str = None) -> float:
+        """Calculate accuracy percentage for sessions.
+        
+        Args:
+            session_id: Optional specific session ID. If None, calculates
+                       across all sessions.
+            
+        Returns:
+            Accuracy percentage (0.0 to 100.0)
+        """
+        sessions = self.session_tracker.completed_sessions
+        
+        if not sessions:
+            return 0.0
+        
+        # Filter to specific session if provided
+        if session_id:
+            sessions = [s for s in sessions if s.session_id == session_id]
+            if not sessions:
+                return 0.0
+        
+        # Calculate overall accuracy across selected sessions
+        total_correct = 0
+        total_attempts = 0
+        
+        for session in sessions:
+            for word in session.words:
+                total_correct += 1 if word.correct else 0
+                total_attempts += word.total_attempts
+        
+        if total_attempts == 0:
+            return 0.0
+        
+        return (total_correct / total_attempts) * 100
+    
+    def get_session_accuracy(self, session_id: str) -> float:
+        """Get accuracy for a specific session.
+        
+        Args:
+            session_id: The session identifier
+            
+        Returns:
+            Accuracy percentage for the session
+        """
+        for session in self.session_tracker.completed_sessions:
+            if session.session_id == session_id:
+                return session.overall_accuracy * 100
+        return 0.0
+    
+    def get_accuracy_trend(self) -> str:
+        """Determine trend compared to previous session.
+        
+        Compares current session accuracy to the previous session.
+        Trend threshold is 5% (adjustable).
+        
+        Returns:
+            "improving" if accuracy increased by >5%
+            "declining" if accuracy decreased by >5%
+            "stable" if change is within 5%
+            "new" if no previous session to compare
+        """
+        sessions = sorted(
+            self.session_tracker.completed_sessions,
+            key=lambda s: s.start_time
+        )
+        
+        if len(sessions) < 2:
+            return "new"
+        
+        # Compare last session to previous session
+        last_accuracy = sessions[-1].overall_accuracy * 100
+        prev_accuracy = sessions[-2].overall_accuracy * 100
+        
+        diff = last_accuracy - prev_accuracy
+        
+        if diff > 5:
+            return "improving"
+        elif diff < -5:
+            return "declining"
+        else:
+            return "stable"
+    
+    def get_weekly_average_accuracy(self, weeks: int = 1) -> float:
+        """Calculate average accuracy over specified weeks.
+        
+        Args:
+            weeks: Number of weeks to calculate average for (default 1)
+            
+        Returns:
+            Average accuracy percentage
+        """
+        from datetime import datetime, timedelta
+        
+        cutoff_date = datetime.now() - timedelta(weeks=weeks)
+        relevant_sessions = [
+            s for s in self.session_tracker.completed_sessions
+            if s.start_time >= cutoff_date
+        ]
+        
+        if not relevant_sessions:
+            return 0.0
+        
+        total_accuracy = sum(s.overall_accuracy * 100 for s in relevant_sessions)
+        return total_accuracy / len(relevant_sessions)
+    
+    def get_accuracy_display(self) -> Dict:
+        """Get formatted accuracy display data.
+        
+        Returns:
+            Dictionary with:
+            - percentage: Current accuracy (rounded to 1 decimal)
+            - trend_symbol: Arrow symbol (↑, →, ↓, -)
+            - trend_label: Text description of trend
+            - trend: Raw trend value ("improving"/"stable"/"declining"/"new")
+        """
+        accuracy = self.calculate_accuracy()
+        trend = self.get_accuracy_trend()
+        
+        trend_symbols = {
+            "improving": ("↑", "Improving"),
+            "stable": ("→", "Stable"),
+            "declining": ("↓", "Needs Practice"),
+            "new": ("-", "New")
+        }
+        
+        symbol, label = trend_symbols.get(trend, ("?", "Unknown"))
+        
+        return {
+            "percentage": round(accuracy, 1),
+            "trend_symbol": symbol,
+            "trend_label": label,
+            "trend": trend
+        }
+    
+    def get_accuracy_comparison(self) -> Dict:
+        """Get detailed accuracy comparison data.
+        
+        Returns:
+            Dictionary with:
+            - current_session_accuracy: Most recent session accuracy
+            - previous_session_accuracy: Previous session accuracy
+            - weekly_average_accuracy: Average over past week
+            - trend: Trend indicator
+            - improvement_percent: Percent change from previous session
+        """
+        sessions = sorted(
+            self.session_tracker.completed_sessions,
+            key=lambda s: s.start_time
+        )
+        
+        current_accuracy = 0.0
+        previous_accuracy = 0.0
+        
+        if len(sessions) >= 1:
+            current_accuracy = sessions[-1].overall_accuracy * 100
+        
+        if len(sessions) >= 2:
+            previous_accuracy = sessions[-2].overall_accuracy * 100
+        
+        improvement = current_accuracy - previous_accuracy
+        
+        return {
+            "current_session_accuracy": round(current_accuracy, 1),
+            "previous_session_accuracy": round(previous_accuracy, 1),
+            "weekly_average_accuracy": round(self.get_weekly_average_accuracy(), 1),
+            "trend": self.get_accuracy_trend(),
+            "improvement_percent": round(improvement, 1)
+        }
     
     # Galaxy Progress Methods (STORY-001-06)
     
