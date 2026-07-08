@@ -56,7 +56,6 @@ class DataStore:
     
     Performance:
     - Save operation completes in < 500ms (target)
-    - Async save queuing for disk full scenarios
     """
     
     def __init__(self, base_path: str = "data/progress"):
@@ -73,9 +72,7 @@ class DataStore:
         self.backup_manager = create_backup_manager(str(self.base_path))
         self.validator = create_validator()
         
-        # Save queue for handling disk full scenarios
-        self._save_queue: List[Dict] = []
-        self._is_saving = False
+
         
         # Configure logging
         logging.basicConfig(level=logging.INFO)
@@ -140,8 +137,6 @@ class DataStore:
             
         except (IOError, OSError) as e:
             self.logger.error(f"Save failed for {student_id}: {e}")
-            # Queue for retry if disk full
-            self._queue_save(student_id, data)
             return SaveResult(
                 success=False,
                 file_path=str(file_path),
@@ -272,56 +267,17 @@ class DataStore:
         Returns:
             Dictionary with empty progress data
         """
+        # Use the same sanitization as filesystem path to ensure consistency
+        safe_id = "".join(c for c in student_id if c.isalnum() or c in '_-')
         return {
             'version': '1.0',
-            'student_id': student_id,
+            'student_id': safe_id,
             'created_at': datetime.now().isoformat(),
             'sessions': [],
             'mastered_words': [],
             'needs_practice': [],
             'achievements': []
         }
-    
-    def _queue_save(self, student_id: str, data: dict):
-        """
-        Queue a save operation for later retry.
-        
-        Args:
-            student_id: Student identifier
-            data: Data to save
-        """
-        self._save_queue.append({
-            'student_id': student_id,
-            'data': data,
-            'queued_at': datetime.now()
-        })
-        self.logger.info(f"Saved to queue for retry: {student_id}")
-    
-    def flush_queue(self) -> int:
-        """
-        Retry saving queued operations.
-        
-        Returns:
-            Number of successfully saved items
-        """
-        saved_count = 0
-        failed = []
-        
-        for item in self._save_queue:
-            result = self.save(item['student_id'], item['data'])
-            if result.success:
-                saved_count += 1
-            else:
-                failed.append(item)
-        
-        self._save_queue = failed
-        
-        if failed:
-            self.logger.warning(f"{len(failed)} items still in queue after flush")
-        else:
-            self._save_queue.clear()
-        
-        return saved_count
     
     def delete_progress(self, student_id: str) -> bool:
         """
