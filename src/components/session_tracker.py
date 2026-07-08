@@ -9,8 +9,11 @@ This component implements STORY-002-01: Session Data Collection.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, TYPE_CHECKING
 import uuid
+
+if TYPE_CHECKING:
+    from src.components.data_store import DataStore
 
 
 @dataclass
@@ -158,14 +161,16 @@ class SessionTracker:
     Performance: Data collection adds < 10ms overhead per word
     """
     
-    def __init__(self, student_id: str):
+    def __init__(self, student_id: str, data_store: Optional['DataStore'] = None):
         """
         Initialize the session tracker.
         
         Args:
             student_id: Unique identifier for the student
+            data_store: Optional DataStore instance for persistence (STORY-002-02)
         """
         self.student_id = student_id
+        self.data_store = data_store  # Optional persistence layer
         self.current_session: Optional[SessionSummary] = None
         self.completed_sessions: List[SessionSummary] = []
         self.pending_sessions: List[SessionSummary] = []  # Queue for failed saves
@@ -399,14 +404,77 @@ class SessionTracker:
             True if save succeeded, False otherwise
         """
         try:
-            # TODO: Implement actual file save (integrate with STORY-002-02)
-            # For now, just track in memory
-            self.completed_sessions.append(session)
-            return True
+            # If DataStore is provided, use it for persistence (STORY-002-02)
+            if self.data_store:
+                # Combine session data with existing progress
+                load_result = self.data_store.load(self.student_id)
+                progress_data = load_result.data or self._create_empty_progress()
+                
+                # Add new session to progress
+                if 'sessions' not in progress_data:
+                    progress_data['sessions'] = []
+                progress_data['sessions'].append(session.to_dict())
+                
+                # Update mastered words and needs_practice based on session
+                self._update_progress_data(progress_data, session)
+                
+                # Save to disk
+                save_result = self.data_store.save(self.student_id, progress_data)
+                
+                if save_result.success:
+                    self.completed_sessions.append(session)
+                    return True
+                else:
+                    raise Exception(save_result.error_message or "Save failed")
+            else:
+                # Fallback to in-memory storage (for testing or when no persistence configured)
+                self.completed_sessions.append(session)
+                return True
         except Exception as e:
             import logging
             logging.error(f"Failed to save session: {e}")
             return False
+    
+    def _update_progress_data(self, progress_data: dict, session: SessionSummary):
+        """
+        Update progress data based on completed session.
+        
+        Args:
+            progress_data: The progress dictionary to update
+            session: The completed session
+        """
+        # Update mastered words
+        if 'mastered_words' not in progress_data:
+            progress_data['mastered_words'] = []
+        
+        mastered = set(progress_data['mastered_words'])
+        needs_practice = set()
+        
+        for word_attempt in session.words:
+            if word_attempt.first_attempt_correct and word_attempt.total_attempts == 1:
+                mastered.add(word_attempt.word_id)
+            elif word_attempt.total_attempts > 1:
+                needs_practice.add(word_attempt.word_id)
+        
+        progress_data['mastered_words'] = list(mastered)
+        progress_data['needs_practice'] = list(needs_practice)
+    
+    def _create_empty_progress(self) -> dict:
+        """
+        Create empty progress data structure.
+        
+        Returns:
+            Dictionary with empty progress data
+        """
+        return {
+            'version': '1.0',
+            'student_id': self.student_id,
+            'created_at': datetime.now().isoformat(),
+            'sessions': [],
+            'mastered_words': [],
+            'needs_practice': [],
+            'achievements': []
+        }
     
     def flush_pending_sessions(self) -> int:
         """
@@ -514,14 +582,18 @@ class SessionTracker:
 
 
 # Factory function
-def create_session_tracker(student_id: str = "student_1") -> SessionTracker:
+def create_session_tracker(
+    student_id: str = "student_1",
+    data_store: Optional['DataStore'] = None
+) -> SessionTracker:
     """
     Create a SessionTracker instance.
     
     Args:
         student_id: Student identifier
+        data_store: Optional DataStore instance for persistence (STORY-002-02)
         
     Returns:
         Configured SessionTracker instance
     """
-    return SessionTracker(student_id=student_id)
+    return SessionTracker(student_id=student_id, data_store=data_store)

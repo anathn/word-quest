@@ -9,8 +9,14 @@ from typing import Dict, List, Optional, Set, Callable
 from dataclasses import dataclass, field
 import time
 from unittest.mock import MagicMock
+
 from src.components.planet_manager import PlanetManager, PlanetResult
 from src.components.session_tracker import SessionTracker, create_session_tracker
+
+# TYPE_CHECKING for circular import avoidance
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.components.data_store import DataStore
 
 
 @dataclass
@@ -85,12 +91,17 @@ class ProgressTracker:
     - Streak tracking
     """
     
-    def __init__(self, student_id: str = "student_1"):
+    def __init__(
+        self,
+        student_id: str = "student_1",
+        data_store: Optional['DataStore'] = None
+    ):
         """
         Initialize the progress tracker.
         
         Args:
             student_id: Unique identifier for the student
+            data_store: Optional DataStore instance for persistence (STORY-002-02)
         """
         # Legacy session tracking (maintained for compatibility)
         self.current_session: Optional[SessionData] = None
@@ -109,8 +120,14 @@ class ProgressTracker:
         # Galaxy tracking (STORY-001-06)
         self.galaxy_progress = GalaxyProgress()
         
-        # Session tracker (STORY-002-01)
-        self.session_tracker = create_session_tracker(student_id=student_id)
+        # Data store for persistence (STORY-002-02)
+        self.data_store = data_store
+        
+        # Session tracker (STORY-002-01) - now with optional persistence
+        self.session_tracker = create_session_tracker(
+            student_id=student_id,
+            data_store=data_store
+        )
         
         # Callbacks for analytics
         self.on_hint_used: Optional[Callable[[Dict], None]] = None
@@ -528,14 +545,18 @@ class ProgressTracker:
 
 
 # Factory function
-def create_progress_tracker(student_id: str = "student_1") -> ProgressTracker:
+def create_progress_tracker(
+    student_id: str = "student_1",
+    data_store: Optional['DataStore'] = None
+) -> ProgressTracker:
     """
     Create a ProgressTracker instance.
     
     Args:
         student_id: Student identifier
+        data_store: Optional DataStore instance for persistence (STORY-002-02)
         
     Returns:
         Configured ProgressTracker instance
     """
-    return ProgressTracker(student_id=student_id)
+    return ProgressTracker(student_id=student_id, data_store=data_store)
