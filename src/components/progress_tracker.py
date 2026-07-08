@@ -89,6 +89,11 @@ class ProgressTracker:
     - Accuracy rate calculation
     - Time spent tracking
     - Streak tracking
+    
+    Features (STORY-002-03):
+    - Words mastered tracking (100% first-attempt accuracy)
+    - Progress display in "X/Y words" format
+    - Real-time counter updates
     """
     
     def __init__(
@@ -128,6 +133,10 @@ class ProgressTracker:
             student_id=student_id,
             data_store=data_store
         )
+        
+        # Mastered words tracking (STORY-002-03)
+        self.mastered_words: Set[str] = set()
+        self.total_words_in_list: int = 0
         
         # Callbacks for analytics
         self.on_hint_used: Optional[Callable[[Dict], None]] = None
@@ -248,6 +257,15 @@ class ProgressTracker:
             is_correct: Whether the final answer was correct
         """
         self.record_attempt(is_correct)
+        
+        # Check if word is mastered (STORY-002-03) BEFORE completing tracking
+        # Word is mastered if spelled correctly on first attempt with no hints
+        mastered_newly = False
+        if self.current_word_id and is_correct:
+            legacy_attempt = self.word_history.get(self.current_word_id)
+            if legacy_attempt and legacy_attempt.attempts == 1 and legacy_attempt.hints_used == 0:
+                mastered_newly = self.mark_word_mastered(self.current_word_id)
+        
         self._complete_word_tracking()
         
         # Track with SessionTracker (STORY-002-01)
@@ -260,7 +278,8 @@ class ProgressTracker:
                 'word_id': self.current_word_id,
                 'attempts': legacy_attempt.attempts,
                 'hints_used': legacy_attempt.hints_used,
-                'is_correct': is_correct
+                'is_correct': is_correct,
+                'just_mastered': mastered_newly
             })
     
     def _complete_word_tracking(self):
@@ -274,6 +293,8 @@ class ProgressTracker:
         
         self.current_word_id = None
         self.current_word_start_time = None
+    
+    # Words Mastered Methods (STORY-002-03)
     
     def get_word_stats(self, word_id: str) -> Optional[LegacyWordAttempt]:
         """
@@ -480,6 +501,87 @@ class ProgressTracker:
         
         # Reset SessionTracker (STORY-002-01)
         self.session_tracker.reset()
+        
+        # Reset mastered words tracking (STORY-002-03)
+        self.mastered_words.clear()
+        self.total_words_in_list = 0
+    
+    # Words Mastered Methods (STORY-002-03)
+    
+    def mark_word_mastered(self, word_id: str) -> bool:
+        """
+        Mark a word as mastered (100% first-attempt accuracy).
+        
+        Args:
+            word_id: The word identifier to mark as mastered
+            
+        Returns:
+            True if word was newly mastered, False if already mastered
+        """
+        if word_id not in self.mastered_words:
+            self.mastered_words.add(word_id)
+            # TODO: Persist to data_store once STORY-002-02 integration is complete
+            return True
+        return False
+    
+    def get_mastered_count(self) -> int:
+        """
+        Get the count of mastered words.
+        
+        Returns:
+            Number of words mastered
+        """
+        return len(self.mastered_words)
+    
+    def get_total_words(self) -> int:
+        """
+        Get the total number of words in the word list.
+        
+        Returns:
+            Total word count from word list
+        """
+        return self.total_words_in_list
+    
+    def set_total_words(self, total: int):
+        """
+        Set the total number of words in the word list.
+        
+        Args:
+            total: Total word count
+        """
+        self.total_words_in_list = total
+    
+    def get_progress_text(self) -> str:
+        """
+        Get the progress text in "X/Y words" format.
+        
+        Returns:
+            Formatted progress string (e.g., "23/50 words")
+        """
+        mastered = self.get_mastered_count()
+        total = self.get_total_words()
+        return f"{mastered}/{total} words"
+    
+    def get_mastered_words(self) -> Set[str]:
+        """
+        Get the set of mastered word IDs.
+        
+        Returns:
+            Set of mastered word identifiers
+        """
+        return self.mastered_words.copy()
+    
+    def is_word_mastered(self, word_id: str) -> bool:
+        """
+        Check if a word is mastered.
+        
+        Args:
+            word_id: The word identifier to check
+            
+        Returns:
+            True if word is mastered, False otherwise
+        """
+        return word_id in self.mastered_words
     
     # Galaxy Progress Methods (STORY-001-06)
     

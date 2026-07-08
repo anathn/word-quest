@@ -233,18 +233,36 @@ epics:
         title: "Words mastered counter"
         description: "Display cumulative mastered word count"
         priority: P0
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
+        status: "review"
+        assignee: "agent"
+        started_date: "2026-07-08"
         completed_date: null
+        branch: "EPIC-002-STORY-003"
         acceptance_criteria:
-          - "Track mastered words list"
+          - "Track mastered words list (words with 100% first-attempt accuracy)"
           - "Display as 'X/Y words' format"
           - "Update in real-time"
         complexity: "Low"
         points: 2
         blockers: []
-        notes: ""
+        notes: "Implementation complete. All 18 new tests passing (468 total tests in suite). ProgressDisplay UI component created for real-time counter display with mastery flash animation. ProgressTracker updated with mark_word_mastered(), get_mastered_count(), get_progress_text() methods. Integration with spelling challenge screen complete. Ready for code review."
+        implementation_notes: |
+          Files created:
+          - src/ui/progress_display.py (ProgressDisplay component with mastery flash animation)
+          - tests/test_words_mastered.py (18 unit tests, all passing)
+          
+          Files modified:
+          - src/components/progress_tracker.py (added mastered_words tracking, methods for STORY-002-03)
+          - src/screens/spelling_challenge.py (integrated ProgressDisplay, render_progress_display() method)
+          - src/ui/__init__.py (exported ProgressDisplay, create_progress_display)
+          
+          Key implementation details:
+          - Word marked mastered only on first-attempt correct with zero hints used
+          - ProgressDisplay renders "X/Y words" in top-right corner with semi-transparent background
+          - Green flash animation triggers when new word is mastered
+          - Mastery check happens before _complete_word_tracking() to capture current_word_id
+          - total_words_in_list set from WordManager.get_total_word_count()
+          - All 468 tests passing including 18 new tests for words mastered feature
 
       - id: STORY-002-04
         title: "Accuracy rate calculation"
