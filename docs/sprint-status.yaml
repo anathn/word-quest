@@ -15,9 +15,9 @@ current_sprint:
     - "STORY-001-04"  # Hint escalation system (PR #9)
     - "STORY-001-05"  # Planet completion logic (PR #7)
     - "STORY-001-06"  # Progression between planets (PR #8)
+    - "STORY-002-01"  # Session data collection (approved 2026-07-07)
   in_progress_stories: []
   planned_stories:
-    - "STORY-002-01"  # Session data collection
     - "STORY-002-02"  # Data persistence (JSON)
     - "STORY-002-03"  # Words mastered counter
     - "STORY-002-04"  # Accuracy rate calculation
@@ -177,23 +177,25 @@ epics:
     name: "Progress Tracking"
     priority: P0
     description: "Data collection, storage, and visualization"
-    status: "ready-for-dev"
-    progress_percent: 0
+    status: "in-progress"
+    progress_percent: 18
     dependencies: ["EPIC-001"]
     blockers: []
-    notes: "Depends on Core Gameplay for events to track"
+    notes: "STORY-002-01 complete and approved. 34 tests passing. Proceeding to data persistence."
     target_sprint: 1
     estimated_points: 28
-    completed_points: 0
+    completed_points: 5
     stories:
       - id: STORY-002-01
         title: "Session data collection"
         description: "Track all relevant metrics per session"
         priority: P0
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: null
+        status: "approved"
+        assignee: "agent"
+        started_date: "2026-07-07"
+        completed_date: "2026-07-07"
+        branch: "EPIC-002-STORY-001"
+        pr: null  # PR pending merge
         acceptance_criteria:
           - "Track words attempted"
           - "Track first-attempt accuracy per word"
@@ -205,7 +207,8 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "Code review approved 2026-07-07. All 34 tests passing. Performance validated <1ms overhead. SessionTracker implements accuracy, streak, hint tracking with idle timeout and persistence queuing. Ready for merge."
+        review_document: "docs/reviews/STORY-002-01-review-2026-07-07.md"
 
       - id: STORY-002-02
         title: "Data persistence (JSON)"
