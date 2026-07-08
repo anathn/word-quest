@@ -14,8 +14,11 @@ from src.components.session_tracker import SessionTracker, create_session_tracke
 
 
 @dataclass
-class WordAttempt:
-    """Data for a single word attempt."""
+class LegacyWordAttempt:
+    """Legacy data for a single word attempt (for backward compatibility).
+    
+    Note: Use session_tracker.WordAttempt for new session tracking code.
+    """
     word_id: str
     word_text: str
     attempts: int = 0
@@ -45,7 +48,7 @@ class SessionData:
     words_attempted: int = 0
     words_correct: int = 0
     total_hints_used: int = 0
-    word_attempts: List[WordAttempt] = field(default_factory=list)
+    word_attempts: List[LegacyWordAttempt] = field(default_factory=list)
     current_planet_id: Optional[str] = None
     planets_completed: List[PlanetData] = field(default_factory=list)
 
@@ -91,7 +94,7 @@ class ProgressTracker:
         """
         # Legacy session tracking (maintained for compatibility)
         self.current_session: Optional[SessionData] = None
-        self.word_history: Dict[str, WordAttempt] = {}
+        self.word_history: Dict[str, LegacyWordAttempt] = {}
         self.sessions: List[SessionData] = []
         
         # Current word tracking
@@ -161,7 +164,7 @@ class ProgressTracker:
         
         # Initialize or update word attempt data
         if word_id not in self.word_history:
-            self.word_history[word_id] = WordAttempt(
+            self.word_history[word_id] = LegacyWordAttempt(
                 word_id=word_id,
                 word_text=word_text
             )
@@ -179,11 +182,11 @@ class ProgressTracker:
         if not self.current_word_id:
             return
         
-        word_attempt = self.word_history[self.current_word_id]
-        word_attempt.attempts += 1
+        legacy_attempt = self.word_history[self.current_word_id]
+        legacy_attempt.attempts += 1
         
-        if word_attempt.attempts == 1:
-            word_attempt.first_attempt_correct = is_correct
+        if legacy_attempt.attempts == 1:
+            legacy_attempt.first_attempt_correct = is_correct
         
         if self.current_session:
             self.current_session.words_attempted += 1
@@ -203,8 +206,8 @@ class ProgressTracker:
         if not self.current_word_id:
             return
         
-        word_attempt = self.word_history[self.current_word_id]
-        word_attempt.hints_used += hint_count
+        legacy_attempt = self.word_history[self.current_word_id]
+        legacy_attempt.hints_used += hint_count
         
         if self.current_session:
             self.current_session.total_hints_used += hint_count
@@ -217,7 +220,7 @@ class ProgressTracker:
         if self.on_hint_used:
             self.on_hint_used({
                 'word_id': self.current_word_id,
-                'hints_used': word_attempt.hints_used
+                'hints_used': legacy_attempt.hints_used
             })
     
     def complete_word(self, is_correct: bool):
@@ -235,11 +238,11 @@ class ProgressTracker:
         
         # Notify callback
         if self.on_word_complete and self.current_word_id:
-            word_attempt = self.word_history[self.current_word_id]
+            legacy_attempt = self.word_history[self.current_word_id]
             self.on_word_complete({
                 'word_id': self.current_word_id,
-                'attempts': word_attempt.attempts,
-                'hints_used': word_attempt.hints_used,
+                'attempts': legacy_attempt.attempts,
+                'hints_used': legacy_attempt.hints_used,
                 'is_correct': is_correct
             })
     
@@ -255,7 +258,7 @@ class ProgressTracker:
         self.current_word_id = None
         self.current_word_start_time = None
     
-    def get_word_stats(self, word_id: str) -> Optional[WordAttempt]:
+    def get_word_stats(self, word_id: str) -> Optional[LegacyWordAttempt]:
         """
         Get statistics for a specific word.
         
@@ -267,7 +270,7 @@ class ProgressTracker:
         """
         return self.word_history.get(word_id)
     
-    def get_words_needing_practice(self, min_attempts: int = 2) -> List[WordAttempt]:
+    def get_words_needing_practice(self, min_attempts: int = 2) -> List[LegacyWordAttempt]:
         """
         Get list of words that need more practice.
         

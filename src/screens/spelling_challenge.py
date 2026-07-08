@@ -285,13 +285,13 @@ class SpellingChallengeScreen:
             self.hint_display.enable_help_button()
     
     def _on_hint_shown(self, hint_data):
-        """Handle hint being shown (for analytics)."""
+        """Handle hint being shown (for analytics).
+        
+        Note: Hint usage is recorded in _request_hint() to avoid double-counting.
+        This callback is only triggered for hints shown via _request_hint().
+        """
         if self.on_hint_used:
             self.on_hint_used(hint_data)
-        
-        # Record hint usage in progress tracker (STORY-002-01)
-        if self.progress_tracker:
-            self.progress_tracker.record_hint_usage()
         
         # Update hint display
         if self.hint_display and self.hint_manager:
@@ -333,6 +333,7 @@ class SpellingChallengeScreen:
             hint = self.hint_manager.get_next_hint()
             if hint and self.hint_display:
                 # Record hint usage in progress tracker (STORY-002-01)
+                # This is the canonical place to record hint usage to avoid double-counting
                 if self.progress_tracker:
                     self.progress_tracker.record_hint_usage()
                 

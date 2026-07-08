@@ -58,17 +58,31 @@ class SessionSummary:
         """Get count of words spelled correctly on first attempt."""
         return sum(1 for w in self.words if w.first_attempt_correct)
     
-    @words_correct.setter
-    def words_correct(self, value: int):
-        """Setter for words_correct (used internally)."""
-        pass  # Read-only property
+
     
     @property
     def accuracy(self) -> float:
-        """Calculate accuracy rate for the session."""
+        """Calculate first-attempt accuracy rate for the session.
+        
+        This measures the percentage of words spelled correctly on the first attempt.
+        For overall accuracy (correct attempts / total attempts), see overall_accuracy.
+        """
         if not self.words:
             return 0.0
         return sum(1 for w in self.words if w.first_attempt_correct) / len(self.words)
+    
+    @property
+    def overall_accuracy(self) -> float:
+        """Calculate overall accuracy rate for the session.
+        
+        This measures the percentage of total attempts that were correct,
+        accounting for multiple attempts per word.
+        """
+        if not self.words:
+            return 0.0
+        total_correct = sum(1 for w in self.words if w.correct)
+        total_attempts = sum(w.total_attempts for w in self.words)
+        return total_correct / total_attempts if total_attempts > 0 else 0.0
     
     @property
     def best_streak(self) -> int:
@@ -105,7 +119,8 @@ class SessionSummary:
             'planet_completed': self.planet_completed,
             'words_attempted': self.words_attempted,
             'words_correct': self.words_correct,
-            'accuracy': self.accuracy,
+            'first_attempt_accuracy': self.accuracy,
+            'overall_accuracy': self.overall_accuracy,
             'best_streak': self.best_streak,
             'total_hints_used': self.total_hints_used,
             'avg_time_per_word': self.avg_time_per_word,
@@ -153,6 +168,7 @@ class SessionTracker:
         self.student_id = student_id
         self.current_session: Optional[SessionSummary] = None
         self.completed_sessions: List[SessionSummary] = []
+        self.pending_sessions: List[SessionSummary] = []  # Queue for failed saves
         
         # Current word tracking for timing
         self._current_word: Optional[str] = None
@@ -161,9 +177,14 @@ class SessionTracker:
         self._word_attempts: int = 0
         self._word_hints_used: int = 0
         self._word_first_attempt_correct: Optional[bool] = None  # Track first attempt result
+        self._word_final_correct: bool = False  # Track if word was eventually spelled correctly
         
         # Streak tracking
         self._current_streak: int = 0
+        self._last_activity: Optional[datetime] = None  # For idle timeout check
+        
+        # Idle timeout configuration (30 minutes)
+        self.IDLE_TIMEOUT_SECONDS = 1800
     
     def _generate_session_id(self) -> str:
         """
@@ -188,6 +209,10 @@ class SessionTracker:
         Returns:
             The new SessionSummary object
         """
+        # Validate student_id
+        if not self.student_id:
+            raise ValueError("student_id cannot be empty")
+        
         # End any existing session
         if self.current_session:
             self.complete_session()
@@ -205,6 +230,7 @@ class SessionTracker:
         self._word_attempts = 0
         self._word_hints_used = 0
         self._current_streak = 0
+        self._last_activity = datetime.now()
         
         return self.current_session
     
@@ -216,6 +242,9 @@ class SessionTracker:
             word_id: Unique identifier for the word
             word_text: The word text being attempted
         """
+        # Check for idle timeout before starting new word
+        self.check_idle_timeout()
+        
         # Complete tracking for previous word if any
         if self._current_word:
             self._complete_word_tracking()
@@ -226,6 +255,7 @@ class SessionTracker:
         self._word_attempts = 0
         self._word_hints_used = 0
         self._word_first_attempt_correct = None
+        self._word_final_correct = False
     
     def record_attempt(self, is_correct: bool):
         """
@@ -238,27 +268,26 @@ class SessionTracker:
             return
         
         # Track if first attempt was correct
-        if self._word_attempts == 0:
+        is_first_attempt = (self._word_attempts == 0)
+        if is_first_attempt:
             self._word_first_attempt_correct = is_correct
         
         self._word_attempts += 1
         
-        # Track streak
-        if is_correct and self._word_attempts == 1:
+        # Update last activity for idle timeout
+        self._last_activity = datetime.now()
+        
+        # Track streak (use is_first_attempt, not _word_attempts after increment)
+        if is_correct and is_first_attempt:
             self._current_streak += 1
         elif not is_correct:
             self._current_streak = 0
-        
-        # Update current session stats
-        if self.current_session:
-            self.current_session.words_attempted += 1
-            if is_correct and self._word_attempts == 1:
-                self.current_session.words_correct += 1
     
     def record_hint(self):
         """Record usage of a hint for the current word."""
         if self._current_word:
             self._word_hints_used += 1
+            self._last_activity = datetime.now()
     
     def complete_word(self, is_correct: bool):
         """
@@ -270,29 +299,43 @@ class SessionTracker:
         # Record final attempt
         self.record_attempt(is_correct)
         
+        # Track final correctness for WordAttempt.correct field
+        self._word_final_correct = is_correct
+        
         # Complete word tracking and add to session
         self._complete_word_tracking()
+        
+        # Check for idle timeout
+        self.check_idle_timeout()
     
     def _complete_word_tracking(self):
         """Complete tracking for the current word and add to session."""
         if not self._current_word or not self._word_start_time:
             return
         
-        # Calculate time spent
-        time_spent = (datetime.now() - self._word_start_time).total_seconds()
+        # Calculate time spent with error handling
+        try:
+            time_spent = (datetime.now() - self._word_start_time).total_seconds()
+            # Validate time is non-negative (handle edge case where clock adjustments occur)
+            time_spent = max(0.0, time_spent)
+        except (TypeError, ValueError, OverflowError) as e:
+            import logging
+            logging.warning(f"Time calculation error: {e}, defaulting to 0")
+            time_spent = 0.0
         
         # Determine if first attempt was correct
         # If we never recorded any attempts, default to False
         first_attempt_correct = self._word_first_attempt_correct if self._word_first_attempt_correct is not None else False
         
         # Create word attempt record
-        # Note: complete_word(True) is only called when word is spelled correctly
+        # correct reflects whether the word was eventually spelled correctly
+        # Allow total_attempts to be 0 if no attempts were recorded (edge case)
         attempt = WordAttempt(
             word=self._current_word,
             word_id=self._current_word_id or "",
-            correct=True,  # complete_word is only called for correct spellings
+            correct=self._word_final_correct,
             first_attempt_correct=first_attempt_correct,
-            total_attempts=self._word_attempts if self._word_attempts > 0 else 1,
+            total_attempts=self._word_attempts,  # Don't fake 0 as 1
             hints_used=self._word_hints_used,
             time_seconds=time_spent,
             timestamp=datetime.now()
@@ -309,6 +352,7 @@ class SessionTracker:
         self._word_attempts = 0
         self._word_hints_used = 0
         self._word_first_attempt_correct = None
+        self._word_final_correct = False
     
     def complete_session(self, planet: Optional[str] = None) -> Optional[SessionSummary]:
         """
@@ -331,15 +375,70 @@ class SessionTracker:
         self.current_session.end_time = datetime.now()
         self.current_session.planet_completed = planet
         
-        # Save to completed sessions
-        self.completed_sessions.append(self.current_session)
+        # Attempt to save session (in-memory for now, TODO: implement persistence)
+        session = self.current_session
+        if not self.save_session(session):
+            # Save failed, queue for later
+            self.pending_sessions.append(session)
         
         # Reset current session
-        session = self.current_session
         self.current_session = None
         self._current_streak = 0
+        self._last_activity = None
         
         return session
+    
+    def save_session(self, session: SessionSummary) -> bool:
+        """
+        Attempt to save session to disk.
+        
+        Args:
+            session: The session to save
+            
+        Returns:
+            True if save succeeded, False otherwise
+        """
+        try:
+            # TODO: Implement actual file save (integrate with STORY-002-02)
+            # For now, just track in memory
+            self.completed_sessions.append(session)
+            return True
+        except Exception as e:
+            import logging
+            logging.error(f"Failed to save session: {e}")
+            return False
+    
+    def flush_pending_sessions(self) -> int:
+        """
+        Retry saving pending sessions from the queue.
+        
+        Returns:
+            Number of sessions successfully saved
+        """
+        saved_count = 0
+        failed = []
+        for session in self.pending_sessions:
+            if self.save_session(session):
+                saved_count += 1
+            else:
+                failed.append(session)
+        self.pending_sessions = failed
+        return saved_count
+    
+    def check_idle_timeout(self):
+        """
+        Check if idle timeout has been exceeded and auto-complete session if so.
+        
+        Completes the session if no activity for IDLE_TIMEOUT_SECONDS (30 minutes).
+        """
+        if not self._last_activity or not self.current_session:
+            return
+        
+        idle_time = (datetime.now() - self._last_activity).total_seconds()
+        if idle_time > self.IDLE_TIMEOUT_SECONDS:
+            import logging
+            logging.info(f"Idle timeout ({idle_time:.0f}s > {self.IDLE_TIMEOUT_SECONDS}s), auto-completing session")
+            self.complete_session()
     
     def get_current_session_stats(self) -> Optional[Dict]:
         """
@@ -355,7 +454,8 @@ class SessionTracker:
             'session_id': self.current_session.session_id,
             'words_attempted': self.current_session.words_attempted,
             'words_correct': self.current_session.words_correct,
-            'accuracy': self.current_session.accuracy,
+            'first_attempt_accuracy': self.current_session.accuracy,
+            'overall_accuracy': self.current_session.overall_accuracy,
             'best_streak': self.current_session.best_streak,
             'duration_seconds': self.current_session.duration_seconds,
             'total_hints_used': self.current_session.total_hints_used
@@ -401,6 +501,7 @@ class SessionTracker:
         """Reset the tracker (useful for testing)."""
         self.current_session = None
         self.completed_sessions.clear()
+        self.pending_sessions.clear()
         self._current_word = None
         self._current_word_id = None
         self._word_start_time = None
@@ -408,6 +509,8 @@ class SessionTracker:
         self._word_hints_used = 0
         self._current_streak = 0
         self._word_first_attempt_correct = None
+        self._word_final_correct = False
+        self._last_activity = None
 
 
 # Factory function
