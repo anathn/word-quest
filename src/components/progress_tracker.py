@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Set, Callable
 from dataclasses import dataclass, field
 import time
 from unittest.mock import MagicMock
+from datetime import datetime, timedelta
 
 from src.components.planet_manager import PlanetManager, PlanetResult
 from src.components.session_tracker import SessionTracker, create_session_tracker
@@ -673,6 +674,17 @@ class ProgressTracker:
                 return session.overall_accuracy * 100
         return 0.0
     
+    def _get_sorted_sessions(self) -> List:
+        """Get completed sessions sorted by start time.
+        
+        Returns:
+            List of SessionSummary objects sorted by start_time
+        """
+        return sorted(
+            self.session_tracker.completed_sessions,
+            key=lambda s: s.start_time
+        )
+    
     def get_accuracy_trend(self) -> str:
         """Determine trend compared to previous session.
         
@@ -685,10 +697,7 @@ class ProgressTracker:
             "stable" if change is within 5%
             "new" if no previous session to compare
         """
-        sessions = sorted(
-            self.session_tracker.completed_sessions,
-            key=lambda s: s.start_time
-        )
+        sessions = self._get_sorted_sessions()
         
         if len(sessions) < 2:
             return "new"
@@ -715,8 +724,6 @@ class ProgressTracker:
         Returns:
             Average accuracy percentage
         """
-        from datetime import datetime, timedelta
-        
         cutoff_date = datetime.now() - timedelta(weeks=weeks)
         relevant_sessions = [
             s for s in self.session_tracker.completed_sessions
@@ -769,10 +776,7 @@ class ProgressTracker:
             - trend: Trend indicator
             - improvement_percent: Percent change from previous session
         """
-        sessions = sorted(
-            self.session_tracker.completed_sessions,
-            key=lambda s: s.start_time
-        )
+        sessions = self._get_sorted_sessions()
         
         current_accuracy = 0.0
         previous_accuracy = 0.0
