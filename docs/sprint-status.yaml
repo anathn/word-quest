@@ -17,9 +17,9 @@ current_sprint:
     - "STORY-001-06"  # Progression between planets (PR #8)
     - "STORY-002-01"  # Session data collection (approved 2026-07-07)
     - "STORY-002-03"  # Words mastered counter (approved 2026-07-08)
+    - "STORY-002-04"  # Accuracy rate calculation (approved 2026-07-08)
   in_progress_stories: []
   planned_stories:
-    - "STORY-002-04"  # Accuracy rate calculation
     - "STORY-002-05"  # Words needing practice list
     - "STORY-002-06"  # Progress graph (fluency trend)
 
@@ -177,13 +177,13 @@ epics:
     priority: P0
     description: "Data collection, storage, and visualization"
     status: "in-progress"
-    progress_percent: 64
+    progress_percent: 75
     dependencies: ["EPIC-001"]
     blockers: []
-    notes: "STORY-002-01, STORY-002-02, and STORY-002-03 complete. 468 total tests passing. Data persistence layer fully operational with mastered words tracking integrated. STORY-002-04, STORY-002-05, STORY-002-06 ready for development."
+    notes: "STORY-002-01, STORY-002-02, STORY-002-03, and STORY-002-04 complete. 520 total tests passing. Accuracy calculation and display fully implemented with trend analysis. All code review issues resolved in STORY-002-04. STORY-002-05 and STORY-002-06 ready for development."
     target_sprint: 1
     estimated_points: 28
-    completed_points: 16
+    completed_points: 21
     stories:
       - id: STORY-002-01
         title: "Session data collection"
@@ -213,7 +213,7 @@ epics:
         title: "Data persistence (JSON)"
         description: "Save progress to local JSON files"
         priority: P0
-        status: "review"
+        status: "approved"
         assignee: "agent"
         started_date: "2026-07-07"
         completed_date: null
@@ -275,10 +275,12 @@ epics:
         title: "Accuracy rate calculation"
         description: "Calculate and display accuracy with trends"
         priority: P0
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: null
+        status: "approved"
+        assignee: "agent"
+        started_date: "2026-07-08"
+        completed_date: "2026-07-08"
+        branch: "EPIC-002-STORY-004"
+        pr: 13
         acceptance_criteria:
           - "Calculate percentage accuracy"
           - "Show trend arrow (improving/stable/declining)"
@@ -286,7 +288,41 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "STORY COMPLETE AND APPROVED. Code review completed 2026-07-08. All issues resolved. Medium-priority fixes applied: datetime import moved to module level, duplicate session sorting extracted to _get_sorted_sessions() helper. All 26 tests passing. READY TO MERGE. See review: docs/reviews/STORY-002-04-review-2026-07-08.md"
+        review_document: "docs/reviews/STORY-002-04-review-2026-07-08.md"
+        implementation_notes: |
+          Files created:
+          - src/ui/accuracy_display.py - AccuracyDisplay component with trend indicators (298 lines)
+          - tests/test_accuracy_calculation.py - 26 unit tests, all passing
+          
+          Files modified:
+          - src/components/progress_tracker.py - Added 7 methods for accuracy calculation (~180 lines)
+          
+          Key implementation details:
+          - Accuracy calculation: correct/total_attempts * 100
+          - Trend threshold: 5% change is significant
+          - Trend symbols: ↑ improving, → stable, ↓ declining, - new
+          - Color coding: Green/Blue/Orange/Grey
+          - Weekly average calculation with configurable time window
+          - UI component supports parent (detailed) and student (encouraging) views
+          - Accessibility: Trend communicated via both symbol AND text label
+          - Performance: All calculations complete in <10ms
+          
+          Methods added to ProgressTracker:
+          1. calculate_accuracy(session_id) - Calculate accuracy percentage
+          2. get_session_accuracy(session_id) - Get accuracy for specific session
+          3. get_accuracy_trend() - Determine trend vs previous session
+          4. get_weekly_average_accuracy(weeks) - Calculate weekly average
+          5. get_accuracy_display() - Get formatted display data
+          6. get_accuracy_comparison() - Get detailed comparison metrics
+          7. _get_sorted_sessions() - Private helper for DRY session sorting
+          
+          Code Review Results (2026-07-08):
+          - All issues resolved
+          - Medium-priority fixes applied: import moved to module level, session sorting extracted
+          - 26/26 tests passing
+          - All acceptance criteria met
+          - READY TO MERGE
 
       - id: STORY-002-05
         title: "Words needing practice list"
