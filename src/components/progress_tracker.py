@@ -123,6 +123,7 @@ class ProgressTracker:
         # Current word tracking
         self.current_word_id: Optional[str] = None
         self.current_word_start_time: Optional[float] = None
+        self._word_attempt_recorded: bool = False  # Track if record_attempt was called
         
         # Planet tracking (STORY-001-05)
         self.current_planet_id: Optional[str] = None
@@ -205,6 +206,7 @@ class ProgressTracker:
         
         self.current_word_id = word_id
         self.current_word_start_time = time.time()
+        self._word_attempt_recorded = False  # Reset for new word
         
         # Initialize or update word attempt data
         if word_id not in self.word_history:
@@ -226,6 +228,10 @@ class ProgressTracker:
         if not self.current_word_id:
             return
         
+        # Track that record_attempt was called
+        self._word_attempt_recorded = True
+        
+        # Update legacy tracking
         legacy_attempt = self.word_history[self.current_word_id]
         legacy_attempt.attempts += 1
         
@@ -237,7 +243,7 @@ class ProgressTracker:
             if is_correct:
                 self.current_session.words_correct += 1
         
-        # Track with SessionTracker (STORY-002-01)
+        # Track with SessionTracker (STORY-002-01) - record each attempt
         self.session_tracker.record_attempt(is_correct)
     
     def record_hint_usage(self, hint_count: int = 1):
@@ -272,22 +278,34 @@ class ProgressTracker:
         Mark the current word as complete.
         
         Args:
-            is_correct: Whether the final answer was correct
+            is_correct: Whether the final answer was correct (used for session tracking)
         """
-        self.record_attempt(is_correct)
+        # Note: record_attempt should be called before complete_word for each attempt
+        # including the final one. If record_attempt was not called, we record the
+        # attempt here to handle the case where complete_word is called directly.
         
-        # Check if word is mastered (STORY-002-03) BEFORE completing tracking
-        # Word is mastered if spelled correctly on first attempt with no hints
+        # Record the final attempt in legacy tracking only if record_attempt wasn't called
+        if not self._word_attempt_recorded:
+            self.record_attempt(is_correct)
+        
+        # Capture session tracker state BEFORE complete_word resets it
+        # Word is mastered if spelled correctly on first attempt with no hints (STORY-002-03)
+        session_tracker = self.session_tracker
+        would_be_mastered = (
+            is_correct and 
+            session_tracker.is_current_word_mastered(is_correct=is_correct)
+        )
+        
+        # Track with SessionTracker (STORY-002-01) - this records the final attempt
+        # if no attempts were recorded yet, otherwise just finalizes the word tracking
+        self.session_tracker.complete_word(is_correct)
+        
+        # Check if word is mastered and mark it
         mastered_newly = False
-        if self.current_word_id and is_correct:
-            legacy_attempt = self.word_history.get(self.current_word_id)
-            if legacy_attempt and legacy_attempt.attempts == 1 and legacy_attempt.hints_used == 0:
-                mastered_newly = self.mark_word_mastered(self.current_word_id)
+        if self.current_word_id and would_be_mastered:
+            mastered_newly = self.mark_word_mastered(self.current_word_id)
         
         self._complete_word_tracking()
-        
-        # Track with SessionTracker (STORY-002-01)
-        self.session_tracker.complete_word(is_correct)
         
         # Notify callback
         if self.on_word_complete and self.current_word_id:
@@ -326,21 +344,77 @@ class ProgressTracker:
         """
         return self.word_history.get(word_id)
     
-    def get_words_needing_practice(self, min_attempts: int = 2) -> List[LegacyWordAttempt]:
-        """
-        Get list of words that need more practice.
+    def get_words_needing_practice(self, limit: int = 10) -> List[Dict]:
+        """Get words that need more practice, sorted by attempts (most first).
+        
+        Identifies words that were NOT mastered on first attempt and ranks them
+        by total attempts (highest attempts = most challenging).
+        
+        A word is considered "mastered" if it was spelled correctly on the first
+        attempt in ANY session. Words that were never mastered on the first attempt
+        are included in the practice list.
         
         Args:
-            min_attempts: Minimum attempts to be considered for practice
+            limit: Maximum number of words to return (default 10)
             
         Returns:
-            List of WordAttempt objects sorted by attempts (descending)
+            List of dictionaries with:
+            - word: The word text
+            - attempts: Total attempts for this word
+            - first_attempt_correct: Whether first attempt was correct
+            - label: Formatted display label (e.g., "because - 3 attempts")
         """
-        words = [
-            wa for wa in self.word_history.values()
-            if wa.attempts >= min_attempts
-        ]
-        return sorted(words, key=lambda w: w.attempts, reverse=True)
+        # Collect words from word_history (STORY-002-04 tracking)
+        # This is the authoritative source for attempt counts
+        word_attempts = {}  # word_id -> {'word': str, 'attempts': int, 'first_attempt_correct': bool}
+        
+        for word_id, attempt_data in self.word_history.items():
+            # Check if word was ever mastered on first attempt in any session
+            # A word is mastered if it's in the mastered_words set
+            if word_id not in self.mastered_words:
+                word_attempts[word_id] = {
+                    'word': attempt_data.word_text,
+                    'attempts': attempt_data.attempts,
+                    'first_attempt_correct': attempt_data.first_attempt_correct
+                }
+        
+        # Sort by attempts (descending) and return top N
+        sorted_words = sorted(
+            word_attempts.items(),
+            key=lambda x: x[1]['attempts'],
+            reverse=True
+        )[:limit]
+        
+        # Format for display
+        result = []
+        for word_id, data in sorted_words:
+            result.append({
+                'word': data['word'],
+                'attempts': data['attempts'],
+                'first_attempt_correct': data['first_attempt_correct'],
+                'label': f"{data['word']} - {data['attempts']} attempt{'s' if data['attempts'] != 1 else ''}"
+            })
+        
+        return result
+    
+    def format_practice_list(self, limit: int = 10) -> List[Dict]:
+        """Format practice list for display.
+        
+        Args:
+            limit: Maximum number of words to include
+            
+        Returns:
+            List of formatted practice word entries
+        """
+        return self.get_words_needing_practice(limit=limit)
+    
+    def get_practice_list_empty_message(self) -> str:
+        """Get encouraging message when no words need practice.
+        
+        Returns:
+            Encouraging message string (matches story specification)
+        """
+        return "Great job! No words need practice"
     
     def get_session_stats(self, session_id: str) -> Optional[Dict]:
         """

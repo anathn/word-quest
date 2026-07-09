@@ -270,7 +270,8 @@ class TestSessionTracker:
         tracker.record_attempt(False)
         tracker.record_hint()
         
-        # Finally correct (which also records the 3rd attempt)
+        # Finally correct (record the 3rd attempt before completing)
+        tracker.record_attempt(True)
         tracker.complete_word(True)
         
         # Word should be in session
