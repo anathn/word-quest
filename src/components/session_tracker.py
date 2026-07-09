@@ -301,8 +301,10 @@ class SessionTracker:
         Args:
             is_correct: Whether the final answer was correct
         """
-        # Record final attempt
-        self.record_attempt(is_correct)
+        # Record final attempt only if no attempts were recorded yet
+        # (handles the case where complete_word is called without record_attempt)
+        if self._word_attempts == 0:
+            self.record_attempt(is_correct)
         
         # Track final correctness for WordAttempt.correct field
         self._word_final_correct = is_correct
@@ -564,6 +566,31 @@ class SessionTracker:
             List of recent session dictionaries
         """
         return [session.to_dict() for session in self.completed_sessions[-count:]]
+    
+    def is_current_word_mastered(self, is_correct: bool = None) -> bool:
+        """Check if the current word was spelled correctly on first attempt with no hints.
+        
+        This is a public API method to check mastery status without exposing
+        private attributes. Word is mastered if:
+        - First attempt was correct
+        - No hints were used
+        - Word was spelled correctly (final answer correct)
+        
+        Args:
+            is_correct: Optional parameter for the final correctness. If provided,
+                       uses this value. Otherwise checks stored _word_final_correct.
+                       This is used when checking mastery BEFORE calling complete_word().
+        
+        Returns:
+            True if word would be mastered, False otherwise
+        """
+        # Use provided is_correct if given, otherwise check stored value
+        final_correct = is_correct if is_correct is not None else self._word_final_correct
+        return (
+            self._word_first_attempt_correct is True and
+            self._word_hints_used == 0 and
+            final_correct is True
+        )
     
     def reset(self):
         """Reset the tracker (useful for testing)."""

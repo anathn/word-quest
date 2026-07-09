@@ -255,16 +255,17 @@ class TestEdgeCases:
         # Mark word as mastered
         tracker.mark_word_mastered("word_1")
         
-        # Track a session
+        # Track a session - word_2 will be marked as mastered since spelled correctly on first attempt
         tracker.start_session("session_1")
         tracker.start_word("word_2", "test")
         tracker.record_attempt(True)
         tracker.complete_word(True)
         tracker.end_session()
         
-        # Word 1 should still be mastered
+        # Both words should be mastered (word_1 was manually marked, word_2 was spelled correctly on first attempt)
         assert tracker.is_word_mastered("word_1") is True
-        assert tracker.get_mastered_count() == 1
+        assert tracker.is_word_mastered("word_2") is True  # Added: word_2 should now be mastered
+        assert tracker.get_mastered_count() == 2  # Updated: now 2 words mastered
 
 
 if __name__ == "__main__":
