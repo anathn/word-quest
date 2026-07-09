@@ -280,7 +280,7 @@ epics:
         started_date: "2026-07-08"
         completed_date: "2026-07-08"
         branch: "EPIC-002-STORY-004"
-        pr: null  # PR pending merge
+        pr: 13
         acceptance_criteria:
           - "Calculate percentage accuracy"
           - "Show trend arrow (improving/stable/declining)"
