@@ -1,10 +1,12 @@
 """
-Parent Dashboard Screen
+Parent Dashboard Screen with Authentication
 
 Displays progress visualization and analytics for parents.
+Implements STORY-003-01: Parent Authentication
 Implements STORY-002-06: Progress Graph (Fluency Trend)
 
 This screen shows fluency trends, accuracy metrics, and progress summary.
+Access is protected by password authentication.
 """
 
 import pygame
@@ -13,6 +15,9 @@ from dataclasses import dataclass
 
 from src.components.analytics import AnalyticsEngine, DataPoint
 from src.ui.graph_renderer import GraphRenderer, GraphConfig
+from src.auth.session_manager import SessionManager
+from src.auth.password_manager import PasswordManager
+from src.ui.password_prompt import PasswordPrompt
 
 
 @dataclass
