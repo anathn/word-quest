@@ -20,7 +20,8 @@ current_sprint:
     - "STORY-002-04"  # Accuracy rate calculation (approved 2026-07-08)
     - "STORY-002-05"  # Words needing practice list (approved 2026-07-09)
     - "STORY-002-06"  # Progress graph fluency trend (approved 2026-07-09)
-  in_progress_stories: []
+  in_progress_stories:
+    - "STORY-003-01"  # Parent authentication
   planned_stories: []
 
 epics:
@@ -424,10 +425,11 @@ epics:
         title: "Parent authentication"
         description: "Password protection for parent settings"
         priority: P0
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-09"
         completed_date: null
+        branch: "EPIC-003-STORY-001"
         acceptance_criteria:
           - "Password prompt on Parent Settings access"
           - "First-time setup allows password creation"
