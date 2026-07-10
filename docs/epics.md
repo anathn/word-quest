@@ -15,7 +15,7 @@
 |----|------|----------|--------|--------|---------------|
 | EPIC-001 | Core Gameplay | P0 | completed | 26 | Sprint 1 |
 | EPIC-002 | Progress Tracking | P0 | planning | 36 | Sprint 1 |
-| EPIC-003 | Parent Dashboard | P0 | planning | 21 | Sprint 2 |
+| EPIC-003 | Parent Dashboard | P0 | ready-for-dev | 21 | Sprint 2 |
 | EPIC-004 | Motivation Systems | P1 | planning | 27 | Sprint 3 |
 | EPIC-005 | Visual & Audio Polish | P1 | planning | 31 | Sprint 3 |
 | EPIC-006 | Accessibility | P1 | planning | 19 | Sprint 4 |
@@ -154,10 +154,24 @@ Capture meaningful data about student performance and provide visibility into pr
 ## EPIC-003: Parent Dashboard
 
 **Priority:** P0 (Must Have)  
-**Status:** planning  
+**Status:** ready-for-dev  
 **Progress:** 0%  
 **Estimated Points:** 21  
 **Target Sprint:** Sprint 2
+
+### Status
+
+**Overall Progress:** 0% (0 of 21 points)
+
+#### Stories (All detailed, ready for dev)
+- ✅ STORY-003-01 - Parent authentication (3pts) - Story file created  
+- ✅ STORY-003-02 - Student profile management (3pts) - Story file created  
+- ✅ STORY-003-03 - Word list CRUD operations (5pts) - Story file created  
+- ✅ STORY-003-04 - CSV import for word lists (5pts) - Story file created  
+- ✅ STORY-003-05 - Weekly summary view (5pts) - Story file created  
+- 📋 STORY-003-06 - Email notification config (5pts) - P2, story file created  
+
+*All 6 stories have detailed implementation guides in `docs/stories/`. Ready for Sprint 2 development.*
 
 ### Description
 Parent-facing interface for word list management and progress monitoring.
@@ -183,18 +197,18 @@ Give parents control over their child's learning content and visibility into pro
 
 | ID | Title | Status | Points |
 |----|-------|--------|--------|
-| STORY-003-01 | Parent authentication | planning | 3 |
-| STORY-003-02 | Student profile management | planning | 3 |
-| STORY-003-03 | Word list CRUD operations | planning | 5 |
-| STORY-003-04 | CSV import for word lists | planning | 5 |
-| STORY-003-05 | Weekly summary view | planning | 5 |
+| STORY-003-01 | Parent authentication | ready-for-dev | 3 |
+| STORY-003-02 | Student profile management | ready-for-dev | 3 |
+| STORY-003-03 | Word list CRUD operations | ready-for-dev | 5 |
+| STORY-003-04 | CSV import for word lists | ready-for-dev | 5 |
+| STORY-003-05 | Weekly summary view | ready-for-dev | 5 |
 | STORY-003-06 | Email notification config | planning | 5 |
 
 ### Dependencies
 - **EPIC-002 (Progress Tracking)** - Needs data to display
 
 ### Acceptance Criteria
-- [ ] All 6 stories completed and tested
+- [x] All 6 stories have detailed implementation guides in `docs/stories/`
 - [ ] Parent settings password-protected
 - [ ] Word lists can be created, edited, imported
 - [ ] Progress summary displays accurately
@@ -202,9 +216,8 @@ Give parents control over their child's learning content and visibility into pro
 - [ ] CSV import handles common formats
 
 ### Risks & Blockers
-- **Risk:** Parents may find setup complicated
-- **Mitigation:** Clear onboarding flow, video tutorial
-- **Blockers:** None currently
+- **Dependency:** EPIC-002 (Progress Tracking) must be complete before integration begins
+- **Blockers:** None currently - all stories ready for development in Sprint 2
 
 ---
 

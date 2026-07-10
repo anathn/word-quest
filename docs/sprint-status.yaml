@@ -328,7 +328,7 @@ epics:
         title: "Words needing practice list"
         description: "Identify and display words requiring more work"
         priority: P0
-        status: "done"
+        status: "approved"
         assignee: "agent"
         started_date: "2026-07-08"
         completed_date: "2026-07-09"
@@ -411,11 +411,11 @@ epics:
     name: "Parent Dashboard"
     priority: P0
     description: "Parent-facing management and monitoring"
-    status: "planning"
+    status: "ready-for-dev"
     progress_percent: 0
     dependencies: ["EPIC-002"]
     blockers: []
-    notes: "Depends on Progress Tracking for data to display"
+    notes: "All 6 stories have detailed implementation guides in docs/stories/. Ready for Sprint 2 development. Dependency: EPIC-002 must be complete first."
     target_sprint: 2
     estimated_points: 21
     completed_points: 0
@@ -424,7 +424,7 @@ epics:
         title: "Parent authentication"
         description: "Password protection for parent settings"
         priority: P0
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
@@ -436,13 +436,13 @@ epics:
         complexity: "Low"
         points: 3
         blockers: []
-        notes: ""
+        notes: "Detailed story file: docs/stories/STORY-003-01.md"
 
       - id: STORY-003-02
         title: "Student profile management"
         description: "Create and edit student profiles"
         priority: P0
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
@@ -454,13 +454,13 @@ epics:
         complexity: "Low"
         points: 3
         blockers: []
-        notes: ""
+        notes: "Detailed story file: docs/stories/STORY-003-02.md"
 
       - id: STORY-003-03
         title: "Word list CRUD operations"
         description: "Add, edit, remove spelling words"
         priority: P0
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
@@ -473,13 +473,13 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "Detailed story file: docs/stories/STORY-003-03.md"
 
       - id: STORY-003-04
         title: "CSV import for word lists"
         description: "Import words from CSV files"
         priority: P0
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
@@ -491,13 +491,13 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "Detailed story file: docs/stories/STORY-003-04.md"
 
       - id: STORY-003-05
         title: "Weekly summary view"
         description: "Dashboard showing weekly progress summary"
         priority: P0
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
@@ -509,7 +509,7 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "Detailed story file: docs/stories/STORY-003-05.md"
 
       - id: STORY-003-06
         title: "Email notification config"
@@ -527,7 +527,7 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "P2 feature - may be deferred"
+        notes: "Detailed story file: docs/stories/STORY-003-06.md. P2 - may be deferred."
 
   - id: EPIC-004
     name: "Motivation Systems"
