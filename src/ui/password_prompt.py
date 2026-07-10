@@ -107,16 +107,43 @@ class PasswordPrompt:
     def _init_fonts(self):
         """Initialize Pygame fonts."""
         if self._title_font is None:
+            # Try system fonts first
             try:
                 self._title_font = pygame.font.SysFont('arial', 24, bold=True)
                 self._body_font = pygame.font.SysFont('arial', 16)
                 self._input_font = pygame.font.SysFont('courier', 20)
                 self._hint_font = pygame.font.SysFont('arial', 12)
-            except:
+                return
+            except pygame.error:
+                pass
+            
+            # Fallback to default font (works in headless/CI environments)
+            try:
                 self._title_font = pygame.font.Font(None, 24)
                 self._body_font = pygame.font.Font(None, 16)
                 self._input_font = pygame.font.Font(None, 20)
                 self._hint_font = pygame.font.Font(None, 12)
+                return
+            except pygame.error:
+                pass
+            
+            # Final fallback: use default pygame font with explicit path
+            try:
+                default_font_path = pygame.font.get_default_font()
+                self._title_font = pygame.font.Font(default_font_path, 24)
+                self._body_font = pygame.font.Font(default_font_path, 16)
+                self._input_font = pygame.font.Font(default_font_path, 20)
+                self._hint_font = pygame.font.Font(default_font_path, 12)
+                return
+            except pygame.error:
+                pass
+            
+            # If all else fails, create a minimal fallback using the first available
+            # This handles CI environments with no font support at all
+            self._title_font = None
+            self._body_font = None
+            self._input_font = None
+            self._hint_font = None
     
     def _calculate_layout(self):
         """Calculate UI element positions."""

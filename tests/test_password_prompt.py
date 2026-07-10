@@ -10,9 +10,13 @@ from unittest.mock import MagicMock, call
 
 # Initialize pygame for tests
 try:
-    pygame.display.set_mode((1, 1))  # Need a display for password_prompt font operations
+    import os
+    os.environ['SDL_VIDEODRIVER'] = 'dummy'
+    pygame.init()
+    pygame.display.set_mode((1, 1))  # Need a display for font operations
+    pygame.font.init()  # Explicitly initialize font module
 except pygame.error:
-    pass  # Display not available in headless mode, continue anyway
+    pass  # Display/font not available, continue anyway
 
 from src.ui.password_prompt import PasswordPrompt
 from src.auth.session_manager import SessionManager
@@ -264,19 +268,20 @@ class TestPasswordPrompt:
     def test_handle_mouse_click_submit(self, password_prompt, mock_session_manager):
         """Test mouse click on submit button."""
         password_prompt._active = True
+        password_prompt._password = "testpass"  # Set password before clicking submit
         password_prompt._calculate_layout()
         
         if password_prompt._submit_rect:
             pos = password_prompt._submit_rect.center
             
             event = MagicMock()
-            event.type = "MOUSEBUTTONDOWN"
+            event.type = pygame.MOUSEBUTTONDOWN
             event.button = 1
             event.pos = pos
             
             password_prompt.handle_event(event)
             
-            mock_session_manager.authenticate.assert_called()
+            mock_session_manager.authenticate.assert_called_once_with("testpass")
     
     def test_render_when_not_active(self, password_prompt):
         """Test that render does nothing when not active."""
@@ -354,8 +359,13 @@ class TestPasswordPromptLayout:
 class TestPasswordPromptColors:
     """Test color constants."""
     
-    def test_colors_defined(self, password_prompt):
+    def test_colors_defined(self, mock_session_manager):
         """Test that all required colors are defined."""
+        password_prompt = PasswordPrompt(
+            session_manager=mock_session_manager,
+            screen_width=800,
+            screen_height=600
+        )
         assert hasattr(password_prompt, 'COLOR_OVERLAY')
         assert hasattr(password_prompt, 'COLOR_BG')
         assert hasattr(password_prompt, 'COLOR_TEXT')
