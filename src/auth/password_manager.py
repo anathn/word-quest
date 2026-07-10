@@ -12,6 +12,7 @@ Handles password hashing, validation, and secure storage using:
 import hashlib
 import json
 import os
+import secrets
 from typing import Optional
 
 
@@ -171,8 +172,8 @@ class PasswordManager:
         # Hash the provided password with stored salt
         computed_hash = self._hash_password(password, stored_salt)
         
-        # Compare hashes (simple string comparison)
-        return computed_hash == stored_hash
+        # Compare hashes using constant-time comparison to prevent timing attacks
+        return secrets.compare_digest(computed_hash, stored_hash)
     
     def change_password(self, old_password: str, new_password: str) -> bool:
         """

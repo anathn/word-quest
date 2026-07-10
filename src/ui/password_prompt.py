@@ -54,7 +54,8 @@ class PasswordPrompt:
         screen_width: int = 800,
         screen_height: int = 600,
         on_success: Optional[Callable] = None,
-        on_cancel: Optional[Callable] = None
+        on_cancel: Optional[Callable] = None,
+        is_setup_mode: bool = False
     ):
         """
         Initialize the password prompt.
@@ -65,6 +66,7 @@ class PasswordPrompt:
             screen_height: Screen height in pixels
             on_success: Callback when authentication succeeds
             on_cancel: Callback when prompt is cancelled
+            is_setup_mode: If True, show password creation UI instead of login
         """
         self.session_manager = session_manager
         self.screen_width = screen_width
@@ -73,6 +75,9 @@ class PasswordPrompt:
         # Callbacks
         self.on_success = on_success
         self.on_cancel = on_cancel
+        
+        # Setup mode flag
+        self.is_setup_mode = is_setup_mode
         
         # UI state
         self._password: str = ""
@@ -223,21 +228,31 @@ class PasswordPrompt:
         if self._is_locked_out:
             return
         
-        success, message = self.session_manager.authenticate(self._password)
-        
-        if success:
-            # Clear error and call success callback
-            self._error_message = ""
-            if self.on_success:
-                self.on_success()
+        if self.is_setup_mode:
+            # In setup mode, just set the password (no validation needed)
+            if self._password:
+                self.session_manager.password_manager.set_password(self._password)
+                self._error_message = ""
+                if self.on_success:
+                    self.on_success()
+            else:
+                self._error_message = "Please enter a password"
         else:
-            # Update error message
-            self._error_message = message
-            self._password = ""  # Clear for retry
+            # Normal authentication
+            success, message = self.session_manager.authenticate(self._password)
             
-            # Check if locked out
-            if "locked" in message.lower():
-                self._is_locked_out = True
+            if success:
+                # Clear error and call success callback
+                self._error_message = ""
+                if self.on_success:
+                    self.on_success()
+            else:
+                # Update error message
+                self._error_message = message
+                self._password = ""  # Clear for retry
+                
+                # Check if locked out using explicit state from SessionManager
+                self._is_locked_out = self.session_manager._is_locked_out()
     
     def _cancelPassword(self):
         """Cancel the password prompt."""
@@ -274,14 +289,17 @@ class PasswordPrompt:
         
         # Draw title
         if self._title_font and self._dialog_rect:
-            title = "Parent Settings"
+            title = "Parent Settings" if not self.is_setup_mode else "Set Password"
             title_surf = self._title_font.render(title, True, self.COLOR_TEXT)
             title_rect = title_surf.get_rect(centerx=self._dialog_rect.centerx, top=self._dialog_rect.y + 20)
             screen.blit(title_surf, title_rect)
         
         # Draw instruction
         if self._body_font and self._dialog_rect:
-            instruction = "Enter password to continue:"
+            if self.is_setup_mode:
+                instruction = "Create a password for parent access:"
+            else:
+                instruction = "Enter password to continue:"
             instr_surf = self._body_font.render(instruction, True, self.COLOR_TEXT)
             instr_rect = instr_surf.get_rect(centerx=self._dialog_rect.centerx, top=self._dialog_rect.y + 60)
             screen.blit(instr_surf, instr_rect)
@@ -333,11 +351,17 @@ class PasswordPrompt:
             screen.blit(error_surf, error_rect)
         
         # Draw buttons
-        self._draw_button(screen, self._submit_rect, "Submit", self._hover_submit)
+        submit_text = "Create Password" if self.is_setup_mode else "Submit"
+        self._draw_button(screen, self._submit_rect, submit_text, self._hover_submit)
         self._draw_button(screen, self._cancel_rect, "Cancel", self._hover_cancel)
         
         # Draw hint for first-time setup
-        if not self.session_manager.password_manager.has_password_set() and self._hint_font:
+        if self.is_setup_mode and self._hint_font:
+            hint = "Choose a password you'll remember (min 8 characters recommended)"
+            hint_surf = self._hint_font.render(hint, True, self.COLOR_TEXT_LIGHT)
+            hint_rect = hint_surf.get_rect(centerx=self._dialog_rect.centerx, bottom=self._dialog_rect.y + 235)
+            screen.blit(hint_surf, hint_rect)
+        elif not self.is_setup_mode and not self.session_manager.password_manager.has_password_set() and self._hint_font:
             hint = "First time? Set password in parent settings"
             hint_surf = self._hint_font.render(hint, True, self.COLOR_TEXT_LIGHT)
             hint_rect = hint_surf.get_rect(centerx=self._dialog_rect.centerx, bottom=self._dialog_rect.y + 70)

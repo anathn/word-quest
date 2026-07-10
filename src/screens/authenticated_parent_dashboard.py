@@ -92,12 +92,14 @@ class AuthenticatedParentDashboard:
         def on_cancel():
             self._state = self.STATE_LOCKED
         
+        # Note: is_setup_mode=False for regular auth (will be set to True in _show_first_time_setup)
         self.password_prompt = PasswordPrompt(
             session_manager=self.session_manager,
             screen_width=self.screen_width,
             screen_height=self.screen_height,
             on_success=on_auth_success,
-            on_cancel=on_cancel
+            on_cancel=on_cancel,
+            is_setup_mode=False
         )
     
     def _create_dashboard(self):
@@ -111,13 +113,36 @@ class AuthenticatedParentDashboard:
     def activate(self):
         """Activate the dashboard (show password prompt)."""
         if not self.session_manager.password_manager.has_password_set():
-            # First-time setup - auto-create password or show setup
-            # For MVP, we'll let user set password through a simple flow
-            print("First-time setup: Setting default password 'parent'")
-            self.session_manager.password_manager.set_password("parent")
+            # First-time setup - show password creation flow
+            self._show_first_time_setup()
+            return
         
         self._state = self.STATE_AUTHENTICATING
         self.password_prompt.activate()
+    
+    def _show_first_time_setup(self):
+        """Show password creation wizard for first-time users."""
+        self._state = self.STATE_AUTHENTICATING
+        # Reinitialize password prompt in setup mode
+        self.password_prompt = PasswordPrompt(
+            session_manager=self.session_manager,
+            screen_width=self.screen_width,
+            screen_height=self.screen_height,
+            on_success=self._on_setup_complete,
+            on_cancel=self._cancel_setup,
+            is_setup_mode=True
+        )
+        self.password_prompt.activate()
+    
+    def _on_setup_complete(self):
+        """Callback when first-time password setup is complete."""
+        self._state = self.STATE_AUTHENTICATED
+        self._create_dashboard()
+    
+    def _cancel_setup(self):
+        """Callback when setup is cancelled."""
+        self._state = self.STATE_LOCKED
+        self.password_prompt.deactivate()
     
     def deactivate(self):
         """Deactivate the dashboard (logout)."""
