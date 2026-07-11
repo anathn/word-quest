@@ -49,12 +49,19 @@ class StudentProfile:
     
     def _validate_name(self):
         """Validate the student name."""
+        # Check basic constraints
         if not self.name or len(self.name.strip()) < self.MIN_NAME_LENGTH:
             raise ValueError("Name must be at least 1 character")
         if len(self.name.strip()) > self.MAX_NAME_LENGTH:
             raise ValueError(f"Name must be at most {self.MAX_NAME_LENGTH} characters")
         if self.name.strip().lower() in self.NAME_BLOCKLIST:
             raise ValueError("Name not allowed")
+        
+        # Check for allowed character set (basic alphanumeric + spaces + hyphens + apostrophes)
+        if not re.match(r"^[a-zA-Z0-9\s\-']+$", self.name.strip()):
+            raise ValueError(
+                "Name can only contain letters, numbers, spaces, hyphens, and apostrophes"
+            )
     
     def _validate_avatar_id(self):
         """Validate the avatar ID."""

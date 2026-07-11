@@ -219,13 +219,18 @@ class ProfileEditor:
         Returns:
             "save" if successful, None if validation failed
         """
-        # Validate name
-        if not self.name_text.strip():
+        # Pre-sanitize name to match model validation
+        from src.models.student_profile import StudentProfile
+        
+        sanitized = self.name_text.strip()
+        
+        # Validate name using model's constants
+        if not sanitized:
             self.name_error = "Name is required"
             return None
         
-        if len(self.name_text.strip()) > 30:
-            self.name_error = "Name too long (max 30 characters)"
+        if len(sanitized) > StudentProfile.MAX_NAME_LENGTH:
+            self.name_error = f"Name too long (max {StudentProfile.MAX_NAME_LENGTH} characters)"
             return None
         
         # Check avatar selection

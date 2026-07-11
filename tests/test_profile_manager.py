@@ -114,7 +114,7 @@ class TestCreateProfile:
     
     def test_create_rejects_invalid_avatar(self, profile_manager):
         """Test that invalid avatar_id is rejected."""
-        with pytest.raises(KeyError, match="Invalid avatar_id"):
+        with pytest.raises(KeyError, match="Invalid avatar selection"):
             profile_manager.create_profile("Test", "invalid_avatar")
     
     def test_create_enforces_max_profiles(self, temp_profile_file):
@@ -259,7 +259,7 @@ class TestUpdateProfile:
         profiles = populated_manager.get_all_profiles()
         profile_id = profiles[0].id
         
-        with pytest.raises(KeyError, match="Invalid avatar_id"):
+        with pytest.raises(KeyError, match="Invalid avatar selection"):
             populated_manager.update_profile(profile_id, avatar_id="invalid")
 
 

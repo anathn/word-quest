@@ -127,6 +127,45 @@ class TestStudentProfileCreation:
                     avatar_id="astronaut",
                     created_date=datetime.now()
                 )
+    
+    def test_name_with_disallowed_characters(self):
+        """Test that names with special characters are rejected."""
+        # Test various special characters that should be rejected
+        invalid_names = [
+            "Name$pecial",  # $
+            "Name@email",   # @
+            "Name&More",    # &
+            "Name*Star",    # *
+            "Name!Excl",    # !
+            "Name+Plus",    # +
+        ]
+        for invalid_name in invalid_names:
+            with pytest.raises(ValueError, match="Name can only contain letters"):
+                StudentProfile(
+                    id="test-id",
+                    name=invalid_name,
+                    avatar_id="astronaut",
+                    created_date=datetime.now()
+                )
+    
+    def test_name_with_allowed_characters(self):
+        """Test that names with allowed characters are accepted."""
+        valid_names = [
+            "John",
+            "John Doe",
+            "Mary-Jane",
+            "O'Brien",
+            "User123",
+            "Test123 User",
+        ]
+        for valid_name in valid_names:
+            profile = StudentProfile(
+                id="test-id",
+                name=valid_name,
+                avatar_id="astronaut",
+                created_date=datetime.now()
+            )
+            assert profile.name == valid_name
 
 
 class TestStudentProfileSerialization:

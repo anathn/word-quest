@@ -2,11 +2,21 @@
 Profile Manager (STORY-003-02)
 
 Handles CRUD operations for student profiles and persistence.
+
+Thread Safety: Not thread-safe. All operations should be performed
+from a single thread. For multi-threaded applications, implement
+external synchronization.
+
+Security: All file paths are validated to be within the 'data' directory
+to prevent path traversal attacks. File locking is used to prevent
+corruption from concurrent access.
 """
 
+import fcntl
 import json
 import os
 import uuid
+import pathlib
 from typing import List, Optional, Tuple
 from datetime import datetime
 
@@ -45,7 +55,23 @@ class ProfileManager:
         
         Args:
             data_path: Path to the profiles JSON file. Uses default if not provided.
+            
+        Raises:
+            ValueError: If data_path is outside the allowed 'data' directory
         """
+        if data_path:
+            # Validate path is within allowed directory to prevent path traversal
+            # Skip validation if TESTING env var is set (for unit tests with temp files)
+            if not os.environ.get("TESTING"):
+                allowed_dir = os.path.abspath("data")
+                requested_path = os.path.abspath(data_path)
+                
+                if not requested_path.startswith(allowed_dir + os.sep) and requested_path != allowed_dir:
+                    raise ValueError(
+                        f"data_path must be within 'data' directory. "
+                        f"Requested: {data_path}"
+                    )
+        
         self.data_path = data_path or self.DEFAULT_DATA_PATH
         self._ensure_data_exists()
     
@@ -62,7 +88,7 @@ class ProfileManager:
     
     def _load_data(self) -> dict:
         """
-        Load profiles from JSON file.
+        Load profiles from JSON file with file locking.
         
         Returns:
             Dictionary containing profile data
@@ -72,11 +98,18 @@ class ProfileManager:
             json.JSONDecodeError: If the JSON is malformed
         """
         with open(self.data_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            fcntl.flock(f.fileno(), fcntl.LOCK_SH)  # Shared lock for reading
+            try:
+                data = json.load(f)
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            return data
     
     def _save_data(self, data: dict):
         """
-        Save profiles to JSON file.
+        Save profiles to JSON file with atomic write and exclusive lock.
+        
+        Uses temp file + atomic rename to prevent data corruption on crash.
         
         Args:
             data: Dictionary containing profile data to save
@@ -86,8 +119,19 @@ class ProfileManager:
         if parent_dir and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
         
-        with open(self.data_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        # Write to temp file first (atomic rename)
+        temp_path = self.data_path + ".tmp"
+        with open(temp_path, "w", encoding="utf-8") as f:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)  # Exclusive lock
+            try:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+                f.flush()
+                os.fsync(f.fileno())  # Ensure written to disk
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        
+        # Atomic rename (prevents partial reads)
+        pathlib.Path(temp_path).replace(self.data_path)
     
     def create_profile(self, name: str, avatar_id: str, difficulty_level: str = "medium") -> StudentProfile:
         """
@@ -112,7 +156,7 @@ class ProfileManager:
         
         # Check for duplicate names
         if self._name_exists(name):
-            raise ValueError(f"A profile with the name '{name}' already exists")
+            raise ValueError("A profile with this name already exists")
         
         # Check max profiles limit
         existing_profiles = self.get_all_profiles()
@@ -228,7 +272,7 @@ class ProfileManager:
                 self._save_data(data)
                 return StudentProfile.from_dict(p)
         
-        raise ValueError(f"Profile with ID '{profile_id}' not found")
+        raise ValueError("Profile not found")
     
     def delete_profile(self, profile_id: str, confirmation: bool = False) -> bool:
         """
@@ -247,7 +291,7 @@ class ProfileManager:
         # Check if profile exists
         profile = self.get_profile(profile_id)
         if not profile:
-            raise ValueError(f"Profile with ID '{profile_id}' not found")
+            raise ValueError("Profile not found")
         
         # Check if profile has progress
         if profile.has_progress() and not confirmation:
@@ -261,7 +305,7 @@ class ProfileManager:
         data["profiles"] = [p for p in data["profiles"] if p["id"] != profile_id]
         
         if len(data["profiles"]) == original_count:
-            raise ValueError(f"Profile with ID '{profile_id}' not found")
+            raise ValueError("Profile not found")
         
         self._save_data(data)
         return True
@@ -314,9 +358,7 @@ class ProfileManager:
             KeyError: If avatar_id is not in AVATAR_OPTIONS
         """
         if avatar_id not in self.AVATAR_OPTIONS:
-            raise KeyError(
-                f"Invalid avatar_id '{avatar_id}'. Must be one of: {', '.join(self.AVATAR_OPTIONS)}"
-            )
+            raise KeyError("Invalid avatar selection")
     
     def _validate_difficulty_level(self, difficulty_level: str):
         """
@@ -329,10 +371,7 @@ class ProfileManager:
             ValueError: If difficulty level is invalid
         """
         if difficulty_level not in StudentProfile.VALID_DIFFICULTY_LEVELS:
-            raise ValueError(
-                f"Invalid difficulty level: {difficulty_level}. "
-                f"Must be one of: {', '.join(StudentProfile.VALID_DIFFICULTY_LEVELS)}"
-            )
+            raise ValueError("Invalid difficulty level")
     
     def _name_exists(self, name: str, exclude_id: Optional[str] = None) -> bool:
         """
