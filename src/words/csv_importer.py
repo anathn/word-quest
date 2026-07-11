@@ -10,6 +10,7 @@ import os
 from typing import List, Dict, Tuple, Optional, TextIO
 from dataclasses import dataclass, field
 from enum import Enum
+import uuid
 
 
 class Difficulty(Enum):
@@ -67,6 +68,11 @@ class CSVImporter:
     - Automatic difficulty assignment
     - Row-level validation with detailed error reporting
     """
+    
+    # Configuration constants
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    MIN_WORD_LENGTH = 2
+    MAX_WORD_LENGTH = 25
     
     # Column name variations to recognize (case-insensitive)
     WORD_COLUMNS = ["word", "spelling", "term", "vocabulary", "spelled word"]
@@ -180,6 +186,33 @@ class CSVImporter:
         
         return mapping
     
+    @staticmethod
+    def is_safe_path(filepath: str) -> bool:
+        """
+        Check if filepath does not contain path traversal patterns.
+        
+        Args:
+            filepath: The file path to check
+            
+        Returns:
+            True if the path is safe (no path traversal), False otherwise
+        """
+        try:
+            # Check for path traversal patterns
+            if ".." in filepath:
+                return False
+            
+            # Check for absolute paths that are system directories
+            abs_path = os.path.abspath(filepath)
+            system_dirs = ["/etc", "/bin", "/sbin", "/usr", "/root"]
+            for sys_dir in system_dirs:
+                if abs_path.startswith(sys_dir + os.sep) or abs_path == sys_dir:
+                    return False
+            
+            return True
+        except (OSError, ValueError):
+            return False
+    
     def _validate_word(self, spelling: str) -> Optional[str]:
         """
         Validate a spelled word.
@@ -193,11 +226,11 @@ class CSVImporter:
         if not spelling:
             return "Missing word"
         
-        if len(spelling) < 2:
-            return "Word too short (minimum 2 letters)"
+        if len(spelling) < self.MIN_WORD_LENGTH:
+            return f"Word too short (minimum {self.MIN_WORD_LENGTH} letters)"
         
-        if len(spelling) > 25:
-            return "Word too long (maximum 25 letters)"
+        if len(spelling) > self.MAX_WORD_LENGTH:
+            return f"Word too long (maximum {self.MAX_WORD_LENGTH} letters)"
         
         # Check for valid characters (letters and hyphens only)
         cleaned = spelling.replace("-", "")
@@ -205,6 +238,16 @@ class CSVImporter:
             return "Word contains invalid characters (letters and hyphens only)"
         
         return None
+    
+    @staticmethod
+    def _generate_word_id() -> str:
+        """
+        Generate a unique word ID using UUID.
+        
+        Returns:
+            Unique ID string (e.g., 'csv_8f3a2b1c')
+        """
+        return f"csv_{uuid.uuid4().hex[:8]}"
     
     def _auto_assign_difficulty(self, spelling: str) -> Difficulty:
         """
@@ -286,7 +329,7 @@ class CSVImporter:
             if difficulty is None:
                 difficulty = self._auto_assign_difficulty(spelling)
             
-            return ParsedWord(spelling, definition, difficulty, row_num)
+            return ParsedWord(spelling, definition[:500] if definition else "", difficulty, row_num)
         
         except Exception as e:
             return ParsedWord("", "", Difficulty.MEDIUM, row_num, f"Parse error: {str(e)}")
@@ -300,6 +343,29 @@ class CSVImporter:
         """
         successful: List[ParsedWord] = []
         skipped: List[Tuple[int, str]] = []
+        
+        # Validate file path to prevent path traversal attacks
+        if self.filepath and not self.is_safe_path(self.filepath):
+            return ImportResult(
+                skipped=[(0, "Invalid file path")],
+                total_processed=0
+            )
+        
+        # Check file exists
+        if self.filepath and not os.path.exists(self.filepath):
+            return ImportResult(skipped=[(0, "File not found")], total_processed=0)
+        
+        # Check file size to prevent DoS attacks
+        if self.filepath:
+            try:
+                file_size = os.path.getsize(self.filepath)
+                if file_size > self.MAX_FILE_SIZE:
+                    return ImportResult(
+                        skipped=[(0, f"File too large (max {self.MAX_FILE_SIZE // 1024 // 1024}MB)")],
+                        total_processed=0
+                    )
+            except OSError:
+                return ImportResult(skipped=[(0, "Could not read file size")], total_processed=0)
         
         # Read file content
         try:
@@ -319,11 +385,14 @@ class CSVImporter:
             self._content = content
             
         except FileNotFoundError:
-            return ImportResult(skipped=[(0, f"File not found: {self.filepath}")], total_processed=0)
+            return ImportResult(skipped=[(0, "File not found")], total_processed=0)
         except PermissionError:
-            return ImportResult(skipped=[(0, "Permission denied reading file")], total_processed=0)
+            return ImportResult(skipped=[(0, "Permission denied")], total_processed=0)
         except Exception as e:
-            return ImportResult(skipped=[(0, f"Could not read file: {str(e)}")], total_processed=0)
+            # Log detailed error internally, show generic message to user
+            import logging
+            logging.error(f"CSV parse error: {e}")
+            return ImportResult(skipped=[(0, "Could not read file")], total_processed=0)
         
         # Parse content
         lines = content.strip().split("\n")
@@ -383,7 +452,7 @@ class CSVImporter:
             if parsed.is_valid:
                 successful.append(parsed)
             else:
-                skipped.append((i, parsed.error or "Unknown error"))
+                skipped.append((i, parsed.error or "Validation error"))
         
         return ImportResult(
             successful=successful,

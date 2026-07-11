@@ -292,8 +292,8 @@ class CSVImportDialog(tk.Toplevel):
             # Create SpellingWord objects
             word_count = 0
             for word in import_list:
-                # Generate unique ID
-                word_id = f"csv_{len(self.word_manager.all_words) + word_count + 1}"
+                # Generate unique ID using UUID
+                word_id = CSVImporter._generate_word_id()
                 
                 # Calculate starter letters based on difficulty
                 starter_letters = 3 if word.difficulty == Difficulty.BEGINNER else (
