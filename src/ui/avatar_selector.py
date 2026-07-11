@@ -154,7 +154,7 @@ class AvatarSelector:
         
         return pygame.Rect(0, 0, 0, 0)
     
-    def handle_event(self, event: pygame.Event) -> Optional[str]:
+    def handle_event(self, event: pygame.event.EventType) -> Optional[str]:
         """
         Handle mouse events for avatar selection.
         
@@ -188,7 +188,7 @@ class AvatarSelector:
         
         return selected
     
-    def handle_key_event(self, event: pygame.Event) -> Optional[str]:
+    def handle_key_event(self, event: pygame.event.EventType) -> Optional[str]:
         """
         Handle keyboard events for avatar selection.
         

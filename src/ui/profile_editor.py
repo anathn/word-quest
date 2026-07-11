@@ -154,7 +154,7 @@ class ProfileEditor:
         """Get the current name input text."""
         return self.name_text
     
-    def handle_event(self, event: pygame.Event) -> Optional[str]:
+    def handle_event(self, event: pygame.event.EventType) -> Optional[str]:
         """
         Handle pygame events for the profile editor.
         

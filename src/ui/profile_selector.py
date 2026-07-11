@@ -195,7 +195,7 @@ class ProfileSelector:
                 return i
         return None
     
-    def handle_event(self, event: pygame.Event) -> Optional[str]:
+    def handle_event(self, event: pygame.event.EventType) -> Optional[str]:
         """
         Handle pygame events.
         
