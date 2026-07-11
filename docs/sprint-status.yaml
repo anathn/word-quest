@@ -22,7 +22,8 @@ current_sprint:
     - "STORY-002-06"  # Progress graph fluency trend (approved 2026-07-09)
     - "STORY-003-01"  # Parent authentication (approved 2026-07-09)
     - "STORY-003-02"  # Student profile management (verified 2026-07-10)
-  in_progress_stories: []
+  in_progress_stories:
+    - "STORY-003-04"  # CSV import for word lists
   planned_stories:
     - "STORY-003-03"  # Word list CRUD operations
 
@@ -542,10 +543,11 @@ epics:
         title: "CSV import for word lists"
         description: "Import words from CSV files"
         priority: P0
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-11"
         completed_date: null
+        branch: "EPIC-003-STORY-004"
         acceptance_criteria:
           - "Upload CSV file"
           - "Parse word and difficulty columns"
