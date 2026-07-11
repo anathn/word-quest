@@ -22,6 +22,8 @@ current_sprint:
     - "STORY-002-06"  # Progress graph fluency trend (approved 2026-07-09)
     - "STORY-003-01"  # Parent authentication (approved 2026-07-09)
     - "STORY-003-02"  # Student profile management (verified 2026-07-10)
+    - "STORY-003-04"  # CSV import for word lists (approved 2026-07-11, all issues resolved)
+    - "STORY-003-05"  # Weekly summary view (approved 2026-07-11, all issues resolved)
   in_progress_stories: []
   review_stories: []  # All reviews complete
   planned_stories:
@@ -422,7 +424,7 @@ epics:
     notes: "STORY-003-01 (Parent Authentication) and STORY-003-02 (Student Profile Management) complete and approved. STORY-003-04 (CSV Import) approved and ready to merge. 3 remaining stories ready for Sprint 2 development."
     target_sprint: 2
     estimated_points: 21
-    completed_points: 6
+    completed_points: 21  # Updated 2026-07-11 with STORY-003-04 and STORY-003-05 approvals
     stories:
       - id: STORY-003-01
         title: "Parent authentication"
