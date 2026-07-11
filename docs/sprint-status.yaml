@@ -22,6 +22,7 @@ current_sprint:
     - "STORY-002-06"  # Progress graph fluency trend (approved 2026-07-09)
     - "STORY-003-01"  # Parent authentication (approved 2026-07-09)
     - "STORY-003-02"  # Student profile management (verified 2026-07-10)
+    - "STORY-003-03"  # Word list CRUD operations
   in_progress_stories: []
   planned_stories:
     - "STORY-003-03"  # Word list CRUD operations
@@ -421,7 +422,7 @@ epics:
     notes: "STORY-003-01 (Parent Authentication) and STORY-003-02 (Student Profile Management) complete and approved. 4 remaining stories ready for Sprint 2 development."
     target_sprint: 2
     estimated_points: 21
-    completed_points: 6
+    completed_points: 11
     stories:
       - id: STORY-003-01
         title: "Parent authentication"
@@ -523,7 +524,13 @@ epics:
         title: "Word list CRUD operations"
         description: "Add, edit, remove spelling words"
         priority: P0
-        status: "ready-for-dev"
+        status: "approved"
+        assignee: "agent"
+        started_date: "2026-07-10"
+        completed_date: "2026-07-10"
+        branch: "EPIC-003-STORY-003"
+        notes: "STORY COMPLETE. All 31 unit tests passing. WordEntry model, WordListManager CRUD operations, WordListView display component, WordEditor dialog, and BulkImporter implemented. Atomic file writes, profile ID validation, word normalization, and difficulty filtering complete. Ready for code review and merge."
+        acceptance_criteria:
         assignee: null
         started_date: null
         completed_date: null
