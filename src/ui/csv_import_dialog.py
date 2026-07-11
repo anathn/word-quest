@@ -319,8 +319,7 @@ class CSVImportDialog(tk.Toplevel):
             # Show success message
             success_msg = (
                 f"Import successful!\n\n"
-                f"Added: {word_count} word(s)\n"
-                f" universe: {len(existing_texts)} duplicate(s)` if duplicates else ""
+                f"Added: {word_count} word(s)"
             )
             
             if self.duplicate_var.get() == "skip" and duplicates:
