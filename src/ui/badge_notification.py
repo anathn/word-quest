@@ -7,6 +7,7 @@ Shows celebration messages when students earn badges.
 
 import pygame
 import math
+import random
 from typing import Optional, Tuple
 from dataclasses import dataclass
 
@@ -77,6 +78,8 @@ class BadgeNotification:
     # Particle effects
     PARTICLE_COUNT = 50
     PARTICLE_LIFETIME_MS = 2000
+    PARTICLE_DECAY_MIN = 100
+    PARTICLE_DECAY_MAX = 200
     
     def __init__(self, screen: pygame.Surface, badge: Badge):
         """
@@ -270,6 +273,7 @@ class BadgeNotification:
     def _create_particles(self):
         """Create confetti particles for burst effect."""
         self.particles = []
+        self._particles_created = True
         
         base_color = self._get_rarity_color()
         colors = [
@@ -279,18 +283,18 @@ class BadgeNotification:
         ]
         
         for _ in range(self.PARTICLE_COUNT):
-            angle = math.random() * 2 * math.pi
-            speed = 200 + math.random() * 300
+            angle = random.random() * 2 * math.pi
+            speed = 200 + random.random() * 300
             
             self.particles.append(Particle(
                 x=self.position[0],
                 y=self.position[1],
                 vx=math.cos(angle) * speed,
                 vy=math.sin(angle) * speed,
-                color=colors[int(math.random() * len(colors))],
-                size=8 + int(math.random() * 8),
+                color=colors[int(random.random() * len(colors))],
+                size=8 + int(random.random() * 8),
                 alpha=255,
-                decay=100 + math.random() * 100
+                decay=self.PARTICLE_DECAY_MIN + random.random() * (self.PARTICLE_DECAY_MAX - self.PARTICLE_DECAY_MIN)
             ))
     
     def update(self, dt: float):
@@ -322,6 +326,9 @@ class BadgeNotification:
             particle.y += particle.vy * dt
             particle.vy += 200 * dt  # Gravity
             particle.alpha = max(0, int(particle.alpha - particle.decay * dt))
+        
+        # Clean up dead particles
+        self.particles = [p for p in self.particles if p.alpha > 0]
     
     def render(self):
         """
@@ -392,6 +399,11 @@ class BadgeNotification:
             True if fade out has finished
         """
         return self.elapsed >= self.total_duration
+    
+    def cleanup(self):
+        """Clean up all particles to prevent memory leaks."""
+        self.particles.clear()
+        self._particles_created = False
 
 
 def create_badge_notification(screen: pygame.Surface, badge: Badge) -> BadgeNotification:

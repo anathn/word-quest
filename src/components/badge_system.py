@@ -36,6 +36,14 @@ RARITY_COLORS = {
     Rarity.LEGENDARY: (255, 0, 255)       # Rainbow (animated in UI)
 }
 
+# Badge unlock thresholds
+SPEED_SPELLER_WORDS_REQUIRED = 10
+SPEED_SPELLER_MAX_SECONDS = 300  # 5 minutes
+PERSEVERANCE_ATTEMPTS_REQUIRED = 5
+WORD_WARRIOR_WORDS_REQUIRED = 25
+COMEBACK_KID_INCORRECT_THRESHOLD = 3
+STREAK_MASTER_STREAK_REQUIRED = 10
+
 
 @dataclass
 class Badge:
@@ -230,19 +238,19 @@ class BadgeManager:
     def _initialize_progress(self):
         """Initialize progress for all badges."""
         # Speed Speller: 10 words in 5 minutes
-        self.progress['speed_speller'] = BadgeProgress('speed_speller', 0, 10, False)
+        self.progress['speed_speller'] = BadgeProgress('speed_speller', 0, SPEED_SPELLER_WORDS_REQUIRED, False)
         
         # Perseverance: 5+ attempts on a word
-        self.progress['perseverance'] = BadgeProgress('perseverance', 0, 5, False)
+        self.progress['perseverance'] = BadgeProgress('perseverance', 0, PERSEVERANCE_ATTEMPTS_REQUIRED, False)
         
         # Perfect Planet: 1 perfect planet
         self.progress['perfect_planet'] = BadgeProgress('perfect_planet', 0, 1, False)
         
         # Streak Master: 10 word streak
-        self.progress['streak_master'] = BadgeProgress('streak_master', 0, 10, False)
+        self.progress['streak_master'] = BadgeProgress('streak_master', 0, STREAK_MASTER_STREAK_REQUIRED, False)
         
         # Word Warrior: 25 mastered words
-        self.progress['word_warrior'] = BadgeProgress('word_warrior', 0, 25, False)
+        self.progress['word_warrior'] = BadgeProgress('word_warrior', 0, WORD_WARRIOR_WORDS_REQUIRED, False)
         
         # Comeback Kid: 3+ incorrect then correct
         self.progress['comeback_kid'] = BadgeProgress('comeback_kid', 0, 1, False)
@@ -310,15 +318,12 @@ class BadgeManager:
         # Check for Speed Speller unlock
         if not self._speed_speller_unlocked:
             elapsed = time.time() - (self.tracker.speed_speller_start_time or 0)
-            if self.tracker.speed_speller_words >= 10 and elapsed < 300:  # 5 minutes
+            if self.tracker.speed_speller_words >= SPEED_SPELLER_WORDS_REQUIRED and elapsed < SPEED_SPELLER_MAX_SECONDS:
                 self._unlock_badge('speed_speller')
         
         # Perseverance - master after 5+ attempts
-        if attempts >= 5 and not self._perseverance_unlocked:
-            # Only unlock if this word is considered "mastered" (correct on final attempt)
-            # We'll check this at the end - if they finally got it right after many tries
-            if attempts >= 5:
-                self._unlock_badge('perseverance')
+        if attempts >= PERSEVERANCE_ATTEMPTS_REQUIRED and not self._perseverance_unlocked:
+            self._unlock_badge('perseverance')
         
         # Comeback Kid - correct after 3+ incorrect
         if self.tracker.had_3plus_incorrect and attempts > 1:
@@ -328,7 +333,7 @@ class BadgeManager:
         
         # Update progress for current word attempts
         self.progress['perseverance'].current = self.tracker.max_word_attempts
-        if self.tracker.max_word_attempts >= 5:
+        if self.tracker.max_word_attempts >= PERSEVERANCE_ATTEMPTS_REQUIRED:
             self.progress['perseverance'].is_complete = True
         
         # Reset for next word
@@ -340,7 +345,7 @@ class BadgeManager:
         self.tracker.current_word_attempts += 1
         self.tracker.current_word_incorrect += 1
         
-        if self.tracker.current_word_incorrect >= 3:
+        if self.tracker.current_word_incorrect >= COMEBACK_KID_INCORRECT_THRESHOLD:
             self.tracker.had_3plus_incorrect = True
         
         # Update Perseverance progress
@@ -356,7 +361,7 @@ class BadgeManager:
         # Update Streak Master progress
         self.progress['streak_master'].current = streak
         
-        if streak >= 10 and not self._streak_master_unlocked:
+        if streak >= STREAK_MASTER_STREAK_REQUIRED and not self._streak_master_unlocked:
             self._unlock_badge('streak_master')
     
     def on_planet_completed(self, perfect: bool):
@@ -382,7 +387,7 @@ class BadgeManager:
         # Update Word Warrior progress
         self.progress['word_warrior'].current = self.tracker.total_words_mastered
         
-        if self.tracker.total_words_mastered >= 25 and not self._word_warrior_unlocked:
+        if self.tracker.total_words_mastered >= WORD_WARRIOR_WORDS_REQUIRED and not self._word_warrior_unlocked:
             self._unlock_badge('word_warrior')
     
     # Badge unlocking

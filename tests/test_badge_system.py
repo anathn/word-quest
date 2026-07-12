@@ -415,5 +415,146 @@ class TestFactoryFunction:
         assert manager.student_id == 'test_student'
 
 
+class TestIntegration:
+    """Integration tests for full badge unlock flow."""
+    
+    @pytest.fixture
+    def badge_manager(self, tmp_path):
+        """Create a BadgeManager for testing."""
+        badge_defs = {
+            'badges': [
+                {
+                    'id': 'speed_speller',
+                    'name': 'Speed Speller',
+                    'description': 'Complete 10 words in under 5 minutes',
+                    'icon_path': 'assets/badges/speed_speller.png',
+                    'rarity': 'common',
+                    'unlock_condition': '10_words_in_5_minutes',
+                    'color_scheme': 'yellow_blue'
+                },
+                {
+                    'id': 'perseverance',
+                    'name': 'Perseverance Award',
+                    'description': 'Master a word after 5+ attempts',
+                    'icon_path': 'assets/badges/perseverance.png',
+                    'rarity': 'uncommon',
+                    'unlock_condition': 'master_after_5_attempts',
+                    'color_scheme': 'brown_green'
+                },
+                {
+                    'id': 'perfect_planet',
+                    'name': 'Perfect Planet',
+                    'description': 'Get 5/5 correct on first attempt',
+                    'icon_path': 'assets/badges/perfect_planet.png',
+                    'rarity': 'rare',
+                    'unlock_condition': 'perfect_planet',
+                    'color_scheme': 'gold_purple'
+                },
+                {
+                    'id': 'streak_master',
+                    'name': 'Streak Master',
+                    'description': 'Achieve a 10-word streak',
+                    'icon_path': 'assets/badges/streak_master.png',
+                    'rarity': 'rare',
+                    'unlock_condition': '10_word_streak',
+                    'color_scheme': 'orange_red'
+                },
+                {
+                    'id': 'word_warrior',
+                    'name': 'Word Warrior',
+                    'description': 'Master 25 words total',
+                    'icon_path': 'assets/badges/word_warrior.png',
+                    'rarity': 'legendary',
+                    'unlock_condition': '25_words_mastered',
+                    'color_scheme': 'blue_silver'
+                },
+                {
+                    'id': 'comeback_kid',
+                    'name': 'Comeback Kid',
+                    'description': 'Correct answer after 3+ incorrect attempts',
+                    'icon_path': 'assets/badges/comeback_kid.png',
+                    'rarity': 'uncommon',
+                    'unlock_condition': 'correct_after_3_wrong',
+                    'color_scheme': 'green_yellow'
+                }
+            ]
+        }
+        
+        import json
+        defs_path = os.path.join(tmp_path, 'badge_definitions.json')
+        with open(defs_path, 'w') as f:
+            json.dump(badge_defs, f)
+        
+        manager = create_badge_manager(student_id='student_1')
+        manager.BADGE_DEFS_PATH = defs_path
+        manager._load_badge_definitions()
+        
+        return manager
+    
+    def test_full_badge_unlock_flow(self, badge_manager):
+        """Integration test: Full game flow from word completion to badge unlock."""
+        badge_manager.start_session()
+        
+        # Simulate natural game flow: word started, attempts, completion
+        callbacks = []
+        def on_badge_unlocked(badge):
+            callbacks.append(badge.id)
+        badge_manager.on_badge_unlocked = on_badge_unlocked
+        
+        # Complete 10 words quickly for Speed Speller
+        for i in range(10):
+            badge_manager.on_word_started()
+            badge_manager.on_word_completed(
+                attempts=1, hints_used=0, is_first_attempt_correct=True,
+                completion_time=10.0
+            )
+        
+        # Verify badge unlock callback was called
+        assert 'speed_speller' in callbacks
+        assert badge_manager.is_badge_unlocked('speed_speller')
+    
+    def test_multiple_badges_unlock_same_session(self, badge_manager):
+        """Integration test: Multiple badges unlocking in same session."""
+        badge_manager.start_session()
+        
+        callbacks = []
+        def on_badge_unlocked(badge):
+            callbacks.append(badge.id)
+        badge_manager.on_badge_unlocked = on_badge_unlocked
+        
+        # Unlock Streak Master (10 correct in a row)
+        for i in range(10):
+            badge_manager.on_correct_answer(streak=i + 1)
+        
+        # Unlock Perfect Planet
+        badge_manager.on_planet_completed(perfect=True)
+        
+        # Verify both badges unlocked
+        assert 'streak_master' in callbacks
+        assert 'perfect_planet' in callbacks
+        assert len(callbacks) == 2
+        assert badge_manager.get_unlocked_count() == 2
+    
+    def test_performance_badge_check_under_50ms(self, badge_manager):
+        """Performance test: Badge unlock check completes in <50ms."""
+        import time
+        
+        badge_manager.start_session()
+        
+        # Measure time for on_word_completed (includes all badge checks)
+        start = time.time()
+        for _ in range(100):
+            badge_manager.on_word_started()
+            badge_manager.on_word_completed(
+                attempts=1, hints_used=0, is_first_attempt_correct=True,
+                completion_time=10.0
+            )
+        end = time.time()
+        
+        # 100 operations should take <50ms total (0.5ms per operation)
+        elapsed_ms = (end - start) * 1000
+        assert elapsed_ms < 50, f"100 badge checks took {elapsed_ms}ms, expected <50ms"
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
