@@ -23,6 +23,11 @@ class EmailScheduler:
     Checks hourly if it's time to send a scheduled email.
     Runs in a daemon thread so it doesn't block application exit.
     
+    Thread Safety:
+        - Uses RLock to protect config access from race conditions
+        - Creates config snapshots before background operations
+        - Safe for concurrent UI and scheduler access
+    
     Example:
         scheduler = EmailScheduler(config, service, summary_generator)
         scheduler.start()
@@ -50,6 +55,7 @@ class EmailScheduler:
         self._running = False
         self._thread: Optional[threading.Thread] = None
         self._last_check: Optional[datetime] = None
+        self._config_lock = threading.RLock()  # Reentrant lock for thread-safe config access
     
     def start(self):
         """Start the background scheduler thread."""
@@ -81,42 +87,61 @@ class EmailScheduler:
     
     def _should_send_email(self) -> bool:
         """
-        Check if it's time to send the scheduled email.
+        Check if it's time to send the scheduled email (thread-safe).
         
         Returns:
             True if email should be sent
         """
-        if not self.email_config.enabled:
-            return False
-        
-        if not self.email_config.consent_date:
-            return False
-        
-        if not self.email_config.email_address:
-            return False
-        
-        now = datetime.now()
-        today_weekday = now.weekday()
-        
-        # Check if today is the selected day
-        if today_weekday != self.email_config.send_day.value:
-            return False
-        
-        # Check if we've already sent this week
-        if self.email_config.last_sent:
-            last_sent_week = self.email_config.last_sent.isocalendar()[1]
-            current_week = now.isocalendar()[1]
-            current_year = now.isocalendar()[0]
-            
-            if last_sent_week == current_week and self.email_config.last_sent.year == current_year:
+        with self._config_lock:
+            if not self.email_config.enabled:
                 return False
-        
-        # Check if it's past the scheduled time
-        current_time = datetime.combine(now.date(), self.email_config.send_time)
-        return now >= current_time
+            
+            if not self.email_config.consent_date:
+                return False
+            
+            if not self.email_config.email_address:
+                return False
+            
+            now = datetime.now()
+            today_weekday = now.weekday()
+            
+            # Check if today is the selected day
+            if today_weekday != self.email_config.send_day.value:
+                return False
+            
+            # Check if we've already sent this week
+            if self.email_config.last_sent:
+                last_sent_week = self.email_config.last_sent.isocalendar()[1]
+                current_week = now.isocalendar()[1]
+                current_year = self.email_config.last_sent.year
+                
+                if last_sent_week == current_week and self.email_config.last_sent.year == current_year:
+                    return False
+            
+            # Check if it's past the scheduled time
+            current_time = datetime.combine(now.date(), self.email_config.send_time)
+            return now >= current_time
     
     def _send_scheduled_email(self):
-        """Send the scheduled weekly progress email."""
+        """
+        Send the scheduled weekly progress email (thread-safe).
+        
+        Thread Safety:
+            - Creates config snapshot under lock
+            - Uses snapshot for email sending outside lock
+            - Updates config safely after successful send
+        """
+        # Create a thread-safe snapshot of config under lock
+        with self._config_lock:
+            config_snapshot = {
+                'enabled': self.email_config.enabled,
+                'email_address': self.email_config.email_address,
+                'consent_date': self.email_config.consent_date,
+                'send_day': self.email_config.send_day,
+                'send_time': self.email_config.send_time,
+                'last_sent': self.email_config.last_sent
+            }
+        
         # Get current student ID
         student_id = self._get_current_student_id()
         
@@ -129,29 +154,32 @@ class EmailScheduler:
             from datetime import date
             summary = self.summary_generator.generate_summary(student_id, date.today())
             
-            # Create report data
+            # Create report data with to_email for unsubscribe token generation
             summary_data = {
                 "words_mastered": summary.words_mastered,
                 "accuracy_rate": summary.accuracy_rate,
                 "total_attempts": self._get_total_attempts(student_id),
                 "total_time_minutes": summary.total_time_minutes,
-                "words_mastered_list": summary.words_mastered_list
+                "words_mastered_list": summary.words_mastered_list,
+                "to_email": config_snapshot['email_address']  # For unsubscribe token
             }
             
             # Get student name
             student_name = self._get_student_name(student_id)
             
-            # Send email
+            # Send email using snapshot data
             success, message = self.email_service.send_weekly_report(
-                self.email_config.email_address,
+                config_snapshot['email_address'],
                 student_name,
                 summary_data
             )
             
             if success:
-                self.email_config.record_email_sent()
-                self.email_config.save()
-                print(f"Weekly report sent successfully to {self.email_config.email_address}")
+                # Update config safely with lock
+                with self._config_lock:
+                    self.email_config.record_email_sent()
+                    self.email_config.save()
+                print(f"Weekly report sent successfully to {config_snapshot['email_address']}")
             else:
                 print(f"Failed to send weekly report: {message}")
         
@@ -254,15 +282,16 @@ class EmailScheduler:
     
     def get_next_scheduled_time(self) -> Optional[datetime]:
         """
-        Get the next scheduled email time.
+        Get the next scheduled email time (thread-safe).
         
         Returns:
             Next scheduled datetime or None if not enabled
         """
-        if not self.email_config.enabled:
-            return None
-        
-        return self.email_config.next_scheduled
+        with self._config_lock:
+            if not self.email_config.enabled:
+                return None
+            
+            return self.email_config.next_scheduled
     
     def is_ready_to_configure(self) -> bool:
         """

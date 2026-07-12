@@ -7,10 +7,11 @@ Implements STORY-003-06: Email Notification Configuration
 
 import pygame
 from typing import Optional, Callable, Tuple
-from datetime import time
+from datetime import time, datetime
 
 from src.email.email_config import EmailConfig, DayOfWeek
 from src.email.email_service import EmailService
+import re
 
 
 class EmailConfigPanel:
@@ -632,9 +633,6 @@ class EmailConfigPanel:
     def reset_test_result(self):
         """Clear test email result."""
         self._test_email_result = None
-
-
-from datetime import datetime
 
 
 def create_email_config_panel(

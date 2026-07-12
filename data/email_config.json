@@ -1,12 +1,12 @@
 {
   "enabled": true,
-  "email_address": "test@example.com",
+  "email_address": "+hsoqrRhkdB0YduC4OT0CA==",
   "send_day": 0,
   "send_time": {
     "hour": 8,
     "minute": 0
   },
-  "consent_date": "2026-07-11T21:41:27.952694",
-  "last_sent": "2026-07-11T21:41:27.955164",
+  "consent_date": "2026-07-12T00:38:29.319768",
+  "last_sent": "2026-07-12T00:38:29.320304",
   "next_scheduled": "2026-07-13T08:00:00"
 }
