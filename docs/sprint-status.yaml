@@ -583,10 +583,11 @@ epics:
         title: "Email notification config"
         description: "Configure weekly email reports"
         priority: P2
-        status: "planning"
-        assignee: null
-        started_date: null
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-11"
         completed_date: null
+        branch: "EPIC-003-STORY-006"
         acceptance_criteria:
           - "Enable/disable email reports"
           - "Select day of week for delivery"
