@@ -629,11 +629,11 @@ epics:
     name: "Motivation Systems"
     priority: P1
     description: "Rewards, streaks, and character interaction"
-    status: "planning"
+    status: "ready-for-dev"
     progress_percent: 0
     dependencies: ["EPIC-001"]
     blockers: []
-    notes: "Depends on Core Gameplay for event triggers"
+    notes: "All 6 stories have detailed implementation guides in `docs/stories/`. Ready for Sprint 3 development. Depends on EPIC-001 (Core Gameplay) for event triggers."
     target_sprint: 3
     estimated_points: 27
     completed_points: 0
@@ -642,7 +642,7 @@ epics:
         title: "Streak counter"
         description: "Track consecutive correct answers"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
@@ -651,16 +651,18 @@ epics:
           - "Reset on incorrect answer"
           - "Display current streak on screen"
           - "No penalty for streak break"
+          - "Streak data persists across sessions"
+          - "Best streak tracked in profile"
         complexity: "Low"
         points: 2
         blockers: []
-        notes: ""
+        notes: "Detailed story file: docs/stories/STORY-004-01.md"
 
       - id: STORY-004-02
         title: "Streak bonus animations"
         description: "Visual rewards for streak milestones"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
@@ -668,80 +670,81 @@ epics:
           - "3-word streak: golden rocket boost"
           - "5-word streak: special planet discovery"
           - "Animation plays immediately on milestone"
+          - "Non-blocking (game continues after animation)"
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "Detailed story file: docs/stories/STORY-004-02.md"
 
       - id: STORY-004-03
         title: "Achievement badge system"
         description: "Unlock badges for milestones"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
         acceptance_criteria:
-          - "Define badge types (Speed Speller, Perseverance, Perfect Planet)"
-          - "Track unlock conditions"
+          - "6 badge types defined (Speed Speller, Perseverance, Perfect Planet, Streak Master, Word Warrior, Comeback Kid)"
+          - "Track unlock conditions in real-time"
           - "Display unlocked badges"
           - "Show progress toward next badge"
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "Detailed story file: docs/stories/STORY-004-03.md"
 
       - id: STORY-004-04
         title: "Captain Cosmos character"
         description: "Mascot character with voice lines"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
         acceptance_criteria:
-          - "Captain Cosmos sprite/animation"
-          - "Voice lines for encouragement"
-          - "Guidance during tutorial"
+          - "Captain Cosmos sprite with multiple animation states"
+          - "Voice lines for all game events (TTS for MVP)"
+          - "Tutorial guidance"
           - "Celebration dialogue on achievements"
         complexity: "High"
         points: 8
         blockers: []
-        notes: "May use TTS for MVP, upgrade later"
+        notes: "Detailed story file: docs/stories/STORY-004-04.md. Use TTS for MVP, professional recording can upgrade later."
 
       - id: STORY-004-05
         title: "Rocket customization"
         description: "Allow students to choose rocket color"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
         acceptance_criteria:
-          - "Color picker or preset options"
+          - "8 preset color options"
           - "Apply selected color to rocket"
           - "Persist choice to profile"
         complexity: "Low"
         points: 2
         blockers: []
-        notes: ""
+        notes: "Detailed story file: docs/stories/STORY-004-05.md"
 
       - id: STORY-004-06
         title: "Sticker collection"
-        description: "Space-themed badge rewards"
+        description: "Space-themed sticker rewards"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
         completed_date: null
         acceptance_criteria:
-          - "Define sticker types"
+          - "10 sticker types defined"
           - "Unlock on achievements"
           - "Display collection in student view"
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "Detailed story file: docs/stories/STORY-004-06.md"
 
   - id: EPIC-005
     name: "Visual & Audio Polish"
