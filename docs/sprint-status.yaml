@@ -25,8 +25,7 @@ current_sprint:
     - "STORY-003-04"  # CSV import for word lists (approved 2026-07-11, all issues resolved)
     - "STORY-003-05"  # Weekly summary view (approved 2026-07-11, all issues resolved)
   in_progress_stories: []
-  review_stories:
-    - "STORY-004-01"  # Streak counter (PR ready)
+  review_stories: []
   planned_stories:
     - "STORY-003-03"  # Word list CRUD operations
 
@@ -643,13 +642,10 @@ epics:
         title: "Streak counter"
         description: "Track consecutive correct answers"
         priority: P1
-        status: "review"
+        status: "requested-changes"
         assignee: "agent"
         started_date: "2026-07-12"
         branch: "EPIC-004-STORY-001"
-        assignee: null
-        started_date: null
-        completed_date: null
         acceptance_criteria:
           - "Increment on correct answer"
           - "Reset on incorrect answer"
@@ -660,7 +656,19 @@ epics:
         complexity: "Low"
         points: 2
         blockers: []
-        notes: "Detailed story file: docs/stories/STORY-004-01.md"
+        notes: "Implementation complete. Code review completed 2026-07-12. 3 issues found and FIXED: (1) Critical - import time moved to module level, (2) High - position now dynamic based on screen width, (3) Medium - random seed now time-based. Review document: docs/reviews/STORY-004-01-findings-2026-07-12.md. Ready for re-review."
+        implementation_notes: |
+          FIXES APPLIED 2026-07-12:
+          1. Critical: Moved 'import time' from inside record_correct_answer() method to module level (line 8)
+          2. High: Changed hardcoded position (800, 20) to dynamic position (screen_width - 100, 20) in spelling_challenge.py
+          3. Medium: Replaced random.seed(self._current_streak) with time-based seed for natural particle variation
+          4. Fixed typo: PULSE_SCALE_min -> PULSE_SCALE_MIN
+          5. Fixed: Changed 3.14159 to math.pi for cleaner code
+          
+          Files modified:
+          - src/components/streak_tracker.py: Import moved to module level
+          - src/screens/spelling_challenge.py: Dynamic positioning implemented
+          - src/ui/streak_display.py: Time-based seed + typo fixes
 
       - id: STORY-004-02
         title: "Streak bonus animations"

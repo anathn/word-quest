@@ -182,10 +182,12 @@ class SpellingChallengeScreen:
             
             # Initialize streak display (STORY-004-01)
             if not self.streak_display:
+                # Dynamic position based on screen size for responsiveness
+                screen_width = self.typography.screen.get_width()
                 self.streak_display = create_streak_display(
                     screen=self.typography.screen,
                     streak_tracker=self.progress_tracker.streak_tracker,
-                    position=(800, 20)  # Top-right corner
+                    position=(screen_width - 100, 20)  # Right-aligned, 100px from edge
                 )
         
         # Start tracking the word (STORY-002-01)

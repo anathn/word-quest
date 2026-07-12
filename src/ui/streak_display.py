@@ -37,7 +37,7 @@ class StreakDisplay:
     
     # Animation constants
     PULSE_DURATION_MS = 100         # 100ms pulse when streak increments
-    PULSE_SCALE_min = 1.0
+    PULSE_SCALE_MIN = 1.0
     PULSE_SCALE_MAX = 1.2
     
     # Visual settings
@@ -156,7 +156,7 @@ class StreakDisplay:
         progress = elapsed / self.PULSE_DURATION_MS
         # Sine wave: 1.0 -> 1.2 -> 1.0
         import math
-        scale = self.PULSE_SCALE_MIN + (self.PULSE_SCALE_MAX - self.PULSE_SCALE_MIN) * math.sin(progress * 3.14159)
+        scale = self.PULSE_SCALE_MIN + (self.PULSE_SCALE_MAX - self.PULSE_SCALE_MIN) * math.sin(progress * math.pi)
         return scale
     
     def _render_streak_hidden(self) -> None:
@@ -237,8 +237,10 @@ class StreakDisplay:
         import math
         import random
         
-        # Use deterministic "random" positions based on streak value
-        random.seed(self._current_streak)
+        # Use time-based seed for natural variation (milliseconds for uniqueness)
+        import time
+        time_seed = int(time.time() * 1000) % 100000
+        random.seed(time_seed)
         
         radius = 50  # Radius for star distribution
         for i, star in enumerate(self._star_surfaces):

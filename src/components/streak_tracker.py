@@ -6,6 +6,7 @@ Implements non-punitive streak tracking for student motivation.
 """
 
 from typing import Optional
+import time
 
 
 class StreakTracker:
@@ -43,7 +44,6 @@ class StreakTracker:
         
         # Track when streak started (for the first answer)
         if self._current_streak == 1:
-            import time
             self._streak_start_time = time.time()
         
         return self._current_streak
