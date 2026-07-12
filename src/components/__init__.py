@@ -16,6 +16,7 @@ from .hint_manager import HintManager, HintData, create_hint_manager
 from .progress_tracker import ProgressTracker, LegacyWordAttempt, SessionData, create_progress_tracker
 from .planet_manager import PlanetManager, PlanetStatus, PlanetResult, WordResult, create_planet_manager
 from .streak_tracker import StreakTracker, create_streak_tracker
+from .streak_bonus import StreakBonusManager, BonusType, BonusMilestone, create_streak_bonus_manager
 
 __all__ = [
     'AudioSystem',
@@ -50,5 +51,9 @@ __all__ = [
     'WordResult',
     'create_planet_manager',
     'StreakTracker',
-    'create_streak_tracker'
+    'create_streak_tracker',
+    'StreakBonusManager',
+    'BonusType',
+    'BonusMilestone',
+    'create_streak_bonus_manager'
 ]
