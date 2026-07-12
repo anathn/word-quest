@@ -618,7 +618,7 @@ class SpellingChallengeScreen:
         self._last_mastered_count = 0
         
         # Reset streak display (STORY-004-01)
-        if self.streak_display:
+        if getattr(self, 'streak_display', None):
             self.streak_display.update_streak(0)
     
     def get_hint_analytics(self) -> dict:
