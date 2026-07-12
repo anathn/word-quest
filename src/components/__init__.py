@@ -15,6 +15,7 @@ from .feedback_controller import (
 from .hint_manager import HintManager, HintData, create_hint_manager
 from .progress_tracker import ProgressTracker, LegacyWordAttempt, SessionData, create_progress_tracker
 from .planet_manager import PlanetManager, PlanetStatus, PlanetResult, WordResult, create_planet_manager
+from .streak_tracker import StreakTracker, create_streak_tracker
 
 __all__ = [
     'AudioSystem',
@@ -47,5 +48,7 @@ __all__ = [
     'PlanetStatus',
     'PlanetResult',
     'WordResult',
-    'create_planet_manager'
+    'create_planet_manager',
+    'StreakTracker',
+    'create_streak_tracker'
 ]

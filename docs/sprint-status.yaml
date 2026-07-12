@@ -24,7 +24,8 @@ current_sprint:
     - "STORY-003-02"  # Student profile management (verified 2026-07-10)
     - "STORY-003-04"  # CSV import for word lists (approved 2026-07-11, all issues resolved)
     - "STORY-003-05"  # Weekly summary view (approved 2026-07-11, all issues resolved)
-  in_progress_stories: []
+  in_progress_stories:
+    - "STORY-004-01"  # Streak counter
   review_stories: []  # STORY-003-06 review complete and approved 2026-07-12
   planned_stories:
     - "STORY-003-03"  # Word list CRUD operations
@@ -642,7 +643,10 @@ epics:
         title: "Streak counter"
         description: "Track consecutive correct answers"
         priority: P1
-        status: "ready-for-dev"
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-12"
+        branch: "EPIC-004-STORY-001"
         assignee: null
         started_date: null
         completed_date: null

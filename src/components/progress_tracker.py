@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 
 from src.components.planet_manager import PlanetManager, PlanetResult
 from src.components.session_tracker import SessionTracker, create_session_tracker
+from src.components.streak_tracker import StreakTracker, create_streak_tracker
 
 # TYPE_CHECKING for circular import avoidance
 from typing import TYPE_CHECKING
@@ -141,6 +142,9 @@ class ProgressTracker:
             student_id=student_id,
             data_store=data_store
         )
+        
+        # Streak tracker (STORY-004-01)
+        self.streak_tracker = create_streak_tracker()
         
         # Mastered words tracking (STORY-002-03)
         self.mastered_words: Set[str] = set()
@@ -594,6 +598,9 @@ class ProgressTracker:
         # Reset SessionTracker (STORY-002-01)
         self.session_tracker.reset()
         
+        # Reset StreakTracker (STORY-004-01)
+        self.streak_tracker.reset()
+        
         # Reset mastered words tracking (STORY-002-03)
         self.mastered_words.clear()
         self.total_words_in_list = 0
@@ -626,6 +633,43 @@ class ProgressTracker:
             
             return True
         return False
+    
+    # Streak Tracker Methods (STORY-004-01)
+    
+    def record_correct_answer(self) -> int:
+        """Record a correct answer and update streak.
+        
+        Returns:
+            New streak value after incrementing
+        """
+        return self.streak_tracker.record_correct_answer()
+    
+    def record_incorrect_answer(self) -> None:
+        """Record an incorrect answer and reset streak.
+        
+        Note: This is non-punitive - no negative feedback, just reset.
+        """
+        self.streak_tracker.record_incorrect_answer()
+    
+    def get_current_streak(self) -> int:
+        """Get the current streak value.
+        
+        Returns:
+            Current consecutive correct answer count
+        """
+        return self.streak_tracker.get_current_streak()
+    
+    def get_best_streak(self) -> int:
+        """Get the best streak achieved in this session.
+        
+        Returns:
+            Highest streak reached
+        """
+        return self.streak_tracker.get_best_streak()
+    
+    def reset_session_streak(self) -> None:
+        """Reset streak for a new session (preserves best streak)."""
+        self.streak_tracker.reset_session()
     
     def get_mastered_count(self) -> int:
         """

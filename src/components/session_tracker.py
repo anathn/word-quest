@@ -603,6 +603,7 @@ class SessionTracker:
         self._word_attempts = 0
         self._word_hints_used = 0
         self._current_streak = 0
+        self._session_best_streak = 0
         self._word_first_attempt_correct = None
         self._word_final_correct = False
         self._last_activity = None
