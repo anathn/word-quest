@@ -248,7 +248,7 @@ class TestEmailServiceSendMethods:
             sender_email="sender@example.com"
         )
         
-        success, message = service.send_test_email("test@example.com")
+        success, message = service.send_test_email("failure-test@example.com")
         
         assert success is False
         assert "failed" in message.lower()
