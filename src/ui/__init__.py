@@ -10,6 +10,7 @@ from .profile_selector import ProfileSelector, create_profile_selector
 from .csv_import_dialog import CSVImportDialog, show_csv_import_dialog
 from .import_preview import ImportPreview, create_import_preview
 from .email_config_panel import EmailConfigPanel, create_email_config_panel
+from .streak_display import StreakDisplay, create_streak_display
 
 __all__ = [
     'Typography',
@@ -33,5 +34,7 @@ __all__ = [
     'ImportPreview',
     'create_import_preview',
     'EmailConfigPanel',
-    'create_email_config_panel'
+    'create_email_config_panel',
+    'StreakDisplay',
+    'create_streak_display'
 ]

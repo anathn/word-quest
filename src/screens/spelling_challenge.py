@@ -179,6 +179,16 @@ class SpellingChallengeScreen:
                 # Update word total from word manager
                 total_words = self.word_manager.get_total_word_count()
                 self.progress_tracker.set_total_words(total_words)
+            
+            # Initialize streak display (STORY-004-01)
+            if not self.streak_display:
+                # Dynamic position based on screen size for responsiveness
+                screen_width = self.typography.screen.get_width()
+                self.streak_display = create_streak_display(
+                    screen=self.typography.screen,
+                    streak_tracker=self.progress_tracker.streak_tracker,
+                    position=(screen_width - 100, 20)  # Right-aligned, 100px from edge
+                )
         
         # Start tracking the word (STORY-002-01)
         if self.progress_tracker:
@@ -262,6 +272,11 @@ class SpellingChallengeScreen:
         # Record incorrect attempt when retry feedback shown (STORY-002-01)
         if feedback_type == FeedbackType.RETRY and self.progress_tracker:
             self.progress_tracker.record_attempt(False)
+            # Reset streak on incorrect answer (STORY-004-01)
+            self.progress_tracker.record_incorrect_answer()
+            # Update streak display to hide it
+            if self.streak_display:
+                self.streak_display.update_streak(0)
         
         if self.on_feedback_shown:
             self.on_feedback_shown(feedback_type)
@@ -297,6 +312,13 @@ class SpellingChallengeScreen:
                 current_count = self.progress_tracker.get_mastered_count()
                 if current_count > self._last_mastered_count:
                     self.progress_display.trigger_mastery_flash()
+            
+            # Record correct answer for streak tracking (STORY-004-01)
+            new_streak = self.progress_tracker.record_correct_answer()
+            
+            # Update streak display
+            if self.streak_display:
+                self.streak_display.update_streak(new_streak)
         
         if self.on_word_complete:
             self.on_word_complete(True)  # True = success
@@ -338,6 +360,16 @@ class SpellingChallengeScreen:
         """
         if self.progress_display and self.progress_tracker:
             self.progress_display.render(screen)
+    
+    def render_streak_display(self, screen):
+        """
+        Render the streak counter on the screen (STORY-004-01).
+        
+        Args:
+            screen: Pygame surface to render on
+        """
+        if self.streak_display:
+            self.streak_display.render(screen)
     
     def _on_planet_complete(self, planet_result):
         """
@@ -586,6 +618,10 @@ class SpellingChallengeScreen:
         
         # Reset progress display tracking (STORY-002-03)
         self._last_mastered_count = 0
+        
+        # Reset streak display (STORY-004-01)
+        if getattr(self, 'streak_display', None):
+            self.streak_display.update_streak(0)
     
     def get_hint_analytics(self) -> dict:
         """
