@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from src.components.planet_manager import PlanetManager, PlanetResult
 from src.components.session_tracker import SessionTracker, create_session_tracker
 from src.components.streak_tracker import StreakTracker, create_streak_tracker
+from src.components.badge_system import BadgeManager, create_badge_manager
 
 # TYPE_CHECKING for circular import avoidance
 from typing import TYPE_CHECKING
@@ -146,6 +147,9 @@ class ProgressTracker:
         # Streak tracker (STORY-004-01)
         self.streak_tracker = create_streak_tracker()
         
+        # Badge system (STORY-004-03)
+        self.badge_manager = create_badge_manager(student_id=student_id, data_store=data_store)
+        
         # Mastered words tracking (STORY-002-03)
         self.mastered_words: Set[str] = set()
         self.total_words_in_list: int = 0
@@ -185,6 +189,10 @@ class ProgressTracker:
         # Initialize SessionTracker (STORY-002-01)
         self.session_tracker.start_session(session_id=session_id)
         
+        # Initialize badge tracking for session (STORY-004-03)
+        if self.badge_manager:
+            self.badge_manager.start_session()
+        
         return self.current_session
     
     def end_session(self):
@@ -195,6 +203,10 @@ class ProgressTracker:
             
             # Complete session in SessionTracker (STORY-002-01)
             self.session_tracker.complete_session()
+            
+            # End badge tracking session and persist (STORY-004-03)
+            if self.badge_manager:
+                self.badge_manager.end_session()
     
     def start_word(self, word_id: str, word_text: str):
         """
@@ -221,6 +233,10 @@ class ProgressTracker:
         
         # Track with SessionTracker (STORY-002-01)
         self.session_tracker.start_word(word_id, word_text)
+        
+        # Notify badge manager (STORY-004-03)
+        if self.badge_manager:
+            self.badge_manager.on_word_started()
     
     def record_attempt(self, is_correct: bool):
         """
@@ -321,6 +337,16 @@ class ProgressTracker:
                 'is_correct': is_correct,
                 'just_mastered': mastered_newly
             })
+            
+            # Notify badge manager (STORY-004-03)
+            if self.badge_manager:
+                completion_time = legacy_attempt.completion_time
+                self.badge_manager.on_word_completed(
+                    attempts=legacy_attempt.attempts,
+                    hints_used=legacy_attempt.hints_used,
+                    is_first_attempt_correct=(legacy_attempt.attempts == 1 and is_correct),
+                    completion_time=completion_time
+                )
     
     def _complete_word_tracking(self):
         """Complete tracking for the current word."""
@@ -554,6 +580,12 @@ class ProgressTracker:
         if self.current_session:
             self.current_session.planets_completed.append(planet_data)
         
+        # Notify badge manager about planet completion (STORY-004-03)
+        # Perfect planet = 5/5 correct on first attempt
+        if self.badge_manager:
+            is_perfect = (planet_result.first_attempt_correct == 5)
+            self.badge_manager.on_planet_completed(perfect=is_perfect)
+        
         # Notify callback with status from PlanetManager
         if self.on_planet_complete:
             self.on_planet_complete({
@@ -601,6 +633,10 @@ class ProgressTracker:
         # Reset StreakTracker (STORY-004-01)
         self.streak_tracker.reset()
         
+        # Reset BadgeManager session (STORY-004-03)
+        if self.badge_manager:
+            self.badge_manager.start_session()
+        
         # Reset mastered words tracking (STORY-002-03)
         self.mastered_words.clear()
         self.total_words_in_list = 0
@@ -632,6 +668,11 @@ class ProgressTracker:
                 self.data_store.save(self.session_tracker.student_id, progress_data)
             
             return True
+        
+        # Notify badge manager for Word Warrior badge (STORY-004-03)
+        if self.badge_manager:
+            self.badge_manager.on_word_mastered()
+        
         return False
     
     # Streak Tracker Methods (STORY-004-01)
@@ -642,7 +683,13 @@ class ProgressTracker:
         Returns:
             New streak value after incrementing
         """
-        return self.streak_tracker.record_correct_answer()
+        streak = self.streak_tracker.record_correct_answer()
+        
+        # Notify badge manager (STORY-004-03)
+        if self.badge_manager:
+            self.badge_manager.on_correct_answer(streak=streak)
+        
+        return streak
     
     def record_incorrect_answer(self) -> None:
         """Record an incorrect answer and reset streak.
@@ -650,6 +697,10 @@ class ProgressTracker:
         Note: This is non-punitive - no negative feedback, just reset.
         """
         self.streak_tracker.record_incorrect_answer()
+        
+        # Notify badge manager (STORY-004-03)
+        if self.badge_manager:
+            self.badge_manager.on_incorrect_answer()
     
     def get_current_streak(self) -> int:
         """Get the current streak value.

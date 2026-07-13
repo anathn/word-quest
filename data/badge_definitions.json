@@ -1,0 +1,58 @@
+{
+  "badges": [
+    {
+      "id": "speed_speller",
+      "name": "Speed Speller",
+      "description": "Complete 10 words in under 5 minutes",
+      "icon_path": "assets/badges/speed_speller.png",
+      "rarity": "common",
+      "unlock_condition": "10_words_in_5_minutes",
+      "color_scheme": "yellow_blue"
+    },
+    {
+      "id": "perseverance",
+      "name": "Perseverance Award",
+      "description": "Master a word after 5+ attempts",
+      "icon_path": "assets/badges/perseverance.png",
+      "rarity": "uncommon",
+      "unlock_condition": "master_after_5_attempts",
+      "color_scheme": "brown_green"
+    },
+    {
+      "id": "perfect_planet",
+      "name": "Perfect Planet",
+      "description": "Get 5/5 correct on first attempt",
+      "icon_path": "assets/badges/perfect_planet.png",
+      "rarity": "rare",
+      "unlock_condition": "perfect_planet",
+      "color_scheme": "gold_purple"
+    },
+    {
+      "id": "streak_master",
+      "name": "Streak Master",
+      "description": "Achieve a 10-word streak",
+      "icon_path": "assets/badges/streak_master.png",
+      "rarity": "rare",
+      "unlock_condition": "10_word_streak",
+      "color_scheme": "orange_red"
+    },
+    {
+      "id": "word_warrior",
+      "name": "Word Warrior",
+      "description": "Master 25 words total",
+      "icon_path": "assets/badges/word_warrior.png",
+      "rarity": "legendary",
+      "unlock_condition": "25_words_mastered",
+      "color_scheme": "blue_silver"
+    },
+    {
+      "id": "comeback_kid",
+      "name": "Comeback Kid",
+      "description": "Correct answer after 3+ incorrect attempts",
+      "icon_path": "assets/badges/comeback_kid.png",
+      "rarity": "uncommon",
+      "unlock_condition": "correct_after_3_wrong",
+      "color_scheme": "green_yellow"
+    }
+  ]
+}
