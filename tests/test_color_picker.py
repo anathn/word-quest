@@ -9,8 +9,10 @@ import pygame
 import os
 import sys
 
-# Set TESTING environment variable before importing project code
+# Set TESTING environment variable and headless display before importing project code
 os.environ["TESTING"] = "1"
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ["SDL_AUDIODRIVER"] = "dummy"
 
 from src.ui.color_picker import (
     ColorPicker,

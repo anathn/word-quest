@@ -9,8 +9,10 @@ import pygame
 import os
 import sys
 
-# Set TESTING environment variable
+# Set TESTING environment variable and headless display before importing
 os.environ["TESTING"] = "1"
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ["SDL_AUDIODRIVER"] = "dummy"
 
 from src.components.rocket_renderer import (
     RocketRenderer,
