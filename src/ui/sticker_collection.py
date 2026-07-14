@@ -454,7 +454,7 @@ class StickerCollection:
             if elapsed >= self.HOVER_DURATION_MS:
                 self.hover_scale = self.HOVER_SCALE
     
-    def handle_event(self, event: pygame.Event) -> None:
+    def handle_event(self, event: pygame.event.Event) -> None:
         """
         Handle pygame events.
         
