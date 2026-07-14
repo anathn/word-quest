@@ -9,6 +9,8 @@ from datetime import datetime
 from typing import Optional
 import re
 
+from src.models.rocket_colors import DEFAULT_ROCKET_COLOR
+
 
 @dataclass
 class StudentProfile:
@@ -30,6 +32,7 @@ class StudentProfile:
     created_date: datetime
     last_played: Optional[datetime] = None
     difficulty_level: str = "medium"
+    rocket_color: str = DEFAULT_ROCKET_COLOR
     
     # Class-level constants
     MIN_NAME_LENGTH = 1
@@ -94,7 +97,8 @@ class StudentProfile:
             "avatar_id": self.avatar_id,
             "created_date": self.created_date.isoformat(),
             "last_played": self.last_played.isoformat() if self.last_played else None,
-            "difficulty_level": self.difficulty_level
+            "difficulty_level": self.difficulty_level,
+            "rocket_color": self.rocket_color
         }
     
     @classmethod
@@ -114,7 +118,8 @@ class StudentProfile:
             avatar_id=data["avatar_id"],
             created_date=datetime.fromisoformat(data["created_date"]),
             last_played=datetime.fromisoformat(data["last_played"]) if data.get("last_played") else None,
-            difficulty_level=data.get("difficulty_level", "medium")
+            difficulty_level=data.get("difficulty_level", "medium"),
+            rocket_color=data.get("rocket_color", DEFAULT_ROCKET_COLOR)
         )
     
     def update_last_played(self):
