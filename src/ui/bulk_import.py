@@ -10,7 +10,7 @@ class BulkImporter:
     
     # Color scheme
     COLOR_BACKGROUND = pygame.Color("#2c3e50")
-    COLOR_MODAL = pygame.Color("rgba(0, 0, 0, 180)")
+    COLOR_MODAL = pygame.Color(0, 0, 0, 180)
     COLOR_FORM_BG = pygame.Color("#34495e")
     COLOR_TEXT = pygame.Color("#ecf0f1")
     COLOR_TEXT_DIM = pygame.Color("#95a5a6")
