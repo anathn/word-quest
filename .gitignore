@@ -7,3 +7,8 @@ __pycache__/
 venv/
 .env/
 .venv/
+
+# Runtime state files (contain dynamic timestamps/data)
+data/email_config.json
+data/.email_enc_key
+data/progress/*.json
