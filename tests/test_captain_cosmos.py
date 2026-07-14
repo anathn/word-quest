@@ -18,7 +18,7 @@ from pathlib import Path
 # Test fixtures
 @pytest.fixture
 def temp_data_dir():
-    """Create temporary data directory with voice lines."""
+    """Create temporary data directory with voice lines matching the real data structure."""
     with tempfile.TemporaryDirectory() as tmpdir:
         voice_lines = {
             "captain_cosmos": {
@@ -53,6 +53,9 @@ def captain(temp_data_dir):
     from src.components.captain_cosmos import CaptainCosmos, reset_captain_cosmos
     
     reset_captain_cosmos()
+    # Reset class-level cache to ensure clean state for each test
+    CaptainCosmos._cached_voice_lines = None
+    CaptainCosmos._cache_data_dir = None
     captain = CaptainCosmos(data_dir=temp_data_dir)
     return captain
 
@@ -76,6 +79,10 @@ class TestCaptainInitialization:
         """Captain should handle missing voice lines file gracefully."""
         from src.components.captain_cosmos import CaptainCosmos
         
+        # Reset cache to ensure fresh load from temp directory
+        CaptainCosmos._cached_voice_lines = None
+        CaptainCosmos._cache_data_dir = None
+        
         with tempfile.TemporaryDirectory() as tmpdir:
             captain = CaptainCosmos(data_dir=tmpdir)
             assert captain._voice_lines == {"captain_cosmos": {}}
@@ -83,6 +90,10 @@ class TestCaptainInitialization:
     def test_captain_handles_invalid_json(self):
         """Captain should handle invalid JSON file gracefully."""
         from src.components.captain_cosmos import CaptainCosmos
+        
+        # Reset cache to ensure fresh load from temp directory
+        CaptainCosmos._cached_voice_lines = None
+        CaptainCosmos._cache_data_dir = None
         
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create invalid JSON file
