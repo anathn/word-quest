@@ -6,7 +6,7 @@ Implements a sticker collection system with rarity tiers and milestone tracking.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Callable
 from enum import Enum
 from datetime import datetime
 import json
@@ -107,6 +107,7 @@ class StickerProgress:
         return f"{self.current}/{self.target}"
 
 
+@dataclass
 class StickerTracker:
     """
     Tracks progress toward stickers.
@@ -130,6 +131,7 @@ class StickerTracker:
     failed_planets: Set[str] = field(default_factory=set)
     cleared_after_fail: Set[str] = field(default_factory=set)
     completed_solar_systems: Set[str] = field(default_factory=set)
+    solar_system_planets: Dict[str, Set[str]] = field(default_factory=dict)  # {solar_system: {planet_ids}}
     current_streak: int = 0
     words_mastered: int = 0
     early_bird_games: int = 0
@@ -201,7 +203,7 @@ class StickerManager:
         self.tracker = StickerTracker()
         
         # Callback
-        self.on_sticker_unlocked: Optional[callable] = None
+        self.on_sticker_unlocked: Optional[Callable[[StickerDefinition], None]] = None
         
         # Load definitions and persisted data
         self._load_sticker_definitions()
@@ -300,19 +302,20 @@ class StickerManager:
     def start_session(self, hour: int):
         """
         Start a new game session.
-        
+
         Args:
             hour: Current hour (0-23) for time-based stickers
         """
         self._current_solar_system_planets = set()
-        self._current_planet_start_time = time.time()
         
-        # Check time-based stickers
-        if hour < 9 and not self.tracker.early_bird_unlocked:
-            self._unlock_sticker('early_bird', {"time": f"{hour}:00"})
+        # Check time-based stickers (only unlock once)
+        if hour < 9:
+            if not self.tracker.early_bird_unlocked:
+                self._unlock_sticker('early_bird', {"time": f"{hour}:00"})
         
-        if hour >= 19 and not self.tracker.night_owl_unlocked:
-            self._unlock_sticker('night_owl', {"time": f"{hour}:00"})
+        if hour >= 19:
+            if not self.tracker.night_owl_unlocked:
+                self._unlock_sticker('night_owl', {"time": f"{hour}:00"})
     
     def end_session(self):
         """End session - persist any new unlocks."""
@@ -323,12 +326,11 @@ class StickerManager:
     def start_planet(self, planet_id: str, solar_system: str):
         """
         Called when a planet starts.
-        
+
         Args:
             planet_id: Unique planet identifier
             solar_system: Solar system the planet belongs to
         """
-        self._current_solar_system_planets = set()
         self._current_planet_start_time = time.time()
     
     def on_planet_completed(self, planet_id: str, solar_system: str, score: int, 
@@ -367,15 +369,15 @@ class StickerManager:
             self.tracker.cleared_after_fail.add(planet_id)
         
         # Track solar system completion
-        self._current_solar_system_planets.add(planet_id)
+        if solar_system not in self.tracker.solar_system_planets:
+            self.tracker.solar_system_planets[solar_system] = set()
+        self.tracker.solar_system_planets[solar_system].add(planet_id)
         
         # Galaxy Explorer - check if solar system is complete (3 planets)
-        # For simplicity, we assume each solar system has 3 planets
-        # and we track completed solar systems separately
-        # This would need actual solar system tracking in practice
-        if self.tracker.completed_solar_systems:
-            # Check if we completed a full solar system (placeholder logic)
-            if len(self.tracker.completed_solar_systems) >= 1 and not self.tracker.galaxy_explorer_unlocked:
+        current_system_planets = self.tracker.solar_system_planets.get(solar_system, set())
+        if len(current_system_planets) >= SOLAR_SYSTEM_PLANETS_REQUIRED and solar_system not in self.tracker.completed_solar_systems:
+            self.tracker.completed_solar_systems.add(solar_system)
+            if not self.tracker.galaxy_explorer_unlocked:
                 self._unlock_sticker('galaxy_explorer', {"system": solar_system})
         
         # Update progress
@@ -462,6 +464,15 @@ class StickerManager:
         if not sticker:
             logger.warning(f"Sticker not found: {sticker_id}")
             return None
+        
+        # Mark as unlocked in tracker
+        tracker_flag = f"{sticker_id}_unlocked"
+        if hasattr(self.tracker, tracker_flag):
+            setattr(self.tracker, tracker_flag, True)
+        
+        # Mark progress as complete
+        if sticker_id in self.progress:
+            self.progress[sticker_id].is_complete = True
         
         sticker.unlocked_at = datetime.now()
         sticker.unlock_context = context
