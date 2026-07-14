@@ -29,6 +29,8 @@ from src.ui.bonus_message import BonusMessage, create_golden_boost_message, crea
 from src.animations.rocket_boost import RocketBoostAnimation, create_rocket_boost_animation
 from src.animations.planet_discovery import PlanetDiscoveryAnimation, create_planet_discovery_animation
 from src.utils.validators import InputValidator, AnswerValidator
+from src.components.captain_cosmos import CaptainCosmos, get_captain_cosmos
+from src.components.audio_system import get_audio_system
 
 # Performance threshold constants
 WORD_PRESENTATION_TIMEOUT_MS = 200  # Maximum allowed time for word presentation
@@ -126,6 +128,10 @@ class SpellingChallengeScreen:
         
         # Performance tracking
         self.render_times: List[float] = []
+        
+        # Captain Cosmos integration (STORY-004-04)
+        # Get singleton instance with audio_system for TTS integration
+        self.captain = get_captain_cosmos(audio_system=self.audio_system)
     
     def present_word(self, word, planet_id: Optional[str] = None, planet_name: Optional[str] = None):
         """
@@ -341,6 +347,15 @@ class SpellingChallengeScreen:
                 bonus = self.streak_bonus_manager.check_milestone(new_streak)
                 if bonus:
                     self._start_bonus_animation(bonus, new_streak)
+        
+        # Captain Cosmos feedback (STORY-004-04)
+        if self.captain:
+            # Trigger Captain response for correct answer
+            self.captain.on_correct_answer()
+            
+            # Check for streak milestones
+            if new_streak in [3, 5, 10]:
+                self.captain.on_streak_milestone(new_streak)
         
         if self.on_word_complete:
             self.on_word_complete(True)  # True = success

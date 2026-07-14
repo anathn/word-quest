@@ -12,6 +12,7 @@ from .import_preview import ImportPreview, create_import_preview
 from .email_config_panel import EmailConfigPanel, create_email_config_panel
 from .streak_display import StreakDisplay, create_streak_display
 from .bonus_message import BonusMessage, create_golden_boost_message, create_planet_discovery_message
+from .captain_display import CaptainDisplay, create_captain_display
 
 __all__ = [
     'Typography',
@@ -40,5 +41,7 @@ __all__ = [
     'create_streak_display',
     'BonusMessage',
     'create_golden_boost_message',
-    'create_planet_discovery_message'
+    'create_planet_discovery_message',
+    'CaptainDisplay',
+    'create_captain_display'
 ]
