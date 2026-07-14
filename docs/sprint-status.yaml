@@ -23,9 +23,11 @@ current_sprint:
     - "STORY-003-01"  # Parent authentication (approved 2026-07-09)
     - "STORY-003-02"  # Student profile management (verified 2026-07-10)
     - "STORY-003-03"  # Word list CRUD operations (approved 2026-07-10)
+    - "STORY-003-04"  # CSV import for word lists (merged 2026-07-12)
+    - "STORY-003-05"  # Weekly summary view (merged 2026-07-12)
+    - "STORY-003-06"  # Email notification config (merged 2026-07-12)
   in_progress_stories: []
-  planned_stories:
-    - "STORY-003-04"  # CSV import for word lists
+  planned_stories: []
 
 epics:
   - id: EPIC-001
@@ -419,10 +421,10 @@ epics:
     progress_percent: 65
     dependencies: ["EPIC-002"]
     blockers: []
-    notes: "STORY-003-01 (Parent Authentication), STORY-003-02 (Student Profile Management), and STORY-003-03 (Word List CRUD) complete and approved. 3 remaining stories ready for Sprint 2 development."
+    notes: "ALL 6 STORIES COMPLETE. STORY-003-01 through STORY-003-06 all approved and merged. EPIC-003 complete and production-ready."
     target_sprint: 2
     estimated_points: 21
-    completed_points: 16
+    completed_points: 21
     stories:
       - id: STORY-003-01
         title: "Parent authentication"
@@ -579,10 +581,13 @@ epics:
         title: "CSV import for word lists"
         description: "Import words from CSV files"
         priority: P0
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: null
+        status: "approved"
+        assignee: "agent"
+        started_date: "2026-07-12"
+        completed_date: "2026-07-12"
+        reviewed_date: "2026-07-12"
+        branch: "EPIC-003-STORY-004"
+        pr: 19
         acceptance_criteria:
           - "Upload CSV file"
           - "Parse word and difficulty columns"
@@ -591,16 +596,20 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "Detailed story file: docs/stories/STORY-003-04.md"
+        notes: "STORY COMPLETE AND APPROVED. Merged to main via PR #19 (commit b4a0b34). CSV import completed with security fixes. All tests passing. Code review passed."
+        review_document: "docs/reviews/STORY-003-04-review-2026-07-12.md"
 
       - id: STORY-003-05
         title: "Weekly summary view"
         description: "Dashboard showing weekly progress summary"
         priority: P0
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: null
+        status: "approved"
+        assignee: "agent"
+        started_date: "2026-07-12"
+        completed_date: "2026-07-12"
+        reviewed_date: "2026-07-12"
+        branch: "EPIC-003-STORY-005"
+        pr: 20
         acceptance_criteria:
           - "Words mastered this week"
           - "Words needing more practice"
@@ -609,16 +618,20 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "Detailed story file: docs/stories/STORY-003-05.md"
+        notes: "STORY COMPLETE AND APPROVED. Merged to main via PR #20 (commit d6c16ee). Weekly summary dashboard implemented with all metrics. All tests passing. Code review passed."
+        review_document: "docs/reviews/STORY-003-05-review-2026-07-12.md"
 
       - id: STORY-003-06
         title: "Email notification config"
         description: "Configure weekly email reports"
         priority: P2
-        status: "planning"
-        assignee: null
-        started_date: null
-        completed_date: null
+        status: "approved"
+        assignee: "agent"
+        started_date: "2026-07-12"
+        completed_date: "2026-07-12"
+        reviewed_date: "2026-07-12"
+        branch: "EPIC-003-STORY-006"
+        pr: 21
         acceptance_criteria:
           - "Enable/disable email reports"
           - "Select day of week for delivery"
@@ -627,7 +640,8 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "Detailed story file: docs/stories/STORY-003-06.md. P2 - may be deferred."
+        notes: "STORY COMPLETE AND APPROVED. Merged to main via PR #21 (commit 5742efc). Email notification configuration implemented. All tests passing. Code review passed."
+        review_document: "docs/reviews/STORY-003-06-review-2026-07-12.md"
 
   - id: EPIC-004
     name: "Motivation Systems"
