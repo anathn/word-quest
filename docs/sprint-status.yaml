@@ -23,13 +23,15 @@ current_sprint:
     - "STORY-003-01"  # Parent authentication (approved 2026-07-09)
     - "STORY-003-02"  # Student profile management (verified 2026-07-10)
     - "STORY-003-04"  # CSV import for word lists (approved 2026-07-11, all issues resolved)
-    - "STORY-003-05"  # Weekly summary view (approved 2026-07-11, all issues resolved)
+    - "STORY-003-06"  # Email notification config (approved 2026-07-12, all issues resolved)
+    - "STORY-004-01"  # Streak counter (approved 2026-07-12, re-review passed)
+    - "STORY-004-02"  # Streak bonus animations (approved 2026-07-12)
+    - "STORY-004-03"  # Achievement badge system (approved 2026-07-12)
     - "STORY-004-04"  # Captain Cosmos character (approved 2026-07-13, all issues resolved)
     - "STORY-004-05"  # Rocket customization (approved 2026-07-14, all issues resolved)
+    - "STORY-004-06"  # Sticker collection (approved 2026-07-14, all issues resolved)
   in_progress_stories:
   review_stories:
-    - "STORY-004-03"  # Achievement badge system (all critical/medium issues resolved, awaiting merge)
-    - "STORY-004-06"  # Sticker collection (all critical/medium issues resolved, awaiting merge)
   planned_stories:
     - "STORY-003-03"  # Word list CRUD operations
 
@@ -425,10 +427,10 @@ epics:
     progress_percent: 50
     dependencies: ["EPIC-002"]
     blockers: []
-    notes: "STORY-003-01 (Parent Authentication) and STORY-003-02 (Student Profile Management) complete and approved. STORY-003-04 (CSV Import) approved and ready to merge. 3 remaining stories ready for Sprint 2 development."
+    notes: "STORY-003-01, STORY-003-02, STORY-003-04, and STORY-003-06 approved. STORY-003-03 and STORY-003-05 remaining for future sprint development."
     target_sprint: 2
     estimated_points: 21
-    completed_points: 21  # Updated 2026-07-11 with STORY-003-04 and STORY-003-05 approvals
+    completed_points: 16  # Updated 2026-07-14: STORY-003-01, STORY-003-02, STORY-003-04, STORY-003-06 approved (3+3+5+5=16)
     stories:
       - id: STORY-003-01
         title: "Parent authentication"
@@ -495,7 +497,7 @@ epics:
         title: "Student profile management"
         description: "Create and edit student profiles"
         priority: P0
-        status: "done"  # All issues verified and resolved (2026-07-10)
+        status: "approved"  # All issues verified and resolved (2026-07-10)
         assignee: "agent"
         started_date: "2026-07-10"
         completed_date: "2026-07-10"
@@ -633,20 +635,20 @@ epics:
     name: "Motivation Systems"
     priority: P1
     description: "Rewards, streaks, and character interaction"
-    status: "in-progress"
-    progress_percent: 19
+    status: "completed"
+    progress_percent: 100
     dependencies: ["EPIC-001"]
     blockers: []
-    notes: "STORY-004-01 (Streak counter) in review. STORY-004-02 (Streak bonus animations) approved. STORY-004-03 (Achievement badge system) approved. STORY-004-04 (Captain Cosmos character) approved 2026-07-13 after resolving all critical TTS integration issues. 2 stories remaining for Sprint 3 development."
+    notes: "All stories in EPIC-004 approved. STORY-004-01 approved 2026-07-12 after re-review. STORY-004-04 approved 2026-07-13 after resolving all critical TTS integration issues. All 6 stories complete."
     target_sprint: 3
     estimated_points: 27
-    completed_points: 13  # Updated 2026-07-13: +8 points for STORY-004-04
+    completed_points: 22  # Updated 2026-07-14: All 6 stories approved (+2 for STORY-004-01, +5 for STORY-004-06)
     stories:
       - id: STORY-004-01
         title: "Streak counter"
         description: "Track consecutive correct answers"
         priority: P1
-        status: "review"
+        status: "approved"  # Re-review approved 2026-07-12, all issues resolved
         assignee: "agent"
         started_date: "2026-07-12"
         branch: "EPIC-004-STORY-001"
