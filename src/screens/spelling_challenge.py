@@ -10,6 +10,7 @@ from typing import Optional, Callable, List
 from dataclasses import dataclass
 from enum import Enum
 import time
+import logging
 
 from src.components.input_handler import InputHandler, InputDisplay, InputState
 from src.components.feedback_controller import (
@@ -20,9 +21,16 @@ from src.components.feedback_controller import (
 )
 from src.components.hint_manager import HintManager, create_hint_manager
 from src.components.planet_manager import PlanetManager, create_planet_manager
+from src.components.streak_bonus import StreakBonusManager, create_streak_bonus_manager
 from src.ui.hint_display import HintDisplay, create_hint_display
 from src.ui.progress_display import ProgressDisplay, create_progress_display
+from src.ui.streak_display import StreakDisplay, create_streak_display
+from src.ui.bonus_message import BonusMessage, create_golden_boost_message, create_planet_discovery_message
+from src.animations.rocket_boost import RocketBoostAnimation, create_rocket_boost_animation
+from src.animations.planet_discovery import PlanetDiscoveryAnimation, create_planet_discovery_animation
 from src.utils.validators import InputValidator, AnswerValidator
+from src.components.captain_cosmos import CaptainCosmos, get_captain_cosmos
+from src.components.audio_system import get_audio_system
 
 # Performance threshold constants
 WORD_PRESENTATION_TIMEOUT_MS = 200  # Maximum allowed time for word presentation
@@ -103,6 +111,11 @@ class SpellingChallengeScreen:
         self.progress_display: Optional[ProgressDisplay] = None
         self._last_mastered_count: int = 0
         
+        # Streak bonus system (STORY-004-02)
+        self.streak_bonus_manager: Optional[StreakBonusManager] = None
+        self.active_bonus_animation = None
+        self.active_bonus_message: Optional[BonusMessage] = None
+        
         # Callbacks for state changes
         self.on_word_presented: Optional[Callable] = None
         self.on_input_changed: Optional[Callable] = None
@@ -115,6 +128,10 @@ class SpellingChallengeScreen:
         
         # Performance tracking
         self.render_times: List[float] = []
+        
+        # Captain Cosmos integration (STORY-004-04)
+        # Get singleton instance with audio_system for TTS integration
+        self.captain = get_captain_cosmos(audio_system=self.audio_system)
     
     def present_word(self, word, planet_id: Optional[str] = None, planet_name: Optional[str] = None):
         """
@@ -179,6 +196,21 @@ class SpellingChallengeScreen:
                 # Update word total from word manager
                 total_words = self.word_manager.get_total_word_count()
                 self.progress_tracker.set_total_words(total_words)
+            
+            # Initialize streak display (STORY-004-01)
+            if not self.streak_display:
+                # Dynamic position based on screen size for responsiveness
+                screen_width = self.typography.screen.get_width()
+                self.streak_display = create_streak_display(
+                    screen=self.typography.screen,
+                    streak_tracker=self.progress_tracker.streak_tracker,
+                    position=(screen_width - 100, 20)  # Right-aligned, 100px from edge
+                )
+            
+            # Initialize streak bonus manager (STORY-004-02)
+            if not self.streak_bonus_manager:
+                self.streak_bonus_manager = create_streak_bonus_manager()
+                self.streak_bonus_manager.on_bonus_triggered = self._on_bonus_triggered
         
         # Start tracking the word (STORY-002-01)
         if self.progress_tracker:
@@ -262,6 +294,11 @@ class SpellingChallengeScreen:
         # Record incorrect attempt when retry feedback shown (STORY-002-01)
         if feedback_type == FeedbackType.RETRY and self.progress_tracker:
             self.progress_tracker.record_attempt(False)
+            # Reset streak on incorrect answer (STORY-004-01)
+            self.progress_tracker.record_incorrect_answer()
+            # Update streak display to hide it
+            if self.streak_display:
+                self.streak_display.update_streak(0)
         
         if self.on_feedback_shown:
             self.on_feedback_shown(feedback_type)
@@ -297,6 +334,28 @@ class SpellingChallengeScreen:
                 current_count = self.progress_tracker.get_mastered_count()
                 if current_count > self._last_mastered_count:
                     self.progress_display.trigger_mastery_flash()
+            
+            # Record correct answer for streak tracking (STORY-004-01)
+            new_streak = self.progress_tracker.record_correct_answer()
+            
+            # Update streak display
+            if self.streak_display:
+                self.streak_display.update_streak(new_streak)
+            
+            # Check for bonus milestones (STORY-004-02)
+            if self.streak_bonus_manager:
+                bonus = self.streak_bonus_manager.check_milestone(new_streak)
+                if bonus:
+                    self._start_bonus_animation(bonus, new_streak)
+        
+        # Captain Cosmos feedback (STORY-004-04)
+        if self.captain:
+            # Trigger Captain response for correct answer
+            self.captain.on_correct_answer()
+            
+            # Check for streak milestones
+            if new_streak in [3, 5, 10]:
+                self.captain.on_streak_milestone(new_streak)
         
         if self.on_word_complete:
             self.on_word_complete(True)  # True = success
@@ -329,6 +388,90 @@ class SpellingChallengeScreen:
             # Also update the word display with revealed letters
             self._update_word_display_with_hints()
     
+    def _on_bonus_triggered(self, bonus):
+        """Handle bonus milestone triggered event.
+        
+        Args:
+            bonus: BonusMilestone that was triggered
+        """
+        # The actual animation is started by _start_bonus_animation
+        # This callback is just for logging/analytics if needed
+        pass
+    
+    def _start_bonus_animation(self, bonus, streak: int):
+        """Start the appropriate bonus animation.
+        
+        Args:
+            bonus: BonusMilestone that was triggered
+            streak: Current streak value
+        """
+        screen = self.typography.screen
+        
+        # Create bonus message
+        if bonus.bonus_type.name == 'GOLDEN_ROCKET':
+            self.active_bonus_message = create_golden_boost_message(
+                screen,
+                bonus.message
+            )
+            # Create rocket boost animation at streak display position with fallback
+            # Use default position as fallback to prevent crash if streak_display is missing
+            rocket_pos = (screen.get_width() - 100, screen.get_height() // 2)
+            if self.streak_display and hasattr(self.streak_display, 'position'):
+                rocket_pos = self.streak_display.position
+            self.active_bonus_animation = create_rocket_boost_animation(screen, rocket_pos)
+        elif bonus.bonus_type.name == 'PLANET_DISCOVERY':
+            self.active_bonus_message = create_planet_discovery_message(
+                screen,
+                bonus.message
+            )
+            # Create planet discovery animation - planet appears to the right of screen
+            planet_pos = (screen.get_width() - 100, screen.get_height() // 2)
+            rocket_start = self.streak_display.position if self.streak_display else (screen.get_width() // 2, screen.get_height() // 2)
+            self.active_bonus_animation = create_planet_discovery_animation(screen, rocket_start, planet_pos)
+    
+    def render_bonus_animation(self, screen):
+        """Render active bonus animations.
+        
+        Args:
+            screen: Pygame surface to render on
+        """
+        # Render planet discovery animation (behind other UI)
+        if self.active_bonus_animation:
+            self.active_bonus_animation.render()
+        
+        # Render bonus message (overlay)
+        if self.active_bonus_message:
+            self.active_bonus_message.render()
+    
+    def update_bonus_animation(self, dt: float):
+        """Update bonus animation state.
+        
+        Args:
+            dt: Time delta in seconds
+        """
+        try:
+            # Update bonus message
+            if self.active_bonus_message:
+                self.active_bonus_message.update(dt)
+                if self.active_bonus_message.is_complete():
+                    self.active_bonus_message = None
+            
+            # Update bonus animation
+            if self.active_bonus_animation:
+                self.active_bonus_animation.update(dt)
+                if self.active_bonus_animation.is_complete():
+                    # Clear animation but keep message if needed
+                    self.active_bonus_animation = None
+                    # Clear any streak bonus entity that might reference it
+                    if self.streak_bonus_manager:
+                        self.streak_bonus_manager.clear_active_bonus()
+        except Exception as e:
+            # Log error and clear animations to prevent crash
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error updating bonus animation: {e}")
+            self.active_bonus_animation = None
+            self.active_bonus_message = None
+    
     def render_progress_display(self, screen):
         """
         Render the words mastered counter on the screen (STORY-002-03).
@@ -338,6 +481,16 @@ class SpellingChallengeScreen:
         """
         if self.progress_display and self.progress_tracker:
             self.progress_display.render(screen)
+    
+    def render_streak_display(self, screen):
+        """
+        Render the streak counter on the screen (STORY-004-01).
+        
+        Args:
+            screen: Pygame surface to render on
+        """
+        if self.streak_display:
+            self.streak_display.render(screen)
     
     def _on_planet_complete(self, planet_result):
         """
@@ -528,6 +681,10 @@ class SpellingChallengeScreen:
         # Update hint display animations
         if self.hint_display:
             self.hint_display.update(current_time)
+        
+        # Update bonus animations (STORY-004-02)
+        if self.active_bonus_animation or self.active_bonus_message:
+            self.update_bonus_animation(current_time)
     
     def get_feedback_message(self) -> str:
         """
@@ -586,6 +743,16 @@ class SpellingChallengeScreen:
         
         # Reset progress display tracking (STORY-002-03)
         self._last_mastered_count = 0
+        
+        # Reset streak display (STORY-004-01)
+        if getattr(self, 'streak_display', None):
+            self.streak_display.update_streak(0)
+        
+        # Reset bonus animations (STORY-004-02)
+        self.active_bonus_animation = None
+        self.active_bonus_message = None
+        if self.streak_bonus_manager:
+            self.streak_bonus_manager.reset_session()
     
     def get_hint_analytics(self) -> dict:
         """

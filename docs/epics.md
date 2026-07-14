@@ -1,6 +1,6 @@
 # Word Quest - Epics
 
-**Last Updated:** July 4, 2026  
+**Last Updated:** July 12, 2026  
 **Based on PRD Version:** 1.0  
 **Based on Architecture Version:** 1.0  
 **Total Epics:** 8  
@@ -14,9 +14,9 @@
 | ID | Name | Priority | Status | Points | Target Sprint |
 |----|------|----------|--------|--------|---------------|
 | EPIC-001 | Core Gameplay | P0 | completed | 26 | Sprint 1 |
-| EPIC-002 | Progress Tracking | P0 | planning | 36 | Sprint 1 |
+| EPIC-002 | Progress Tracking | P0 | ready-for-dev | 36 | Sprint 1 |
 | EPIC-003 | Parent Dashboard | P0 | ready-for-dev | 21 | Sprint 2 |
-| EPIC-004 | Motivation Systems | P1 | planning | 27 | Sprint 3 |
+| EPIC-004 | Motivation Systems | P1 | ready-for-dev | 27 | Sprint 3 |
 | EPIC-005 | Visual & Audio Polish | P1 | planning | 31 | Sprint 3 |
 | EPIC-006 | Accessibility | P1 | planning | 19 | Sprint 4 |
 | EPIC-007 | Student Progress View | P1 | planning | 16 | Sprint 4 |
@@ -224,10 +224,24 @@ Give parents control over their child's learning content and visibility into pro
 ## EPIC-004: Motivation Systems
 
 **Priority:** P1 (Should Have)  
-**Status:** planning  
+**Status:** ready-for-dev  
 **Progress:** 0%  
 **Estimated Points:** 27  
 **Target Sprint:** Sprint 3
+
+### Status
+
+**Overall Progress:** 0% (Stories refined, ready for development)
+
+#### Stories (All detailed, ready for dev)
+- ✅ STORY-004-01 - Streak counter (2pts) - Story file created  
+- ✅ STORY-004-02 - Streak bonus animations (5pts) - Story file created  
+- ✅ STORY-004-03 - Achievement badge system (5pts) - Story file created  
+- ✅ STORY-004-04 - Captain Cosmos character (8pts) - Story file created  
+- ✅ STORY-004-05 - Rocket customization (2pts) - Story file created  
+- ✅ STORY-004-06 - Sticker collection (5pts) - Story file created  
+
+*All 6 stories have detailed implementation guides in `docs/stories/`. Ready for Sprint 3 development.*
 
 ### Description
 Positive reinforcement through streaks, badges, and character interaction to keep students engaged.
@@ -239,31 +253,33 @@ Create an engaging experience that encourages regular practice through rewards, 
 **Included:**
 - Streak counter with visual display
 - Streak bonus animations (3-word, 5-word milestones)
-- Achievement badge system (multiple badge types)
-- Captain Cosmos mascot with voice lines
-- Rocket color customization
-- Space-themed sticker collection
+- Achievement badge system (6 badge types)
+- Captain Cosmos mascot with TTS voice lines (MVP)
+- Rocket color customization (8 preset colors)
+- Space-themed sticker collection (10 sticker types)
 
 **Excluded:**
 - Leaderboards (against design principle - no competition)
 - Social sharing (privacy consideration)
 - In-app purchases (not applicable)
+- Professional voice recording (TTS for MVP)
 
 ### Stories
 
 | ID | Title | Status | Points |
 |----|-------|--------|--------|
-| STORY-004-01 | Streak counter | planning | 2 |
-| STORY-004-02 | Streak bonus animations | planning | 5 |
-| STORY-004-03 | Achievement badge system | planning | 5 |
-| STORY-004-04 | Captain Cosmos character | planning | 8 |
-| STORY-004-05 | Rocket customization | planning | 2 |
-| STORY-004-06 | Sticker collection | planning | 5 |
+| STORY-004-01 | Streak counter | ready-for-dev | 2 |
+| STORY-004-02 | Streak bonus animations | ready-for-dev | 5 |
+| STORY-004-03 | Achievement badge system | ready-for-dev | 5 |
+| STORY-004-04 | Captain Cosmos character | ready-for-dev | 8 |
+| STORY-004-05 | Rocket customization | ready-for-dev | 2 |
+| STORY-004-06 | Sticker collection | ready-for-dev | 5 |
 
 ### Dependencies
-- **EPIC-001 (Core Gameplay)** - Needs gameplay events for triggers
+- **EPIC-001 (Core Gameplay)** - Needs gameplay events for triggers (COMPLETED)
 
 ### Acceptance Criteria
+- [x] All 6 stories have detailed implementation guides in `docs/stories/`
 - [ ] All 6 stories completed and tested
 - [ ] Streaks track correctly and display visually
 - [ ] Badges unlock at correct milestones
@@ -274,7 +290,7 @@ Create an engaging experience that encourages regular practice through rewards, 
 ### Risks & Blockers
 - **Risk:** Character voice lines may require professional recording
 - **Mitigation:** Use TTS for MVP, upgrade later if budget allows
-- **Blockers:** None currently
+- **Blockers:** None currently - EPIC-001 complete, ready for development
 
 ---
 

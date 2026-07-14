@@ -21,6 +21,7 @@ from typing import List, Optional, Tuple
 from datetime import datetime
 
 from src.models.student_profile import StudentProfile
+from src.models.rocket_colors import DEFAULT_ROCKET_COLOR
 
 
 class ProfileManager:
@@ -229,7 +230,8 @@ class ProfileManager:
         profile_id: str, 
         name: Optional[str] = None, 
         avatar_id: Optional[str] = None,
-        difficulty_level: Optional[str] = None
+        difficulty_level: Optional[str] = None,
+        rocket_color: Optional[str] = None
     ) -> StudentProfile:
         """
         Update an existing profile.
@@ -239,6 +241,7 @@ class ProfileManager:
             name: New name (optional)
             avatar_id: New avatar ID (optional)
             difficulty_level: New difficulty level (optional)
+            rocket_color: New rocket color hex string (optional)
             
         Returns:
             Updated StudentProfile instance
@@ -267,6 +270,10 @@ class ProfileManager:
                 if difficulty_level is not None:
                     self._validate_difficulty_level(difficulty_level)
                     p["difficulty_level"] = difficulty_level
+                
+                if rocket_color is not None:
+                    self._validate_rocket_color(rocket_color)
+                    p["rocket_color"] = rocket_color
                 
                 # Save and return
                 self._save_data(data)
@@ -401,3 +408,18 @@ class ProfileManager:
             List of avatar identifier strings
         """
         return self.AVATAR_OPTIONS.copy()
+    
+    def _validate_rocket_color(self, rocket_color: str):
+        """
+        Validate a rocket color hex string.
+        
+        Args:
+            rocket_color: Hex color string to validate
+            
+        Raises:
+            ValueError: If color format is invalid
+        """
+        import re
+        # Validate hex color format (3 or 6 hex digits, with or without #)
+        if not re.match(r'^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', rocket_color):
+            raise ValueError(f"Invalid color format: {rocket_color}. Expected hex color (e.g., '#FF4444')")

@@ -1,0 +1,56 @@
+{
+  "captain_cosmos": {
+    "greeting": [
+      "Welcome to Word Quest, explorer!",
+      "Ready for a spelling adventure?",
+      "Hi there! Let's discover new worlds through spelling!"
+    ],
+    "correct": [
+      "Great job!",
+      "You nailed it!",
+      "Fantastic spelling!",
+      "Excellent work!",
+      "You're a spelling star!",
+      "That's correct!",
+      "Amazing!"
+    ],
+    "incorrect": [
+      "Try again!",
+      "You've got this!",
+      "Let's try that one more time",
+      "Keep trying, you're almost there",
+      "Mistakes help us learn!",
+      "Don't give up!"
+    ],
+    "streak": [
+      "3 in a row! Awesome!",
+      "You're on fire!",
+      "Streak master!",
+      "Keep it going!"
+    ],
+    "planet_complete": [
+      "Planet cleared! Excellent work!",
+      "Another world conquered!",
+      "Fantastic job completing this planet!",
+      "You're doing amazing!"
+    ],
+    "hint_request": [
+      "Let me help you with this one",
+      "I've got just the hint you need",
+      "Here's a little clue..."
+    ],
+    "badge_unlock": [
+      "Congratulations! You earned a new badge!",
+      "Awesome achievement!",
+      "You did it! Badge unlocked!"
+    ],
+    "tutorial": {
+      "welcome": "Welcome to Word Quest! I'm Captain Cosmos, your space guide.",
+      "objective": "We're going to spell words to fuel our rocket and explore new planets.",
+      "controls": "Type the missing letters to spell each word. Use the on-screen keyboard if you need to.",
+      "feedback": "When you're done, press Enter or click Submit. I'll let you know if you got it right!",
+      "hints": "Stuck? Click 'Need Help?' for a hint. There's no penalty for using hints!",
+      "progression": "Spell 5 words correctly to complete each planet. Ready to start?"
+    }
+  }
+}

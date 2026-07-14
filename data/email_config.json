@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "email_address": "+hsoqrRhkdB0YduC4OT0CA==",
+  "send_day": 0,
+  "send_time": {
+    "hour": 8,
+    "minute": 0
+  },
+  "consent_date": "2026-07-14T08:06:02.419358",
+  "last_sent": "2026-07-14T08:06:02.422069",
+  "next_scheduled": "2026-07-20T08:00:00"
+}
