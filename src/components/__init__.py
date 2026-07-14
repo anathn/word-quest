@@ -17,6 +17,7 @@ from .progress_tracker import ProgressTracker, LegacyWordAttempt, SessionData, c
 from .planet_manager import PlanetManager, PlanetStatus, PlanetResult, WordResult, create_planet_manager
 from .streak_tracker import StreakTracker, create_streak_tracker
 from .streak_bonus import StreakBonusManager, BonusType, BonusMilestone, create_streak_bonus_manager
+from .captain_cosmos import CaptainCosmos, CaptainState, VoiceLine, get_captain_cosmos, reset_captain_cosmos
 
 __all__ = [
     'AudioSystem',
@@ -55,5 +56,10 @@ __all__ = [
     'StreakBonusManager',
     'BonusType',
     'BonusMilestone',
-    'create_streak_bonus_manager'
+    'create_streak_bonus_manager',
+    'CaptainCosmos',
+    'CaptainState',
+    'VoiceLine',
+    'get_captain_cosmos',
+    'reset_captain_cosmos'
 ]

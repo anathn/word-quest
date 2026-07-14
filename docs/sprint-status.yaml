@@ -1,5 +1,5 @@
 # Word Quest Sprint Status
-# Last Updated: 2026-07-11
+# Last Updated: 2026-07-13
 # Based on PRD v1.0
 
 current_sprint:
@@ -24,9 +24,10 @@ current_sprint:
     - "STORY-003-02"  # Student profile management (verified 2026-07-10)
     - "STORY-003-04"  # CSV import for word lists (approved 2026-07-11, all issues resolved)
     - "STORY-003-05"  # Weekly summary view (approved 2026-07-11, all issues resolved)
+    - "STORY-004-04"  # Captain Cosmos character (approved 2026-07-13, all issues resolved)
   in_progress_stories: []
   review_stories:
-    - "STORY-004-03"  # Achievement badge system (all critical/medium issues resolved, awaiting re-review approval)
+    - "STORY-004-03"  # Achievement badge system (all critical/medium issues resolved, awaiting merge)
   planned_stories:
     - "STORY-003-03"  # Word list CRUD operations
 
@@ -634,10 +635,10 @@ epics:
     progress_percent: 19
     dependencies: ["EPIC-001"]
     blockers: []
-    notes: "STORY-004-01 (Streak counter) and STORY-004-02 (Streak bonus animations) approved. STORY-004-01 status: review, STORY-004-02 status: approved (adversarial review completed 2026-07-12). 4 stories remaining for Sprint 3 development."
+    notes: "STORY-004-01 (Streak counter) in review. STORY-004-02 (Streak bonus animations) approved. STORY-004-03 (Achievement badge system) approved. STORY-004-04 (Captain Cosmos character) approved 2026-07-13 after resolving all critical TTS integration issues. 2 stories remaining for Sprint 3 development."
     target_sprint: 3
     estimated_points: 27
-    completed_points: 5
+    completed_points: 13  # Updated 2026-07-13: +8 points for STORY-004-04
     stories:
       - id: STORY-004-01
         title: "Streak counter"
@@ -869,10 +870,12 @@ epics:
         title: "Captain Cosmos character"
         description: "Mascot character with voice lines"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: null
+        status: "approved"
+        assignee: "agent"
+        started_date: "2026-07-12"
+        completed_date: "2026-07-13"
+        branch: "EPIC-004-STORY-004"
+        review_document: "docs/reviews/STORY-004-04-adversarial-review-2026-07-13.md"
         acceptance_criteria:
           - "Captain Cosmos sprite with multiple animation states"
           - "Voice lines for all game events (TTS for MVP)"
@@ -880,8 +883,26 @@ epics:
           - "Celebration dialogue on achievements"
         complexity: "High"
         points: 8
-        blockers: []
-        notes: "Detailed story file: docs/stories/STORY-004-04.md. Use TTS for MVP, professional recording can upgrade later."
+        blockers: []  # All blockers resolved 2026-07-13
+        review_notes: |
+          VALIDATION DATE: 2026-07-13
+          
+          ✅ ALL CRITICAL AND MEDIUM ISSUES RESOLVED:
+          - Logging import validated at module level (captain_display.py line 12)
+          - TTS integration complete: audio_system parameter added to CaptainCosmos.__init__()
+          - Path traversal validation implemented for data_dir parameter
+          - Singleton lock initialized at module level for thread safety
+          - Audio availability checks and fallback behavior working
+          - spelling_challenge.py updated to call get_captain_cosmos(audio_system=self.audio_system)
+          
+          DEFERRED (POST-MVP):
+          - Performance tests for TTS latency
+          - Accessibility enhancements
+          - Voice line usage statistics
+          - Additional screen integrations (main menu)
+          
+          STATUS: APPROVED - All critical issues resolved, ready for merge
+          Review updated 2026-07-13 with fix verification
 
       - id: STORY-004-05
         title: "Rocket customization"
