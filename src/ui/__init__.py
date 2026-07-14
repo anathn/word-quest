@@ -13,6 +13,8 @@ from .email_config_panel import EmailConfigPanel, create_email_config_panel
 from .streak_display import StreakDisplay, create_streak_display
 from .bonus_message import BonusMessage, create_golden_boost_message, create_planet_discovery_message
 from .captain_display import CaptainDisplay, create_captain_display
+from .sticker_collection import StickerCollection, create_sticker_collection
+from .sticker_notification import StickerNotification, create_sticker_notification
 
 __all__ = [
     'Typography',
@@ -43,5 +45,9 @@ __all__ = [
     'create_golden_boost_message',
     'create_planet_discovery_message',
     'CaptainDisplay',
-    'create_captain_display'
+    'create_captain_display',
+    'StickerCollection',
+    'create_sticker_collection',
+    'StickerNotification',
+    'create_sticker_notification'
 ]

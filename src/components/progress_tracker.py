@@ -15,6 +15,7 @@ from src.components.planet_manager import PlanetManager, PlanetResult
 from src.components.session_tracker import SessionTracker, create_session_tracker
 from src.components.streak_tracker import StreakTracker, create_streak_tracker
 from src.components.badge_system import BadgeManager, create_badge_manager
+from src.components.sticker_manager import StickerManager, create_sticker_manager
 
 # TYPE_CHECKING for circular import avoidance
 from typing import TYPE_CHECKING
@@ -150,6 +151,9 @@ class ProgressTracker:
         # Badge system (STORY-004-03)
         self.badge_manager = create_badge_manager(student_id=student_id, data_store=data_store)
         
+        # Sticker system (STORY-004-06)
+        self.sticker_manager = create_sticker_manager(student_id=student_id, data_store=data_store)
+        
         # Mastered words tracking (STORY-002-03)
         self.mastered_words: Set[str] = set()
         self.total_words_in_list: int = 0
@@ -193,6 +197,12 @@ class ProgressTracker:
         if self.badge_manager:
             self.badge_manager.start_session()
         
+        # Initialize sticker tracking for session (STORY-004-06)
+        if self.sticker_manager:
+            import datetime
+            current_hour = datetime.datetime.now().hour
+            self.sticker_manager.start_session(hour=current_hour)
+        
         return self.current_session
     
     def end_session(self):
@@ -207,6 +217,10 @@ class ProgressTracker:
             # End badge tracking session and persist (STORY-004-03)
             if self.badge_manager:
                 self.badge_manager.end_session()
+            
+            # End sticker tracking session and persist (STORY-004-06)
+            if self.sticker_manager:
+                self.sticker_manager.end_session()
     
     def start_word(self, word_id: str, word_text: str):
         """
@@ -586,6 +600,20 @@ class ProgressTracker:
             is_perfect = (planet_result.first_attempt_correct == 5)
             self.badge_manager.on_planet_completed(perfect=is_perfect)
         
+        # Notify sticker manager about planet completion (STORY-004-06)
+        if self.sticker_manager:
+            is_perfect = (planet_result.first_attempt_correct == 5)
+            total_attempts = sum(r['attempts'] for r in self.planet_word_results)
+            hints_used = sum(r.get('hints_used', 0) for r in self.planet_word_results)
+            self.sticker_manager.on_planet_completed(
+                planet_id=self.current_planet_id,
+                solar_system=self.current_planet_name or 'unknown',
+                score=planet_result.first_attempt_correct,
+                total_attempts=total_attempts,
+                first_attempt_correct=is_perfect,
+                hints_used=hints_used
+            )
+        
         # Notify callback with status from PlanetManager
         if self.on_planet_complete:
             self.on_planet_complete({
@@ -673,6 +701,10 @@ class ProgressTracker:
         if self.badge_manager:
             self.badge_manager.on_word_mastered()
         
+        # Notify sticker manager for Word Master sticker (STORY-004-06)
+        if self.sticker_manager:
+            self.sticker_manager.on_word_mastered()
+        
         return False
     
     # Streak Tracker Methods (STORY-004-01)
@@ -688,6 +720,10 @@ class ProgressTracker:
         # Notify badge manager (STORY-004-03)
         if self.badge_manager:
             self.badge_manager.on_correct_answer(streak=streak)
+        
+        # Notify sticker manager (STORY-004-06) for Streak King/Queen
+        if self.sticker_manager:
+            self.sticker_manager.on_streak_update(streak=streak)
         
         return streak
     

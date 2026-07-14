@@ -982,10 +982,10 @@ epics:
         title: "Sticker collection"
         description: "Space-themed sticker rewards"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: null
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-14"
+        branch: "EPIC-004-STORY-006"
         acceptance_criteria:
           - "10 sticker types defined"
           - "Unlock on achievements"

@@ -1,0 +1,103 @@
+{
+  "stickers": [
+    {
+      "id": "planet_winner",
+      "name": "Planet Winner",
+      "description": "Complete any planet",
+      "rarity": "common",
+      "unlock_condition": "complete_planet",
+      "category": "progression",
+      "color_scheme": "green_white"
+    },
+    {
+      "id": "flawless_victory",
+      "name": "Flawless Victory",
+      "description": "Complete a planet with 5/5 first-attempt correct",
+      "rarity": "rare",
+      "unlock_condition": "perfect_planet",
+      "category": "skill",
+      "color_scheme": "gold_purple"
+    },
+    {
+      "id": "speed_demon",
+      "name": "Speed Demon",
+      "description": "Complete a planet in under 3 minutes",
+      "rarity": "uncommon",
+      "unlock_condition": "speed_planet",
+      "category": "skill",
+      "color_scheme": "red_yellow"
+    },
+    {
+      "id": "hint_helper",
+      "name": "Hint Helper",
+      "description": "Successfully solve a word after using all hints",
+      "rarity": "common",
+      "unlock_condition": "full_hint_solved",
+      "category": "special",
+      "color_scheme": "yellow_blue"
+    },
+    {
+      "id": "comeback_champion",
+      "name": "Comeback Champion",
+      "description": "Complete a planet after failing it once before",
+      "rarity": "uncommon",
+      "unlock_condition": "failed_then_cleared",
+      "category": "special",
+      "color_scheme": "orange_purple"
+    },
+    {
+      "id": "galaxy_explorer",
+      "name": "Galaxy Explorer",
+      "description": "Complete all planets in a solar system (3 planets)",
+      "rarity": "rare",
+      "unlock_condition": "complete_solar_system",
+      "category": "progression",
+      "color_scheme": "blue_silver"
+    },
+    {
+      "id": "streak_king",
+      "name": "Streak King",
+      "description": "Achieve a 15-word streak",
+      "rarity": "epic",
+      "unlock_condition": "streak_15",
+      "category": "skill",
+      "color_scheme": "gold_red"
+    },
+    {
+      "id": "streak_queen",
+      "name": "Streak Queen",
+      "description": "Achieve a 15-word streak",
+      "rarity": "epic",
+      "unlock_condition": "streak_15",
+      "category": "skill",
+      "color_scheme": "pink_purple"
+    },
+    {
+      "id": "word_master",
+      "name": "Word Master",
+      "description": "Master 50 words total",
+      "rarity": "rare",
+      "unlock_condition": "master_50_words",
+      "category": "progression",
+      "color_scheme": "blue_gold"
+    },
+    {
+      "id": "early_bird",
+      "name": "Early Bird",
+      "description": "Play game before 9am",
+      "rarity": "common",
+      "unlock_condition": "play_before_9am",
+      "category": "special",
+      "color_scheme": "orange_yellow"
+    },
+    {
+      "id": "night_owl",
+      "name": "Night Owl",
+      "description": "Play game after 7pm",
+      "rarity": "common",
+      "unlock_condition": "play_after_7pm",
+      "category": "special",
+      "color_scheme": "purple_blue"
+    }
+  ]
+}
