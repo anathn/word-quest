@@ -29,6 +29,7 @@ current_sprint:
   in_progress_stories:
   review_stories:
     - "STORY-004-03"  # Achievement badge system (all critical/medium issues resolved, awaiting merge)
+    - "STORY-004-06"  # Sticker collection (all critical/medium issues resolved, awaiting merge)
   planned_stories:
     - "STORY-003-03"  # Word list CRUD operations
 
@@ -982,10 +983,13 @@ epics:
         title: "Sticker collection"
         description: "Space-themed sticker rewards"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: null
+        status: "approved"
+        assignee: "agent"
+        started_date: "2026-07-14"
+        completed_date: "2026-07-14"
+        reviewed_date: "2026-07-14"
+        branch: "EPIC-004-STORY-006"
+        review_document: "docs/reviews/STORY-004-06-review-verification-2026-07-14.md"
         acceptance_criteria:
           - "10 sticker types defined"
           - "Unlock on achievements"
@@ -993,7 +997,7 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "Detailed story file: docs/stories/STORY-004-06.md"
+        notes: "Detailed story file: docs/stories/STORY-004-06.md. Implementation complete. 59 tests passing. Code review verification completed 2026-07-14. **ALL CRITICAL AND MEDIUM ISSUES RESOLVED**: Galaxy Explorer logic fixed, time-based tracking corrected, comprehensive test suite created (59/59 tests passing). **READY TO MERGE**. See verification review: docs/reviews/STORY-004-06-review-verification-2026-07-14.md"
 
   - id: EPIC-005
     name: "Visual & Audio Polish"
