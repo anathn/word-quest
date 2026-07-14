@@ -29,6 +29,7 @@ current_sprint:
     - "STORY-004-05"  # Rocket customization
   review_stories:
     - "STORY-004-03"  # Achievement badge system (all critical/medium issues resolved, awaiting merge)
+    - "STORY-004-05"  # Rocket customization (implementation complete, awaiting review)
   planned_stories:
     - "STORY-003-03"  # Word list CRUD operations
 
@@ -909,7 +910,7 @@ epics:
         title: "Rocket customization"
         description: "Allow students to choose rocket color"
         priority: P1
-        status: "in-progress"
+        status: "review"
         assignee: "agent"
         started_date: "2026-07-14"
         branch: "EPIC-004-STORY-005"
@@ -920,8 +921,9 @@ epics:
           - "Persist choice to profile"
         complexity: "Low"
         points: 2
-        blockers: []
-        notes: "Detailed story file: docs/stories/STORY-004-05.md"
+        blocker: []
+        notes: "Detailed story file: docs/stories/STORY-004-05.md. Implementation complete. 49 tests passing. Ready for code review."
+        review_document: null
 
       - id: STORY-004-06
         title: "Sticker collection"
