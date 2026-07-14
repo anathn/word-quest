@@ -13,6 +13,7 @@ from src.models.rocket_colors import DEFAULT_ROCKET_COLOR, ROCKET_COLOR_PRESETS
 from src.ui.color_picker import ColorPicker
 from src.ui.typography import Typography
 from src.profiles.profile_manager import ProfileManager
+from src.components.rocket_renderer import RocketRenderer
 
 
 class StudentSettingsScreen:
@@ -85,7 +86,9 @@ class StudentSettingsScreen:
             self.current_rocket_color = hex_color
         self.color_picker.on_color_selected = on_color_change
         
-        # Initialize rocket preview
+        # Initialize rocket preview using RocketRenderer for consistent tinting
+        self.rocket_preview_renderer = RocketRenderer(screen)
+        self.rocket_preview_renderer.set_color(self.current_rocket_color)
         self.rocket_preview_rect = pygame.Rect(0, 0, 80, 120)
         self.rocket_preview_rect.centerx = self.screen_width // 2
         self.rocket_preview_rect.top = self.ROCKET_PREVIEW_Y
@@ -111,70 +114,7 @@ class StudentSettingsScreen:
         # Font for header
         self._header_font = Typography.get_font("heading", 32)
         self._label_font = Typography.get_font("body", 24)
-        
-        # Simple rocket preview surface
-        self._rocket_preview_surf = self._create_rocket_preview()
-    
-    def _create_rocket_preview(self) -> pygame.Surface:
-        """
-        Create a simple rocket preview sprite.
-        
-        Returns:
-            pygame.Surface with rocket graphic
-        """
-        surf = pygame.Surface((80, 120), pygame.SRCALPHA)
-        
-        # Rocket body
-        body_points = [
-            (40, 10),   # Top tip
-            (60, 50),   # Right shoulder
-            (55, 90),   # Right bottom
-            (25, 90),   # Left bottom
-            (20, 50),   # Left shoulder
-        ]
-        pygame.draw.polygon(surf, (240, 240, 240), body_points)
-        
-        # Window
-        pygame.draw.circle(surf, (135, 206, 235), (40, 35), 12)
-        pygame.draw.circle(surf, (100, 150, 180), (40, 35), 12, 2)
-        
-        # Fins
-        fin_left = [(20, 60), (5, 95), (25, 88)]
-        fin_right = [(60, 60), (75, 95), (55, 88)]
-        pygame.draw.polygon(surf, (200, 200, 200), fin_left)
-        pygame.draw.polygon(surf, (200, 200, 200), fin_right)
-        
-        return surf
-    
-    def _apply_color_to_preview(self, surface: pygame.Surface) -> pygame.Surface:
-        """
-        Apply the current rocket color to the preview sprite.
-        
-        Args:
-            surface: Base rocket surface
-            
-        Returns:
-            Tinted copy of the surface
-        """
-        # Parse hex to RGB
-        hex_color = self.current_rocket_color.lstrip('#')
-        rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-        
-        # Create tinted copy
-        tinted = surface.copy()
-        tint_r, tint_g, tint_b = rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0
-        
-        for x in range(tinted.get_width()):
-            for y in range(tinted.get_height()):
-                pixel = tinted.get_at((x, y))
-                if pixel.a > 0:
-                    r = min(255, int(pixel.r * tint_r))
-                    g = min(255, int(pixel.g * tint_g))
-                    b = min(255, int(pixel.b * tint_b))
-                    tinted.set_at((x, y), pygame.Color(r, g, b, pixel.a))
-        
-        return tinted
-    
+
     def handle_event(self, event: pygame.event.Event) -> bool:
         """
         Handle pygame events.
@@ -244,9 +184,9 @@ class StudentSettingsScreen:
         preview_label_rect = preview_label.get_rect(centerx=self.screen_width // 2, top=self.ROCKET_PREVIEW_Y - 30)
         self.screen.blit(preview_label, preview_label_rect)
         
-        # Render rocket preview with current color
-        preview_surf = self._apply_color_to_preview(self._rocket_preview_surf)
-        self.screen.blit(preview_surf, self.rocket_preview_rect.topleft)
+        # Render rocket preview with current color using RocketRenderer
+        self.rocket_preview_renderer.set_color(self.current_rocket_color)
+        self.rocket_preview_renderer.render(self.rocket_preview_rect.topleft)
         
         # Draw current color name
         color_name = self._get_color_name(self.current_rocket_color)

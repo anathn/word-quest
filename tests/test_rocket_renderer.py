@@ -19,27 +19,19 @@ from src.components.rocket_renderer import (
     DEFAULT_ROCKET_COLOR,
     create_rocket_renderer
 )
+from src.models.rocket_colors import hex_to_rgb
 
 
 class TestHexToRgb:
-    """Tests for hex to RGB conversion in rocket renderer."""
+    """Tests for hex to RGB conversion from rocket_colors module."""
     
-    @pytest.fixture
-    def renderer(self):
-        """Create a RocketRenderer instance for testing."""
-        pygame.init()
-        screen = pygame.display.set_mode((100, 100))
-        renderer = RocketRenderer(screen)
-        yield renderer
-        pygame.quit()
-    
-    def test_hex_to_rgb_basic(self, renderer):
+    def test_hex_to_rgb_basic(self):
         """Test hex to RGB conversion."""
-        assert renderer._hex_to_rgb("#FF0000") == (255, 0, 0)
-        assert renderer._hex_to_rgb("#00FF00") == (0, 255, 0)
-        assert renderer._hex_to_rgb("#0000FF") == (0, 0, 255)
+        assert hex_to_rgb("#FF0000") == (255, 0, 0)
+        assert hex_to_rgb("#00FF00") == (0, 255, 0)
+        assert hex_to_rgb("#0000FF") == (0, 0, 255)
     
-    def test_hex_to_rgb_preset_colors(self, renderer):
+    def test_hex_to_rgb_preset_colors(self):
         """Test conversion of preset colors."""
         test_cases = [
             ("#FF4444", (255, 68, 68)),
@@ -47,7 +39,7 @@ class TestHexToRgb:
             ("#FFD700", (255, 215, 0)),
         ]
         for hex_color, expected_rgb in test_cases:
-            assert renderer._hex_to_rgb(hex_color) == expected_rgb
+            assert hex_to_rgb(hex_color) == expected_rgb
 
 
 class TestRocketRenderer:

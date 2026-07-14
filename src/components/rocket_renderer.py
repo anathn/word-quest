@@ -139,18 +139,6 @@ class RocketRenderer:
         # Apply color tint to base sprite
         self.tinted_sprite = self._apply_tint(self.base_sprite, rgb)
     
-    def _hex_to_rgb(self, hex_color: str) -> tuple:
-        """
-        Convert hex color string to RGB tuple.
-        
-        Args:
-            hex_color: Hex color string (e.g., "#FF4444")
-            
-        Returns:
-            RGB tuple (r, g, b) with values 0-255
-        """
-        return hex_to_rgb(hex_color)
-    
     def _apply_tint(self, sprite: pygame.Surface, rgb: tuple) -> pygame.Surface:
         """
         Apply color tint to a sprite using pixel multiplication.
