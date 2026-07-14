@@ -7,6 +7,9 @@ from .password_prompt import PasswordPrompt, create_password_prompt
 from .avatar_selector import AvatarSelector, create_avatar_selector
 from .profile_editor import ProfileEditor, create_profile_editor
 from .profile_selector import ProfileSelector, create_profile_selector
+from .word_list_view import WordListView
+from .word_editor import WordEditor
+from .bulk_import import BulkImporter
 from .csv_import_dialog import CSVImportDialog, show_csv_import_dialog
 from .import_preview import ImportPreview, create_import_preview
 from .email_config_panel import EmailConfigPanel, create_email_config_panel
@@ -33,6 +36,9 @@ __all__ = [
     'create_profile_editor',
     'ProfileSelector',
     'create_profile_selector',
+    'WordListView',
+    'WordEditor',
+    'BulkImporter',
     'CSVImportDialog',
     'show_csv_import_dialog',
     'ImportPreview',

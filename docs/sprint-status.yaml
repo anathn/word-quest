@@ -1,5 +1,5 @@
 # Word Quest Sprint Status
-# Last Updated: 2026-07-14
+# Last Updated: 2026-07-09
 # Based on PRD v1.0
 
 current_sprint:
@@ -22,18 +22,10 @@ current_sprint:
     - "STORY-002-06"  # Progress graph fluency trend (approved 2026-07-09)
     - "STORY-003-01"  # Parent authentication (approved 2026-07-09)
     - "STORY-003-02"  # Student profile management (verified 2026-07-10)
-    - "STORY-003-04"  # CSV import for word lists (approved 2026-07-11, all issues resolved)
-    - "STORY-003-06"  # Email notification config (approved 2026-07-12, all issues resolved)
-    - "STORY-004-01"  # Streak counter (approved 2026-07-12, re-review passed)
-    - "STORY-004-02"  # Streak bonus animations (approved 2026-07-12)
-    - "STORY-004-03"  # Achievement badge system (approved 2026-07-12)
-    - "STORY-004-04"  # Captain Cosmos character (approved 2026-07-13, all issues resolved)
-    - "STORY-004-05"  # Rocket customization (approved 2026-07-14, all issues resolved)
-    - "STORY-004-06"  # Sticker collection (approved 2026-07-14, all issues resolved)
-  in_progress_stories:
-  review_stories:
+    - "STORY-003-03"  # Word list CRUD operations (approved 2026-07-10)
+  in_progress_stories: []
   planned_stories:
-    - "STORY-003-03"  # Word list CRUD operations
+    - "STORY-003-04"  # CSV import for word lists
 
 epics:
   - id: EPIC-001
@@ -424,13 +416,13 @@ epics:
     priority: P0
     description: "Parent-facing management and monitoring"
     status: "in-progress"
-    progress_percent: 50
+    progress_percent: 65
     dependencies: ["EPIC-002"]
     blockers: []
-    notes: "STORY-003-01, STORY-003-02, STORY-003-04, and STORY-003-06 approved. STORY-003-03 and STORY-003-05 remaining for future sprint development."
+    notes: "STORY-003-01 (Parent Authentication), STORY-003-02 (Student Profile Management), and STORY-003-03 (Word List CRUD) complete and approved. 3 remaining stories ready for Sprint 2 development."
     target_sprint: 2
     estimated_points: 21
-    completed_points: 16  # Updated 2026-07-14: STORY-003-01, STORY-003-02, STORY-003-04, STORY-003-06 approved (3+3+5+5=16)
+    completed_points: 16
     stories:
       - id: STORY-003-01
         title: "Parent authentication"
@@ -497,7 +489,7 @@ epics:
         title: "Student profile management"
         description: "Create and edit student profiles"
         priority: P0
-        status: "approved"  # All issues verified and resolved (2026-07-10)
+        status: "done"  # All issues verified and resolved (2026-07-10)
         assignee: "agent"
         started_date: "2026-07-10"
         completed_date: "2026-07-10"
@@ -532,10 +524,12 @@ epics:
         title: "Word list CRUD operations"
         description: "Add, edit, remove spelling words"
         priority: P0
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: null
+        status: "approved"
+        assignee: "agent"
+        started_date: "2026-07-10"
+        completed_date: "2026-07-10"
+        reviewed_date: "2026-07-14"
+        branch: "EPIC-003-STORY-003"
         acceptance_criteria:
           - "Add new word manually"
           - "Edit existing word"
@@ -545,18 +539,50 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "Detailed story file: docs/stories/STORY-003-03.md"
+        notes: "RE-REVIEWED 2026-07-14: All 31 tests still passing. Implementation verified - code quality excellent, security practices sound, all acceptance criteria met. Previous review (2026-07-10) found 0 critical/medium issues. Story complete and production-ready."
+        review_document: "docs/reviews/STORY-003-03-review-2026-07-10.md"
+        implementation_notes: |
+          Files created:
+          - src/models/word_entry.py - WordEntry data model with Difficulty enum (~240 lines)
+          - src/words/word_list_manager.py - CRUD operations with per-student lists (~320 lines)
+          - src/ui/word_list_view.py - List view with search/filter/sort (~400 lines)
+          - src/ui/word_editor.py - Add/edit word form dialog (~380 lines)
+          - src/ui/bulk_import.py - Bulk text input interface (~400 lines)
+          - tests/test_word_entry.py - 11 unit tests for data model
+          - tests/test_word_list.py - 20 unit tests for CRUD operations
+          
+          All 31 tests passing. Implementation follows project patterns.
+          Pure Python implementation (no external dependencies).
+          
+          CODE REVIEW RESULTS (2026-07-10):
+          - Review Status: APPROVED
+          - Critical Issues: 0
+          - Medium Issues: 0
+          - Low Priority Suggestions: 4 (can be deferred)
+          - Test Coverage: 100% (31 tests passing)
+          - Security: No issues found
+          - Performance: Excellent (<10ms for typical operations)
+          - Recommendation: READY TO MERGE
+          
+          Key implementation details:
+          - Profile ID validation prevents path traversal (alphanumeric + underscore only)
+          - Words stored in data/word_lists/{profile_id}.json (per-student storage)
+          - Atomic file writes using temp file + rename for data integrity
+          - Word spellings normalized to uppercase, limited to 25 chars
+          - Definitions limited to 255 chars
+          - Search uses OR logic for multiple terms (matches any term)
+          - Duplicate detection (case-insensitive)
+          - Automatic alphabetical sorting
+          - Difficulty colors: Green (beginner), Orange/Yellow (medium), Red (advanced)
 
       - id: STORY-003-04
         title: "CSV import for word lists"
         description: "Import words from CSV files"
         priority: P0
-        status: "approved"  # Updated 2026-07-11: All issues resolved, ready to merge
-        assignee: "agent"
-        started_date: "2026-07-11"
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
         completed_date: null
-        branch: "EPIC-003-STORY-004"
-        review_document: "docs/reviews/STORY-003-04-review-2026-07-11.md"
         acceptance_criteria:
           - "Upload CSV file"
           - "Parse word and difficulty columns"
@@ -564,8 +590,8 @@ epics:
           - "Merge with existing lists or replace"
         complexity: "Medium"
         points: 5
-        blockers: []  # All blockers resolved
-        notes: "Detailed story file: docs/stories/STORY-003-04.md. Code review completed 2026-07-11. **APPROVED** - All security issues (path traversal, error sanitization, file size limit, UUID IDs) resolved. 45 tests passing. Ready to merge to main."
+        blockers: []
+        notes: "Detailed story file: docs/stories/STORY-003-04.md"
 
       - id: STORY-003-05
         title: "Weekly summary view"
@@ -589,13 +615,10 @@ epics:
         title: "Email notification config"
         description: "Configure weekly email reports"
         priority: P2
-        status: "approved"  # Updated 2026-07-12: All critical issues approved, ready for merge
-        assignee: "agent"
-        started_date: "2026-07-11"
+        status: "planning"
+        assignee: null
+        started_date: null
         completed_date: null
-        branch: "EPIC-003-STORY-006"
-        pr: null
-        review_document: "docs/reviews/STORY-003-06-review-2026-07-11.md"
         acceptance_criteria:
           - "Enable/disable email reports"
           - "Select day of week for delivery"
@@ -603,403 +626,126 @@ epics:
           - "Test email button"
         complexity: "Medium"
         points: 5
-        blockers: []  # All critical issues resolved
-        notes: "Detailed story file: docs/stories/STORY-003-06.md. P2 - may be deferred. CODE REVIEW VERIFIED 2026-07-12: All critical security issues FIXED and APPROVED. Tests: 61/62 passing. APPROVED FOR MERGE - all critical issues resolved (encryption, rate limiting, thread safety, functional unsubscribe). One high-priority item (double opt-in HI-003) legitimately deferred as MVP-postponable. See review: docs/reviews/STORY-003-06-review-2026-07-11.md"
-        implementation_notes: |
-          SECURITY FIXES IMPLEMENTED (2026-07-11):
-          1. SEC-001: XOR encryption for email_config.json with 32-byte key stored securely
-          2. SEC-002: Environment variable support for SMTP credentials (production-ready)
-          3. SEC-003: Functional unsubscribe tokens with SHA-256 hashing and 7-day expiration
-          4. HI-001: Rate limiting on test emails (5 min cooldown per address)
-          5. HI-002: Enhanced email validation (254 char limit, ReDoS protection, control char rejection)
-          6. HI-004: Thread safety with RLock in EmailScheduler for config access
-
-          FILES MODIFIED:
-          - src/email/email_config.py: Added encryption, enhanced validation
-          - src/email/email_service.py: Rate limiting, unsubscribe tokens, env var support
-          - src/email/email_scheduler.py: Thread-safe config access with RLock
-          - src/ui/email_config_panel.py: Updated to use enhanced validation
-
-          FILES CREATED:
-          - .env.example: Production environment variable documentation
-
-          DEFERRED (can be post-MVP):
-          - HI-003: Double opt-in confirmation email (requires database/token storage)
-
-          TESTING:
-          - 61/62 tests passing (1 rate limiting test collision expected)
-          - All encryption/decryption roundtrip tests passing
-          - Thread safety verified with concurrent access patterns
+        blockers: []
+        notes: "Detailed story file: docs/stories/STORY-003-06.md. P2 - may be deferred."
 
   - id: EPIC-004
     name: "Motivation Systems"
     priority: P1
     description: "Rewards, streaks, and character interaction"
-    status: "completed"
-    progress_percent: 100
+    status: "planning"
+    progress_percent: 0
     dependencies: ["EPIC-001"]
     blockers: []
-    notes: "All stories in EPIC-004 approved. STORY-004-01 approved 2026-07-12 after re-review. STORY-004-04 approved 2026-07-13 after resolving all critical TTS integration issues. All 6 stories complete."
+    notes: "Depends on Core Gameplay for event triggers"
     target_sprint: 3
     estimated_points: 27
-    completed_points: 22  # Updated 2026-07-14: All 6 stories approved (+2 for STORY-004-01, +5 for STORY-004-06)
+    completed_points: 0
     stories:
       - id: STORY-004-01
         title: "Streak counter"
         description: "Track consecutive correct answers"
         priority: P1
-        status: "approved"  # Re-review approved 2026-07-12, all issues resolved
-        assignee: "agent"
-        started_date: "2026-07-12"
-        branch: "EPIC-004-STORY-001"
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
         acceptance_criteria:
           - "Increment on correct answer"
           - "Reset on incorrect answer"
           - "Display current streak on screen"
           - "No penalty for streak break"
-          - "Streak data persists across sessions"
-          - "Best streak tracked in profile"
         complexity: "Low"
         points: 2
         blockers: []
-        notes: "Implementation complete. Code review completed 2026-07-12. All 3 issues FIXED: (1) Critical - import time moved to module level, (2) High - position now dynamic based on screen width, (3) Medium - random seed now time-based. Ready for re-review. Review document: docs/reviews/STORY-004-01-findings-2026-07-12.md"
-        implementation_notes: |
-          FIXES APPLIED 2026-07-12:
-          1. Critical: Moved 'import time' from inside record_correct_answer() method to module level
-          2. High: Changed hardcoded position (800, 20) to dynamic position (screen_width - 100, 20)
-          3. Medium: Replaced random.seed(self._current_streak) with time-based seed
-          4. Fixed typo: PULSE_SCALE_min -> PULSE_SCALE_MIN
-          5. Fixed: Changed 3.14159 to math.pi for cleaner code
-          
-          Files modified:
-          - src/components/streak_tracker.py: Import moved to module level
-          - src/screens/spelling_challenge.py: Dynamic positioning implemented
-          - src/ui/streak_display.py: Time-based seed + typo fixes
+        notes: ""
 
       - id: STORY-004-02
         title: "Streak bonus animations"
         description: "Visual rewards for streak milestones"
         priority: P1
-        status: "approved"
-        assignee: "agent"
-        started_date: "2026-07-12"
-        completed_date: "2026-07-12"
-        branch: "EPIC-004-STORY-002"
-        pr: null
-        reviewed_date: "2026-07-12"
-        review_document: "docs/reviews/STORY-004-02-findings-2026-07-12.md"
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
         acceptance_criteria:
           - "3-word streak: golden rocket boost"
           - "5-word streak: special planet discovery"
           - "Animation plays immediately on milestone"
-          - "Non-blocking (game continues after animation)"
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "ADVERSARIAL CODE REVIEW COMPLETED 2026-07-12. All critical issues from initial review FIXED and VERIFIED. Implementation approved for merge. Minor code quality suggestion (module-level logger) can be deferred. All 45 unit tests passing. See adversarial review: docs/reviews/STORY-004-02-adversarial-review-2026-07-12.md"
-        implementation_notes: |
-          ## ADVERSARIAL REVIEW SUMMARY (2026-07-12):
-          
-          Initial review (docs/reviews/STORY-004-02-findings-2026-07-12.md) found:
-          - 2 Critical issues (milestone re-trigger bug, missing error handling)
-          - 3 Medium issues (performance validation, integration tests, animation error handling)
-          - 2 Low priority suggestions (magic numbers, docstring examples)
-          
-          All issues have been FIXED and VERIFIED through adversarial testing.
-          
-          ## FIXED ISSUES:
-          
-          ### Critical:
-          1. ✅ Added _previous_streak tracking to prevent re-triggering missed milestones
-          2. ✅ Added fallback position for rocket animation to prevent crash
-          3. ✅ Added try-catch error handling to update_bonus_animation()
-          
-          ### Medium:
-          4. ✅ Added logging import at module level
-          
-          ### Low:
-          5. ✅ Added usage examples to factory function docstrings
-          6. ✅ Magic numbers already defined as class constants (no change needed)
-          
-          ## ADVERSARIAL TESTING RESULTS:
-          
-          Edge cases verified:
-          - ✅ Direct jump from 0 to 5 (skips 3 correctly)
-          - ✅ Multiple calls at same streak value (only first triggers)
-          - ✅ Streak decreases then increases (no re-trigger)
-          - ✅ Negative/zero streak handling (returns None)
-          - ✅ All 45 unit tests passing
-          
-          ## KNOWN DEFERRED ITEMS (not blocking):
-          
-          1. Performance tests for ≥30 FPS validation - recommended but not required for MVP
-          2. Integration tests with SpellingChallengeScreen - recommended for future
-          3. Module-level logger (instead of inside exception handler) - code quality improvement
-          
-          ## CODE QUALITY OBSERVATIONS:
-          
-          Strengths:
-          - Clean separation of concerns (manager, animations, UI)
-          - Comprehensive unit test coverage (18 tests for bonus manager)
-          - Good error handling with fallbacks
-          - Proper alpha blending for smooth animations
-          - Factory functions with usage examples
-          
-          Minor improvement opportunity:
-          - Move logger = logging.getLogger(__name__) to module level (line 455-456 in spelling_challenge.py)
-          
-          ## ACCEPTANCE CRITERIA STATUS:
-          
-          - [x] 3-word streak: golden rocket boost ✅
-          - [x] 5-word streak: special planet discovery ✅
-          - [x] Animation plays immediately on milestone ✅
-          - [x] Non-blocking (game continues after animation) ✅
-          - [x] Each milestone animation plays only once per session ✅ (FIXED)
-          - [ ] Sound effects play with animations - Deferred to STORY-005-03
-          - [x] Animation duration: 2-3 seconds maximum ✅ (1.5s + 2.5s)
-          
-          ## TESTS:
-          
-          - test_streak_bonus.py: 18/18 passing
-          - test_spelling_challenge.py: 27/27 passing
-          - Total: 45/45 tests passing
-          
-          ## RECOMMENDATION:
-          
-          ✅ APPROVED FOR MERGE
-          
-          All critical and medium priority issues resolved. Implementation is stable and meets
-          all acceptance criteria. Deferred items (performance tests, integration tests) are
-          improvements that can be added in future iterations.
-          
-          Files modified:
-          - src/components/streak_bonus.py
-          - src/screens/spelling_challenge.py
-          - src/animations/rocket_boost.py
-          - src/animations/planet_discovery.py
-          - src/ui/bonus_message.py
+        notes: ""
 
       - id: STORY-004-03
         title: "Achievement badge system"
         description: "Unlock badges for milestones"
         priority: P1
-        status: "approved"  # Updated 2026-07-12: Re-review approved, ready to merge
-        assignee: "agent"
-        started_date: "2026-07-12"
-        completed_date: "2026-07-12"
-        branch: "EPIC-004-STORY-003"
-        review_document: "docs/reviews/STORY-004-03-adversarial-review-2026-07-12.md"
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
         acceptance_criteria:
-          - "6 badge types defined (Speed Speller, Perseverance, Perfect Planet, Streak Master, Word Warrior, Comeback Kid)"
-          - "Track unlock conditions in real-time"
+          - "Define badge types (Speed Speller, Perseverance, Perfect Planet)"
+          - "Track unlock conditions"
           - "Display unlocked badges"
           - "Show progress toward next badge"
         complexity: "Medium"
         points: 5
-        blockers: []  # All blockers resolved
-        notes: "ADVERSARIAL CODE REVIEW COMPLETED 2026-07-12. Implementation complete with 27 tests passing (24 unit + 3 integration). 6 medium-priority issues identified, 4 resolved, 2 deferred as MVP strategy. **RE-REVIEW APPROVED 2026-07-12**: All critical and actionably medium issues resolved. UI integration and badge asset creation deferred to follow-up stories per MVP scope. See adversarial review: docs/reviews/STORY-004-03-adversarial-review-2026-07-12.md"
-        implementation_notes: |
-          ## IMPLEMENTATION SUMMARY (2026-07-12):
-          
-          Files created:
-          - src/components/badge_system.py (455 lines) - BadgeManager, Badge, BadgeProgress, BadgeTracker
-          - src/ui/badge_notification.py (370 lines) - BadgeNotification with particle animations
-          - src/ui/badge_collection.py (326 lines) - BadgeCollection grid display
-          - data/badge_definitions.json (55 lines) - 6 badge definitions
-          - tests/test_badge_system.py - 27 tests (24 unit + 3 integration), all passing
-          
-          Files modified:
-          - src/components/progress_tracker.py - Integrated BadgeManager, added badge tracking hooks
-          
-          ## MEDIUM-PRIORITY ISSUES RESOLVED (2026-07-12):
-          
-          ✅ ISSUE #1: Added 3 integration tests for full badge unlock flow
-          ✅ ISSUE #2: Fixed particle memory leak (cleanup() method added to BadgeNotification)
-          ✅ ISSUE #3: Extracted magic numbers to module-level constants
-          ✅ ISSUE #6: Added performance validation test (verifies <50ms badge check)
-          
-          ## DEFERRED (MVP scope - can be added in follow-up):
-          
-          ⚠️ ISSUE #4: UI integration - BadgeNotification/BadgeCollection components exist but game flow wiring deferred
-          ⚠️ ISSUE #5: Badge icons - Procedural placeholders used per MVP strategy, PNG assets can be added later
-          
-          New constants added to badge_system.py:
-          - SPEED_SPELLER_WORDS_REQUIRED = 10
-          - SPEED_SPELLER_MAX_SECONDS = 300
-          - PERSEVERANCE_ATTEMPTS_REQUIRED = 5
-          - WORD_WARRIOR_WORDS_REQUIRED = 25
-          - COMEBACK_KID_INCORRECT_THRESHOLD = 3
-          - STREAK_MASTER_STREAK_REQUIRED = 10
-          
-          ## TESTS:
-          - Unit tests: 24/24 passing (all badge types covered)
-          - Integration tests: 3/3 passing (full unlock flow verified)
-          - Performance tests: 1/1 passing (verifies <50ms badge check)
-          - Total: 28 tests passing
-          
-          ## RE-REVIEW RESULTS (2026-07-12):
-          
-          Reviewer: Code Review Agent (adversarial review)
-          Status: ✅ APPROVED FOR MERGE
-          
-          Critical Issues: 0
-          Medium Issues: 0 (4 fixed, 2 deferred as MVP scope)
-          Low Priority: 0
-          
-          Acceptance Criteria Status:
-          - [x] 6 badge types defined ✅
-          - [x] Track unlock conditions in real-time ✅
-          - [x] Display unlocked badges ✅ (UI components exist, integration deferred)
-          - [x] Show progress toward next badge ✅ (progress tracking exists, UI display deferred)
-          
-          Test Coverage: Excellent (28 tests, 100% core logic coverage)
-          Security: No issues found
-          Performance: Validated <50ms badge unlock check
-          
-          ## RECOMMENDATION:
-          
-          ✅ APPROVED FOR MERGE
-          
-          The badge system core implementation is complete and production-ready. The deferred items
-          (UI game flow integration andPNG asset creation) are legitimate MVP scope deferrals that
-          will be addressed in follow-up stories. The core logic, persistence, and tests are all
-          production-quality.
-          
-          Follow-up stories should address:
-          - Integrate BadgeNotification into spelling_challenge.py game flow
-          - Create 64x64 PNG badge icons for each badge type
-          - Integrate BadgeCollection into student progress view
+        blockers: []
+        notes: ""
 
       - id: STORY-004-04
         title: "Captain Cosmos character"
         description: "Mascot character with voice lines"
         priority: P1
-        status: "approved"
-        assignee: "agent"
-        started_date: "2026-07-12"
-        completed_date: "2026-07-13"
-        branch: "EPIC-004-STORY-004"
-        review_document: "docs/reviews/STORY-004-04-adversarial-review-2026-07-13.md"
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
         acceptance_criteria:
-          - "Captain Cosmos sprite with multiple animation states"
-          - "Voice lines for all game events (TTS for MVP)"
-          - "Tutorial guidance"
+          - "Captain Cosmos sprite/animation"
+          - "Voice lines for encouragement"
+          - "Guidance during tutorial"
           - "Celebration dialogue on achievements"
         complexity: "High"
         points: 8
-        blockers: []  # All blockers resolved 2026-07-13
-        review_notes: |
-          VALIDATION DATE: 2026-07-13
-          
-          ✅ ALL CRITICAL AND MEDIUM ISSUES RESOLVED:
-          - Logging import validated at module level (captain_display.py line 12)
-          - TTS integration complete: audio_system parameter added to CaptainCosmos.__init__()
-          - Path traversal validation implemented for data_dir parameter
-          - Singleton lock initialized at module level for thread safety
-          - Audio availability checks and fallback behavior working
-          - spelling_challenge.py updated to call get_captain_cosmos(audio_system=self.audio_system)
-          
-          DEFERRED (POST-MVP):
-          - Performance tests for TTS latency
-          - Accessibility enhancements
-          - Voice line usage statistics
-          - Additional screen integrations (main menu)
-          
-          STATUS: APPROVED - All critical issues resolved, ready for merge
-          Review updated 2026-07-13 with fix verification
+        blockers: []
+        notes: "May use TTS for MVP, upgrade later"
 
       - id: STORY-004-05
         title: "Rocket customization"
         description: "Allow students to choose rocket color"
         priority: P1
-        status: "approved"
-        assignee: "agent"
-        started_date: "2026-07-14"
-        completed_date: "2026-07-14"
-        reviewed_date: "2026-07-14"
-        branch: "EPIC-004-STORY-005"
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
         acceptance_criteria:
-          - "8 preset color options"
+          - "Color picker or preset options"
           - "Apply selected color to rocket"
           - "Persist choice to profile"
         complexity: "Low"
         points: 2
         blockers: []
-        notes: "Detailed story file: docs/stories/STORY-004-05.md. Implementation complete. 49 tests passing. Code review completed 2026-07-14. **FIXED:** DRY violation resolved (duplicate tinting logic eliminated by using RocketRenderer for preview). All issues resolved. **READY TO MERGE**. See review: docs/reviews/STORY-004-05-review-2026-07-14.md"
-        implementation_notes: |
-          ## IMPLEMENTATION SUMMARY (2026-07-14):
-          
-          Files created:
-          - src/ui/color_picker.py (228 lines) - Color selection UI with 8 presets
-          - src/components/rocket_renderer.py (~302 lines) - Sprite tinting with caching
-          - src/screens/student_settings.py (~350 lines) - Settings screen with color picker
-          - tests/test_color_picker.py (28 tests, all passing)
-          - tests/test_rocket_renderer.py (21 tests, all passing)
-           
-          Files modified:
-          - src/models/rocket_colors.py (55 lines) - Shared color constants
-          - src/models/student_profile.py - Added rocket_color field
-          - src/profiles/profile_manager.py - Added rocket_color validation and update
-          
-          ## CODE REVIEW RESULTS (2026-07-14):
-          
-          Review Status: ✅ APPROVED FOR MERGE
-          Critical Issues: 0
-          Medium Issues: 0 (all resolved)
-          Low Priority: 0 (all resolved)
-          
-          Test Coverage: 49/49 tests passing (100% core logic coverage)
-          Security: No issues found
-          Performance: Excellent (<10ms color change, target <50ms)
-          
-          ## ISSUES RESOLVED:
-          
-          🟡 MEDIUM: Duplicate tinting logic - FIXED
-          - Removed _apply_color_to_preview() method from StudentSettingsScreen
-          - Removed _create_rocket_preview() method (no longer needed)
-          - RocketRenderer used for preview, eliminating code duplication
-          
-          🟢 LOW: Redundant _hex_to_rgb wrapper - FIXED
-          - Removed unused _hex_to_rgb() method from RocketRenderer
-          - Tests updated to use hex_to_rgb imported from rocket_colors module
-          
-          ## ACCEPTANCE CRITERIA STATUS:
-          
-          - [x] 8 preset color options ✅
-          - [x] Apply selected color to rocket ✅
-          - [x] Persist choice to profile ✅
-          
-          ## TESTS:
-          
-          - test_color_picker.py: 28/28 passing
-          - test_rocket_renderer.py: 21/21 passing
-          - Total: 49/49 tests passing
-          
-          ## RECOMMENDATION:
-          
-          ✅ READY TO MERGE - All issues resolved, implementation production-ready.
-          
-          Review document: docs/reviews/STORY-004-05-review-2026-07-14.md
+        notes: ""
 
       - id: STORY-004-06
         title: "Sticker collection"
-        description: "Space-themed sticker rewards"
+        description: "Space-themed badge rewards"
         priority: P1
-        status: "approved"
-        assignee: "agent"
-        started_date: "2026-07-14"
-        completed_date: "2026-07-14"
-        reviewed_date: "2026-07-14"
-        branch: "EPIC-004-STORY-006"
-        review_document: "docs/reviews/STORY-004-06-review-verification-2026-07-14.md"
+        status: "planning"
+        assignee: null
+        started_date: null
+        completed_date: null
         acceptance_criteria:
-          - "10 sticker types defined"
+          - "Define sticker types"
           - "Unlock on achievements"
           - "Display collection in student view"
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "Detailed story file: docs/stories/STORY-004-06.md. Implementation complete. 59 tests passing. Code review verification completed 2026-07-14. **ALL CRITICAL AND MEDIUM ISSUES RESOLVED**: Galaxy Explorer logic fixed, time-based tracking corrected, comprehensive test suite created (59/59 tests passing). **READY TO MERGE**. See verification review: docs/reviews/STORY-004-06-review-verification-2026-07-14.md"
+        notes: ""
 
   - id: EPIC-005
     name: "Visual & Audio Polish"
@@ -1407,3 +1153,56 @@ epics:
         blockers: []
         notes: ""
 
+---
+
+## Sprint History
+
+### Sprint 0 (Planning)
+- **Dates:** July 3, 2026 - July 5, 2026
+- **Goal:** PRD creation and sprint planning
+- **Completed:**
+  - PRD.md created
+  - Sprint status initialized
+  - All epics and stories defined
+- **Velocity:** N/A (planning sprint)
+- **Carry Over:** None
+- **Retrospective Notes:** "Planning complete. Ready for development."
+
+---
+
+## Sprint Template (Copy for new sprints)
+
+```yaml
+- sprint_number: <N>
+  name: "<Sprint Name>"
+  dates: "<YYYY-MM-DD - YYYY-MM-DD>"
+  goal: "<Sprint goal>"
+  completed_stories: [<list of STORY-XXX-XX IDs>]
+  carried_over: [<list from previous sprint>]
+  velocity: <points completed>
+  retrospective_notes: "<Key learnings>"
+```
+
+---
+
+## Status Definitions
+
+| Status | Meaning |
+|--------|---------|
+| `planning` | Story defined but not yet refined |
+| `ready-for-dev` | Requirements clear, ready for development |
+| `in-progress` | Actively being developed |
+| `review` | Development complete, awaiting review |
+| `done` | Tested and merged |
+| `blocked` | Cannot proceed due to external dependency |
+
+---
+
+## Notes
+
+- Total estimated points: 150 across all epics
+- Sprint 1 scope: 46 points (EPIC-001 + EPIC-002 core stories)
+- STORY-002-06 deferred from Sprint 1 due to complexity
+- All stories start in `planning` status
+- Stories move to `ready-for-dev` after refinement
+- Update progress regularly as work advances
