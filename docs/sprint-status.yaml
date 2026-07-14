@@ -982,9 +982,10 @@ epics:
         title: "Sticker collection"
         description: "Space-themed sticker rewards"
         priority: P1
-        status: "in-progress"
+        status: "review"
         assignee: "agent"
         started_date: "2026-07-14"
+        completed_date: "2026-07-14"
         branch: "EPIC-004-STORY-006"
         acceptance_criteria:
           - "10 sticker types defined"
@@ -993,7 +994,7 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "Detailed story file: docs/stories/STORY-004-06.md"
+        notes: "Detailed story file: docs/stories/STORY-004-06.md. Implementation complete with 11 sticker types, collection grid UI, unlock notifications, and ProgressTracker integration. Ready for code review."
 
   - id: EPIC-005
     name: "Visual & Audio Polish"
