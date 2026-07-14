@@ -25,7 +25,8 @@ current_sprint:
     - "STORY-003-04"  # CSV import for word lists (approved 2026-07-11, all issues resolved)
     - "STORY-003-05"  # Weekly summary view (approved 2026-07-11, all issues resolved)
     - "STORY-004-04"  # Captain Cosmos character (approved 2026-07-13, all issues resolved)
-  in_progress_stories: []
+  in_progress_stories:
+    - "STORY-004-05"  # Rocket customization
   review_stories:
     - "STORY-004-03"  # Achievement badge system (all critical/medium issues resolved, awaiting merge)
   planned_stories:
@@ -908,10 +909,11 @@ epics:
         title: "Rocket customization"
         description: "Allow students to choose rocket color"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: null
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-14"
+        branch: "EPIC-004-STORY-005"
+        completion_date: null
         acceptance_criteria:
           - "8 preset color options"
           - "Apply selected color to rocket"
