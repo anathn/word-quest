@@ -9,7 +9,7 @@ import pygame
 from typing import Optional
 import math
 
-from src.ui.color_picker import DEFAULT_ROCKET_COLOR, hex_to_rgb
+from src.models.rocket_colors import DEFAULT_ROCKET_COLOR, hex_to_rgb
 
 
 class RocketRenderer:

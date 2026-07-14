@@ -21,7 +21,7 @@ from typing import List, Optional, Tuple
 from datetime import datetime
 
 from src.models.student_profile import StudentProfile
-from src.ui.color_picker import DEFAULT_ROCKET_COLOR
+from src.models.rocket_colors import DEFAULT_ROCKET_COLOR
 
 
 class ProfileManager:

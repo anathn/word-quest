@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional
 import re
 
-from src.ui.color_picker import DEFAULT_ROCKET_COLOR
+from src.models.rocket_colors import DEFAULT_ROCKET_COLOR
 
 
 @dataclass

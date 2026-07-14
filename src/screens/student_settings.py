@@ -9,7 +9,8 @@ import pygame
 from typing import Optional, List
 import sys
 
-from src.ui.color_picker import ColorPicker, DEFAULT_ROCKET_COLOR, ROCKET_COLOR_PRESETS
+from src.models.rocket_colors import DEFAULT_ROCKET_COLOR, ROCKET_COLOR_PRESETS
+from src.ui.color_picker import ColorPicker
 from src.ui.typography import Typography
 from src.profiles.profile_manager import ProfileManager
 
