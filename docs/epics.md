@@ -17,7 +17,7 @@
 | EPIC-002 | Progress Tracking | P0 | ready-for-dev | 36 | Sprint 1 |
 | EPIC-003 | Parent Dashboard | P0 | ready-for-dev | 21 | Sprint 2 |
 | EPIC-004 | Motivation Systems | P1 | ready-for-dev | 27 | Sprint 3 |
-| EPIC-005 | Visual & Audio Polish | P1 | planning | 31 | Sprint 3 |
+| EPIC-005 | Visual & Audio Polish | P1 | ready-for-dev | 31 | Sprint 3 |
 | EPIC-006 | Accessibility | P1 | planning | 19 | Sprint 4 |
 | EPIC-007 | Student Progress View | P1 | planning | 16 | Sprint 4 |
 | EPIC-008 | Email Reports | P2 | planning | 17 | Sprint 5 |
@@ -297,10 +297,24 @@ Create an engaging experience that encourages regular practice through rewards, 
 ## EPIC-005: Visual & Audio Polish
 
 **Priority:** P1 (Should Have)  
-**Status:** planning  
+**Status:** ready-for-dev  
 **Progress:** 0%  
 **Estimated Points:** 31  
 **Target Sprint:** Sprint 3
+
+### Status
+
+**Overall Progress:** 0% (Stories refined, ready for development)
+
+#### Stories (All detailed, ready for dev)
+- ✅ STORY-005-01 - Space theme visuals (5pts) - Story file created  
+- ✅ STORY-005-02 - Rocket sprite with animations (8pts) - Story file created  
+- ✅ STORY-005-03 - Success/failure SFX (3pts) - Story file created  
+- ✅ STORY-005-04 - Background music (5pts) - Story file created  
+- ✅ STORY-005-05 - Letter animations (5pts) - Story file created  
+- ✅ STORY-005-06 - Planet bloom on completion (5pts) - Story file created  
+
+*All 6 stories have detailed implementation guides in `docs/stories/`. Ready for Sprint 3 development.*
 
 ### Description
 Engaging space-themed visuals and supportive audio feedback that make the game enjoyable.
@@ -326,17 +340,18 @@ Transform the functional MVP into a polished, delightful experience that kids wa
 
 | ID | Title | Status | Points |
 |----|-------|--------|--------|
-| STORY-005-01 | Space theme visuals | planning | 5 |
-| STORY-005-02 | Rocket sprite with animations | planning | 8 |
-| STORY-005-03 | Success/failure SFX | planning | 3 |
-| STORY-005-04 | Background music | planning | 5 |
-| STORY-005-05 | Letter animations | planning | 5 |
-| STORY-005-06 | Planet bloom on completion | planning | 5 |
+| STORY-005-01 | Space theme visuals | ready-for-dev | 5 |
+| STORY-005-02 | Rocket sprite with animations | ready-for-dev | 8 |
+| STORY-005-03 | Success/failure SFX | ready-for-dev | 3 |
+| STORY-005-04 | Background music | ready-for-dev | 5 |
+| STORY-005-05 | Letter animations | ready-for-dev | 5 |
+| STORY-005-06 | Planet bloom on completion | ready-for-dev | 5 |
 
 ### Dependencies
-- **EPIC-001 (Core Gameplay)** - Needs game states to apply visuals to
+- **EPIC-001 (Core Gameplay)** - Needs game states to apply visuals to (COMPLETED)
 
 ### Acceptance Criteria
+- [x] All 6 stories have detailed implementation guides in `docs/stories/`
 - [ ] All 6 stories completed and tested
 - [ ] Visual theme consistent with design guidelines
 - [ ] Animations smooth (≥30 FPS)
@@ -346,8 +361,8 @@ Transform the functional MVP into a polished, delightful experience that kids wa
 
 ### Risks & Blockers
 - **Risk:** Asset creation may take longer than expected
-- **Mitigation:** Use placeholder assets for MVP, iterate with polish
-- **Blockers:** None currently
+- **Mitigation:** Use procedural generation for MVP (no external assets needed)
+- **Blockers:** None currently - EPIC-001 complete, ready for development
 
 ---
 
