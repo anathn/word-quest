@@ -31,6 +31,8 @@ from src.animations.planet_discovery import PlanetDiscoveryAnimation, create_pla
 from src.utils.validators import InputValidator, AnswerValidator
 from src.components.captain_cosmos import CaptainCosmos, get_captain_cosmos
 from src.components.audio_system import get_audio_system
+from src.ui.star_field import StarField
+from src.ui.theme import get_theme, SPACE_BLUE
 
 # Performance threshold constants
 WORD_PRESENTATION_TIMEOUT_MS = 200  # Maximum allowed time for word presentation
@@ -132,8 +134,12 @@ class SpellingChallengeScreen:
         # Captain Cosmos integration (STORY-004-04)
         # Get singleton instance with audio_system for TTS integration
         self.captain = get_captain_cosmos(audio_system=self.audio_system)
+        
+        # Space theme integration (STORY-005-01)
+        self.theme = get_theme()
+        self.star_field: Optional[StarField] = None
     
-    def present_word(self, word, planet_id: Optional[str] = None, planet_name: Optional[str] = None):
+    def present_word(self, word, planet_id: Optional[str] = None, planet_name: Optional[str] = None, screen_width: int = 800, screen_height: int = 600):
         """
         Present a word with audio and starter hints.
         
@@ -141,10 +147,16 @@ class SpellingChallengeScreen:
             word: SpellingWord object to present
             planet_id: Optional planet identifier for tracking
             planet_name: Optional planet name for tracking
+            screen_width: Screen width for star field initialization
+            screen_height: Screen height for star field initialization
             
         Returns:
             True if presentation started successfully
         """
+        # Initialize star field if not already created (STORY-005-01)
+        if not self.star_field:
+            self.star_field = StarField(screen_width, screen_height)
+        
         start_time = time.time()
         
         self.current_word = word
@@ -472,6 +484,23 @@ class SpellingChallengeScreen:
             self.active_bonus_animation = None
             self.active_bonus_message = None
     
+    def render_background(self, screen):
+        """
+        Render the space theme background (STORY-005-01).
+        
+        This fills the screen with deep space blue and renders the star field.
+        Call this BEFORE rendering other UI elements.
+        
+        Args:
+            screen: Pygame surface to render on
+        """
+        # Fill with deep space blue background
+        screen.fill(self.theme.get_color("space_blue"))
+        
+        # Render star field
+        if self.star_field:
+            self.star_field.render(screen)
+    
     def render_progress_display(self, screen):
         """
         Render the words mastered counter on the screen (STORY-002-03).
@@ -670,6 +699,10 @@ class SpellingChallengeScreen:
         Args:
             current_time: Current time in seconds
         """
+        # Update star field animation (STORY-005-01)
+        if self.star_field:
+            self.star_field.update(current_time)
+        
         # Update input display animations
         if self.input_display:
             self.input_display.update(current_time)
@@ -753,6 +786,11 @@ class SpellingChallengeScreen:
         self.active_bonus_message = None
         if self.streak_bonus_manager:
             self.streak_bonus_manager.reset_session()
+        
+        # Reset star field (STORY-005-01)
+        if self.star_field:
+            # Keep star field but reset doesn't need to regenerate stars
+            pass
     
     def get_hint_analytics(self) -> dict:
         """
