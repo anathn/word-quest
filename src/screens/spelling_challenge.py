@@ -31,6 +31,7 @@ from src.animations.planet_discovery import PlanetDiscoveryAnimation, create_pla
 from src.utils.validators import InputValidator, AnswerValidator
 from src.components.captain_cosmos import CaptainCosmos, get_captain_cosmos
 from src.components.audio_system import get_audio_system
+from src.audio import get_sound_manager, SoundEvent
 from src.ui.star_field import StarField
 from src.ui.theme import get_theme, SPACE_BLUE
 
@@ -138,6 +139,14 @@ class SpellingChallengeScreen:
         # Space theme integration (STORY-005-01)
         self.theme = get_theme()
         self.star_field: Optional[StarField] = None
+        
+        # Sound effects integration (STORY-005-03)
+        self.sound_manager = get_sound_manager()
+        # Initialize sound manager (non-blocking)
+        try:
+            self.sound_manager.initialize()
+        except Exception as e:
+            print(f"Warning: Could not initialize sound manager: {e}")
     
     def present_word(self, word, planet_id: Optional[str] = None, planet_name: Optional[str] = None, screen_width: int = 800, screen_height: int = 600):
         """
@@ -303,6 +312,13 @@ class SpellingChallengeScreen:
     
     def _on_feedback_shown(self, feedback_type: FeedbackType):
         """Handle feedback being shown."""
+        # Play sound effect based on feedback type
+        if self.sound_manager and self.sound_manager.is_audio_available():
+            if feedback_type == FeedbackType.SUCCESS:
+                self.sound_manager.play(SoundEvent.CORRECT_ANSWER)
+            elif feedback_type == FeedbackType.RETRY:
+                self.sound_manager.play(SoundEvent.INCORRECT_ANSWER)
+        
         # Record incorrect attempt when retry feedback shown (STORY-002-01)
         if feedback_type == FeedbackType.RETRY and self.progress_tracker:
             self.progress_tracker.record_attempt(False)

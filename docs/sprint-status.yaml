@@ -923,10 +923,11 @@ epics:
         title: "Success/failure SFX"
         description: "Sound effects for game events"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: "2026-07-14"
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-15"
+        completed_date: null
+        branch: "EPIC-005-STORY-003"
         acceptance_criteria:
           - "Correct answer: ascending chime (C-E-G)"
           - "Incorrect: gentle descending tone"

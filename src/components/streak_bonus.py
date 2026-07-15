@@ -1,13 +1,14 @@
-"""
-Streak Bonus Manager (STORY-004-02)
+"""Streak Bonus Manager (STORY-004-02)
 
-Manages streak bonus milestones and triggers special animations at streak thresholds.
+Manages streak bonus milestones and triggers.
 Implements visual rewards for maintaining consecutive correct answers.
 """
 
 from dataclasses import dataclass
 from typing import Optional, Callable
 from enum import Enum
+import sys
+import os
 
 
 class BonusType(Enum):
@@ -34,6 +35,7 @@ class StreakBonusManager:
     - Track which bonuses have been triggered in current session
     - Provide callbacks for animation trigger
     - Reset milestones for new sessions
+    - Play sound effects on milestone achievement (STORY-005-03)
     
     Milestones:
     - 3-word streak: Golden rocket boost animation
@@ -57,6 +59,17 @@ class StreakBonusManager:
         self.active_bonus: Optional[BonusMilestone] = None
         self._on_bonus_triggered: Optional[Callable] = None
         self._previous_streak = 0  # Track previous streak for milestone detection
+        
+        # SFX integration (STORY-005-03)
+        self._sound_manager = None
+        try:
+            # Try to import sound manager for SFX playback
+            from src.audio import get_sound_manager, SoundEvent
+            self._sound_manager = get_sound_manager()
+            self._SoundEvent = SoundEvent
+        except (ImportError, Exception):
+            # SFX not available, continue silently
+            pass
     
     @property
     def on_bonus_triggered(self) -> Optional[Callable]:
@@ -98,6 +111,9 @@ class StreakBonusManager:
                 milestone.triggered = True
                 self.active_bonus = milestone
                 
+                # Play sound effect (STORY-005-03)
+                self._play_streak_sfx(threshold)
+                
                 # Trigger callback if set
                 if self._on_bonus_triggered:
                     self._on_bonus_triggered(milestone)
@@ -107,6 +123,34 @@ class StreakBonusManager:
         
         self._previous_streak = streak
         return None
+    
+    def _play_streak_sfx(self, streak: int):
+        """
+        Play sound effect for streak milestone.
+        
+        Args:
+            streak: Streak threshold that was achieved
+        """
+        if self._sound_manager is None:
+            return
+        
+        try:
+            # Initialize sound manager if needed
+            if not self._sound_manager.is_initialized():
+                self._sound_manager.initialize()
+            
+            # Check if audio is available
+            if not self._sound_manager.is_audio_available():
+                return
+            
+            # Play appropriate SFX based on streak
+            if streak == 3:
+                self._sound_manager.play(self._SoundEvent.STREAK_3)
+            elif streak == 5:
+                self._sound_manager.play(self._SoundEvent.STREAK_5)
+        except Exception:
+            # Silently ignore SFX playback errors
+            pass
     
     def get_active_bonus(self) -> Optional[BonusMilestone]:
         """
