@@ -9,11 +9,11 @@ import pygame
 from typing import Optional, List
 import sys
 
-from src.models.rocket_colors import DEFAULT_ROCKET_COLOR, ROCKET_COLOR_PRESETS
+from src.models.rocket_config import RocketConfig, ROCKET_COLOR_PRESETS
 from src.ui.color_picker import ColorPicker
 from src.ui.typography import Typography
 from src.profiles.profile_manager import ProfileManager
-from src.components.rocket_renderer import RocketRenderer
+from src.ui.rocket_sprite import RocketSprite
 
 
 class StudentSettingsScreen:
@@ -63,12 +63,12 @@ class StudentSettingsScreen:
         self.profile_id = profile_id
         self.running = True
         
-        # Load current profile data
-        profile = profile_manager.get_profile(profile_id)
-        if profile:
-            self.current_rocket_color = profile.rocket_color
-        else:
-            self.current_rocket_color = DEFAULT_ROCKET_COLOR
+        # Initialize RocketConfig with player ID (STORY-005-02)
+        self.rocket_config = RocketConfig(profile_id)
+        
+        # Get current color from config
+        current_rgb = self.rocket_config.get_current_color()
+        self.current_rocket_color = RocketConfig.rgb_to_hex(current_rgb)
         
         # Get screen dimensions
         self.screen_width, self.screen_height = screen.get_size()
@@ -81,17 +81,22 @@ class StudentSettingsScreen:
         self.color_picker = ColorPicker(self.screen, picker_x, self.COLOR_PICKER_Y)
         self.color_picker.selected_color = self.current_rocket_color
         
-        # Set up callback for color selection
+        # Set up callback for color selection - directly update rocket config
         def on_color_change(hex_color: str):
             self.current_rocket_color = hex_color
+            try:
+                rgb = RocketConfig.hex_to_rgb(hex_color)
+                self.rocket_config.set_color(rgb)
+            except ValueError as e:
+                print(f"Invalid color: {e}")
         self.color_picker.on_color_selected = on_color_change
         
-        # Initialize rocket preview using RocketRenderer for consistent tinting
-        self.rocket_preview_renderer = RocketRenderer(screen)
-        self.rocket_preview_renderer.set_color(self.current_rocket_color)
-        self.rocket_preview_rect = pygame.Rect(0, 0, 80, 120)
-        self.rocket_preview_rect.centerx = self.screen_width // 2
-        self.rocket_preview_rect.top = self.ROCKET_PREVIEW_Y
+        # Initialize rocket preview (STORY-005-02)
+        self.rocket_sprite = RocketSprite(size=80)
+        self.rocket_sprite.set_color(current_rgb)
+        self.rocket_rect = pygame.Rect(0, 0, 80, 120)
+        self.rocket_rect.centerx = self.screen_width // 2
+        self.rocket_rect.top = self.ROCKET_PREVIEW_Y
         
         # Button definitions
         self.save_button = pygame.Rect(
@@ -148,11 +153,11 @@ class StudentSettingsScreen:
     
     def _save_changes(self):
         """Save the rocket color change to the profile."""
+        # RocketConfig already saves when set_color() is called during color selection
+        # But ensure the final color is persisted
         try:
-            self.profile_manager.update_profile(
-                profile_id=self.profile_id,
-                rocket_color=self.current_rocket_color
-            )
+            rgb = RocketConfig.hex_to_rgb(self.current_rocket_color)
+            self.rocket_config.set_color(rgb)
             # Exit screen after saving
             self.running = False
         except ValueError as e:
@@ -184,9 +189,10 @@ class StudentSettingsScreen:
         preview_label_rect = preview_label.get_rect(centerx=self.screen_width // 2, top=self.ROCKET_PREVIEW_Y - 30)
         self.screen.blit(preview_label, preview_label_rect)
         
-        # Render rocket preview with current color using RocketRenderer
-        self.rocket_preview_renderer.set_color(self.current_rocket_color)
-        self.rocket_preview_renderer.render(self.rocket_preview_rect.topleft)
+        # Render rocket preview with current color (STORY-005-02)
+        current_rgb = RocketConfig.hex_to_rgb(self.current_rocket_color)
+        self.rocket_sprite.set_color(current_rgb)
+        self.screen.blit(self.rocket_sprite.surface, self.rocket_rect.topleft)
         
         # Draw current color name
         color_name = self._get_color_name(self.current_rocket_color)

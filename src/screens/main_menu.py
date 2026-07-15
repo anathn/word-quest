@@ -14,6 +14,9 @@ from src.ui.theme import get_theme, SPACE_BLUE
 from src.ui.planet_sprite import PlanetSprite, PlanetManager
 from src.ui.typography import get_typography
 from src.components.audio_system import get_audio_system
+from src.ui.rocket_sprite import RocketSprite
+from src.ui.rocket_animator import RocketAnimator, create_rocket_animator
+from src.models.rocket_config import RocketConfig
 
 
 @dataclass
@@ -83,8 +86,42 @@ class MainMenuScreen:
         self.on_settings: Optional[Callable] = None
         self.on_quit: Optional[Callable] = None
         
+        # Rocket animation (STORY-005-02)
+        self.rocket_sprite: Optional[RocketSprite] = None
+        self.rocket_animator: Optional[RocketAnimator] = None
+        
         # Initialize buttons
         self._setup_buttons()
+        
+        # Initialize rocket
+        self._setup_rocket()
+    
+    def _setup_rocket(self):
+        """Set up the animated rocket (STORY-005-02)."""
+        try:
+            # Get player ID from current session (fallback to default)
+            from src.profiles.student_profile import get_current_student_id
+            player_id = get_current_student_id()
+        except Exception:
+            # Use default player ID if no student is logged in
+            player_id = "default_student"
+        
+        # Create rocket config to get current color preference
+        self.rocket_config = RocketConfig(player_id)
+        rocket_color = self.rocket_config.get_current_color()
+        
+        # Create rocket sprite with configured color
+        self.rocket_sprite = RocketSprite(color=rocket_color, size=64)
+        
+        # Create animator and start hover animation in center of screen
+        self.rocket_animator = create_rocket_animator(
+            self.rocket_sprite,
+            initial_position=(self.screen_width // 2, self.screen_height // 2)
+        )
+        # Start hover animation around center position
+        self.rocket_animator.animate_hover(
+            (self.screen_width // 2, self.screen_height // 2)
+        )
     
     def _setup_decorative_planets(self):
         """Set up decorative planets for visual interest."""
@@ -208,6 +245,10 @@ class MainMenuScreen:
         
         # Render footer with version
         self._render_footer(screen)
+        
+        # Render rocket (STORY-005-02)
+        if self.rocket_animator:
+            self.rocket_animator.render(screen)
     
     def _render_title(self, screen: pygame.Surface):
         """Render the game title."""
@@ -309,6 +350,10 @@ class MainMenuScreen:
         for planet in self.planets:
             if hasattr(planet, 'update'):
                 planet.update(delta_time)
+        
+        # Update rocket animation (STORY-005-02)
+        if self.rocket_animator:
+            self.rocket_animator.update(delta_time)
     
     def handle_mouse_motion(self, pos: tuple):
         """
@@ -387,6 +432,14 @@ class MainMenuScreen:
         
         # Reposition buttons
         self._setup_buttons()
+        
+        # Reposition rocket
+        if self.rocket_animator:
+            # Reset rocket position and animation
+            self.rocket_animator.position = (self.screen_width // 2, self.screen_height // 2)
+            self.rocket_animator.animate_hover(
+                (self.screen_width // 2, self.screen_height // 2)
+            )
 
 
 def create_main_menu(screen_width: int = 800, screen_height: int = 600) -> MainMenuScreen:
