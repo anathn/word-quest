@@ -111,17 +111,8 @@ class PlanetResultsScreen:
         
         status = self.planet_result.status
         
-        # Play SFX sounds (STORY-005-03)
-        if self.sound_manager and self.sound_manager.is_audio_available():
-            if status == PlanetStatus.COMPLETED:
-                # Play planet complete victory fanfare
-                try:
-                    self.sound_manager.play(SoundEvent.PLANET_COMPLETE)
-                except Exception as e:
-                    print(f"Planet complete SFX not available: {e}")
-        
-        # Also use audio system for TTS
-        if self.audio_system:
+        # Use audio system for audio feedback
+        if self.audio_system and self.audio_system.is_audio_available():
             if status == PlanetStatus.COMPLETED:
                 # Victory fanfare
                 self.audio_system.play_victory_fanfare()
