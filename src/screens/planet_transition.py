@@ -18,7 +18,11 @@ import pygame
 
 from src.components.audio_system import AudioSystem
 from src.ui.typography import Typography
-from src.ui.animations import RocketAnimator, StarField, ProgressBarAnimator
+from src.ui.star_field import StarField
+from src.ui.rocket_animator import RocketAnimator
+from src.ui.rocket_sprite import RocketSprite
+from src.ui.animations import ProgressBarAnimator
+from src.ui.theme import get_theme
 
 
 @dataclass
@@ -118,7 +122,21 @@ class PlanetTransitionScreen:
         
         # Initialize components
         self.star_field = StarField(self.width, self.height)
-        self.rocket_animator = RocketAnimator()
+        
+        # Create rocket sprite with current color from RocketConfig
+        try:
+            from src.profiles.student_profile import get_current_student_id
+            from src.models.rocket_config import RocketConfig
+            player_id = get_current_student_id()
+            rocket_config = RocketConfig(player_id)
+            rocket_color = rocket_config.get_current_color()
+        except Exception:
+            # Default to white rocket if no student logged in
+            rocket_color = (255, 255, 255)
+        
+        rocket_sprite = RocketSprite(color=rocket_color, size=64)
+        self.rocket_animator = RocketAnimator(rocket_sprite)
+        
         self.progress_bar_animator = ProgressBarAnimator()
         
         # Reset skip lock for new transition
