@@ -863,10 +863,11 @@ epics:
         title: "Rocket sprite with animations"
         description: "Animated rocket ship with engine flames"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
-        completed_date: "2026-07-14"
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-15"
+        completed_date: null
+        branch: "EPIC-005-STORY-002"
         acceptance_criteria:
           - "Rocket sprite (multiple frames)"
           - "Engine flame animation"
