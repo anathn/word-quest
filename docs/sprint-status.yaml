@@ -32,7 +32,8 @@ current_sprint:
     - "STORY-004-04"  # Captain Cosmos character (merged PR #26, 2026-07-14)
     - "STORY-004-05"  # Rocket customization (merged PR #27, 2026-07-14)
     - "STORY-004-06"  # Sticker collection (merged PR #28, 2026-07-14)
-  in_progress_stories: []
+  in_progress_stories:
+    - "STORY-005-01"  # Space theme visuals
   planned_stories: []
 
 epics:
@@ -802,10 +803,11 @@ epics:
         title: "Space theme visuals"
         description: "Deep blue background with stars and planets"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-14"
         completed_date: null
+        branch: "EPIC-005-STORY-001"
         acceptance_criteria:
           - "Deep space blue background (#1a1a3e)"
           - "Star field with twinkling effect"
