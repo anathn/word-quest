@@ -18,6 +18,8 @@ from src.ui.graph_renderer import GraphRenderer, GraphConfig
 from src.auth.session_manager import SessionManager
 from src.auth.password_manager import PasswordManager
 from src.ui.password_prompt import PasswordPrompt
+from src.ui.star_field import StarField
+from src.ui.theme import get_theme
 
 
 @dataclass
@@ -48,6 +50,10 @@ class ParentDashboardScreen:
     COLOR_BORDER = (200, 200, 220)
     COLOR_ACCENT = (76, 175, 80)
     
+    # Theme manager (STORY-005-01)
+    theme = None
+    star_field = None
+    
     def __init__(self, analytics_engine: AnalyticsEngine, screen_width: int = 800, screen_height: int = 600):
         """
         Initialize the parent dashboard.
@@ -60,6 +66,10 @@ class ParentDashboardScreen:
         self.analytics = analytics_engine
         self.screen_width = screen_width
         self.screen_height = screen_height
+        
+        # Space theme initialization (STORY-005-01)
+        self.theme = get_theme()
+        self.star_field = StarField(screen_width, screen_height)
         
         # Graph renderer
         graph_config = GraphConfig(width=600, height=300)
@@ -108,13 +118,17 @@ class ParentDashboardScreen:
         """
         self._init_fonts()
         
-        # Clear background
-        screen.fill(self.COLOR_BG)
+        # Render space theme background (STORY-005-01)
+        # Fill with deep space blue
+        screen.fill(self.theme.get_color("space_blue"))
+        
+        # Render star field (twinkling animation)
+        self.star_field.render(screen)
         
         # Draw header
         self._draw_header(screen)
         
-        # Draw content area
+        # Draw content area (with lighter background for readability)
         card_rect = pygame.Rect(50, 80, self.screen_width - 100, self.screen_height - 130)
         self._draw_card(screen, card_rect)
         
@@ -274,6 +288,17 @@ class ParentDashboardScreen:
             if button.rect.collidepoint(pos) and button.callback:
                 button.callback()
                 return
+    
+    def update(self, delta_time: float):
+        """
+        Update dashboard state (call each frame).
+        
+        Args:
+            delta_time: Time since last update in seconds
+        """
+        # Update star field twinkling animation (STORY-005-01)
+        if self.star_field:
+            self.star_field.update(delta_time)
     
     def handle_event(self, event: pygame.event.Event):
         """

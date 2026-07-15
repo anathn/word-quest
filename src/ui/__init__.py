@@ -18,6 +18,9 @@ from .bonus_message import BonusMessage, create_golden_boost_message, create_pla
 from .captain_display import CaptainDisplay, create_captain_display
 from .sticker_collection import StickerCollection, create_sticker_collection
 from .sticker_notification import StickerNotification, create_sticker_notification
+from .theme import ThemeManager, get_theme, reset_theme, SPACE_BLUE, STAR_WHITE, STAR_PALE_YELLOW
+from .star_field import Star, StarField, create_star_field
+from .planet_sprite import PlanetSprite, PlanetManager, create_planet
 
 __all__ = [
     'Typography',
@@ -55,5 +58,17 @@ __all__ = [
     'StickerCollection',
     'create_sticker_collection',
     'StickerNotification',
-    'create_sticker_notification'
+    'create_sticker_notification',
+    'ThemeManager',
+    'get_theme',
+    'reset_theme',
+    'SPACE_BLUE',
+    'STAR_WHITE',
+    'STAR_PALE_YELLOW',
+    'Star',
+    'StarField',
+    'create_star_field',
+    'PlanetSprite',
+    'PlanetManager',
+    'create_planet'
 ]

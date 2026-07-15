@@ -1,0 +1,30 @@
+{
+  "colors": {
+    "space_blue": [26, 26, 62],
+    "ui_bg_light": [42, 42, 80],
+    "ui_bg_dark": [26, 26, 62],
+    "star_white": [255, 255, 255],
+    "star_pale_yellow": [255, 255, 224],
+    "planet_1": [255, 152, 0],
+    "planet_2": [33, 150, 243],
+    "planet_3": [156, 39, 176],
+    "planet_4": [76, 175, 80],
+    "planet_5": [244, 67, 54],
+    "text_normal": [255, 255, 255],
+    "text_muted": [189, 189, 189],
+    "font_primary": [255, 255, 255],
+    "font_secondary": [189, 189, 189],
+    "font_accent": [255, 200, 100],
+    "ui_accent": [255, 152, 0],
+    "ui_success": [76, 175, 80],
+    "ui_warning": [255, 152, 0],
+    "ui_error": [244, 67, 54],
+    "ui_border": [100, 100, 150]
+  },
+  "settings": {
+    "star_count": 200,
+    "planet_size": 100,
+    "twinkle_speed": 1.0,
+    "parallax_enabled": true
+  }
+}
