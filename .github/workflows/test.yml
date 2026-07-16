@@ -24,13 +24,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests (headless)
-        env:
-          SDL_VIDEODRIVER: dummy
-          SDL_AUDIODRIVER: dummy
-          DISPLAY:
+      - name: Install Xvfb
         run: |
-          pytest tests/ -v --cov=src --cov-report=term-missing
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+
+      - name: Run tests
+        run: |
+          xvfb-run -a -s "-screen 0 1024x768x24" pytest tests/ -v --cov=src --cov-report=term-missing
 
       - name: Upload test results
         if: always()
