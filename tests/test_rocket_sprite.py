@@ -4,21 +4,15 @@ Unit Tests for Rocket Sprite (STORY-005-02)
 Tests for rocket rendering, color customization, and rotation.
 """
 
-import os
-
-# Set environment variables BEFORE pygame import
-os.environ["SDL_VIDEODRIVER"] = "dummy"
-os.environ["SDL_AUDIODRIVER"] = "dummy"
-os.environ["TESTING"] = "1"
-
 import pytest
 import pygame
+import os
 import sys
 
-# Initialize pygame at module level
-pygame.init()
-pygame.display.init()
-pygame.font.init()
+# Set TESTING environment variable and headless display before importing
+os.environ["TESTING"] = "1"
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ["SDL_AUDIODRIVER"] = "dummy"
 
 from src.ui.rocket_sprite import RocketSprite, create_rocket_sprite
 from src.models.rocket_config import ROCKET_COLOR_PRESETS
@@ -28,7 +22,14 @@ class TestRocketSprite:
     """Tests for RocketSprite class."""
     
     @pytest.fixture
-    def screen(self):
+    def pygame_init(self):
+        """Initialize pygame for testing."""
+        pygame.init()
+        yield
+        pygame.quit()
+    
+    @pytest.fixture
+    def screen(self, pygame_init):
         """Create test screen."""
         return pygame.display.set_mode((800, 600))
     
@@ -159,29 +160,37 @@ class TestRocketCreation:
 class TestRocketRendering:
     """Tests for rocket rendering behavior."""
     
-    def test_render_preserves_transparency(self, test_screen):
+    @pytest.fixture
+    def pygame_init(self):
+        """Initialize pygame."""
+        pygame.init()
+        yield
+        pygame.quit()
+    
+    @pytest.fixture
+    def screen(self, pygame_init):
+        """Create test screen."""
+        return pygame.display.set_mode((400, 300))
+    
+    @pytest.fixture
+    def rocket(self):
+        """Create rocket sprite."""
+        return RocketSprite()
+    
+    def test_render_preserves_transparency(self, rocket, screen):
         """Test that rendering preserves alpha channel."""
-        import pygame
-        screen = test_screen
-        rocket = RocketSprite()
         rocket.render(screen, (100, 100))
         # Verify screen surface is valid
         assert screen.get_at((0, 0))[3] == 255  # Should be opaque at corner
     
-    def test_render_multiple_times(self, test_screen):
+    def test_render_multiple_times(self, rocket, screen):
         """Test rendering rocket multiple times."""
-        import pygame
-        screen = test_screen
-        rocket = RocketSprite()
         for i in range(10):
             rocket.render(screen, (i * 10, i * 10))
         assert True
     
-    def test_render_offscreen(self, test_screen):
+    def test_render_offscreen(self, rocket, screen):
         """Test rendering rocket offscreen doesn't crash."""
-        import pygame
-        screen = test_screen
-        rocket = RocketSprite()
         rocket.render(screen, (1000, 1000))
         rocket.render(screen, (-100, -100))
         assert True
@@ -225,6 +234,23 @@ class TestRocketBoundaries:
 class TestRocketPerformance:
     """Performance tests for rocket sprite."""
     
+    @pytest.fixture
+    def pygame_init(self):
+        """Initialize pygame."""
+        pygame.init()
+        yield
+        pygame.quit()
+    
+    @pytest.fixture
+    def screen(self, pygame_init):
+        """Create test screen."""
+        return pygame.display.set_mode((800, 600))
+    
+    @pytest.fixture
+    def rocket(self):
+        """Create rocket sprite."""
+        return RocketSprite()
+    
     def test_color_change_performance(self):
         """Test that color changes are fast."""
         rocket = RocketSprite()
@@ -238,10 +264,8 @@ class TestRocketPerformance:
         # 100 color changes should take < 1 second
         assert elapsed < 1.0
     
-    def test_render_performance(self, test_screen):
+    def test_render_performance(self, screen):
         """Test that rendering is fast."""
-        import pygame
-        screen = test_screen
         rocket = RocketSprite()
         import time
         start = time.time()
@@ -252,10 +276,8 @@ class TestRocketPerformance:
         # 100 renders should take < 0.1 second (1ms per render)
         assert elapsed < 0.1
     
-    def test_rotation_performance(self, test_screen):
+    def test_rotation_performance(self, screen):
         """Test that rotation rendering is fast."""
-        import pygame
-        screen = test_screen
         rocket = RocketSprite()
         import time
         start = time.time()

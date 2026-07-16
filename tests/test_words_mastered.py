@@ -12,8 +12,8 @@ from src.components.progress_tracker import (
     create_progress_tracker
 )
 
-# NOTE: pygame initialization is handled by conftest.py at module load time
-# Do NOT initialize pygame at module level to avoid xdist race conditions
+# Initialize pygame for testing
+pygame.init()
 
 
 class TestWordsMasteredProgress:

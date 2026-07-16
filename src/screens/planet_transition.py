@@ -17,7 +17,6 @@ import time
 import pygame
 
 from src.components.audio_system import AudioSystem
-from src.audio import get_sound_manager, SoundEvent
 from src.ui.typography import Typography
 from src.ui.star_field import StarField
 from src.ui.rocket_animator import RocketAnimator
@@ -57,13 +56,6 @@ class PlanetTransitionScreen:
         """
         self.typography = typography
         self.audio_system = audio_system
-        
-        # SFX integration (STORY-005-03)
-        self.sound_manager = get_sound_manager()
-        try:
-            self.sound_manager.initialize()
-        except Exception as e:
-            print(f"Warning: Could not initialize sound manager: {e}")
         
         # State
         self.is_running = False
@@ -155,21 +147,13 @@ class PlanetTransitionScreen:
     
     def _play_transition_audio(self):
         """Play transition sound effects."""
-        # Play SFX sounds (STORY-005-03)
-        if self.sound_manager and self.sound_manager.is_audio_available():
-            # Play planet approach sound
-            try:
-                self.sound_manager.play(SoundEvent.PLANET_APPROACH)
-            except Exception as e:
-                print(f"Planet approach SFX not available: {e}")
-        
-        # Try to play transition SFX via old audio system (fallback)
+        # Try to play transition SFX
         if self.audio_system:
             # Play whoosh sound at start
             try:
                 self.audio_system.play_sfx("transition")
             except Exception as e:
-                pass  # Silent fallback
+                print(f"Transition SFX not available: {e}")
             
             # Speak destination planet name
             if self.to_planet:

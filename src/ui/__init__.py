@@ -13,7 +13,6 @@ from .bulk_import import BulkImporter
 from .csv_import_dialog import CSVImportDialog, show_csv_import_dialog
 from .import_preview import ImportPreview, create_import_preview
 from .email_config_panel import EmailConfigPanel, create_email_config_panel
-from .sound_settings_panel import SoundSettingsPanel, create_sound_settings_panel
 from .streak_display import StreakDisplay, create_streak_display
 from .bonus_message import BonusMessage, create_golden_boost_message, create_planet_discovery_message
 from .captain_display import CaptainDisplay, create_captain_display
@@ -49,8 +48,6 @@ __all__ = [
     'create_import_preview',
     'EmailConfigPanel',
     'create_email_config_panel',
-    'SoundSettingsPanel',
-    'create_sound_settings_panel',
     'StreakDisplay',
     'create_streak_display',
     'BonusMessage',

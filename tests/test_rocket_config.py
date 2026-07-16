@@ -329,8 +329,8 @@ class TestRocketConfigPerformance:
             config.get_current_color()
         elapsed = time.time() - start
         
-        # 10000 gets should take < 0.05 second (relaxed from 0.01 for CI stability)
-        assert elapsed < 0.05
+        # 10000 gets should take < 0.01 second
+        assert elapsed < 0.01
     
     def test_color_validation_performance(self):
         """Test color validation is fast."""

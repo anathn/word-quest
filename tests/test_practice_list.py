@@ -4,19 +4,10 @@ Unit tests for Words Needing Practice List (STORY-002-05)
 Tests the PracticeListDisplay UI component and ProgressTracker integration.
 """
 
-import os
-
-# Set environment variables BEFORE pygame import (conftest.py also sets these)
-os.environ["SDL_VIDEODRIVER"] = "dummy"
-os.environ["SDL_AUDIODRIVER"] = "dummy"
-
 import pytest
 import pygame
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta
-
-# NOTE: pygame initialization is handled by conftest.py session-scoped fixture
-# Do NOT initialize pygame at module level to avoid conflicts with xdist workers
 
 from src.components.progress_tracker import ProgressTracker, create_progress_tracker
 from src.components.session_tracker import SessionTracker, WordAttempt
@@ -28,7 +19,10 @@ class TestPracticeListDisplay:
     
     def setup_method(self):
         """Set up test fixtures."""
-        # pygame is already initialized at module level
+        # Initialize pygame for testing
+        if not pygame.get_init():
+            pygame.init()
+        
         self.screen_width = 800
         self.screen_height = 600
     
@@ -337,7 +331,6 @@ class TestPracticeListIntegration:
     
     def setup_method(self):
         """Set up test fixtures."""
-        # pygame is already initialized at module level
         self.tracker = create_progress_tracker(student_id="test_student")
     
     def teardown_method(self):

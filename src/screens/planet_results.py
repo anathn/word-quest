@@ -12,7 +12,6 @@ import time
 
 from src.components.planet_manager import PlanetManager, PlanetStatus, PlanetResult
 from src.components.audio_system import AudioSystem
-from src.audio import get_sound_manager, SoundEvent
 from src.ui.typography import Typography
 
 
@@ -111,20 +110,18 @@ class PlanetResultsScreen:
         
         status = self.planet_result.status
         
-        # Use audio system for audio feedback
-        if self.audio_system and self.audio_system.is_audio_available():
-            if status == PlanetStatus.COMPLETED:
-                # Victory fanfare
-                self.audio_system.play_victory_fanfare()
-                self.audio_system.speak("Planet complete! Great job!")
-            elif status == PlanetStatus.RETRY:
-                # Encouraging tone
-                self.audio_system.play_encouraging_tone()
-                self.audio_system.speak(f"Good effort! {self.planet_result.first_attempt_correct} out of 5 words mastered.")
-            else:  # NEEDS_HELP
-                # Gentle, supportive message
-                self.audio_system.play_gentle_tone()
-                self.audio_system.speak(f"Let's practice more. {self.planet_result.first_attempt_correct} out of 5 words mastered.")
+        if status == PlanetStatus.COMPLETED:
+            # Victory fanfare
+            self.audio_system.play_victory_fanfare()
+            self.audio_system.speak("Planet complete! Great job!")
+        elif status == PlanetStatus.RETRY:
+            # Encouraging tone
+            self.audio_system.play_encouraging_tone()
+            self.audio_system.speak(f"Good effort! {self.planet_result.first_attempt_correct} out of 5 words mastered.")
+        else:  # NEEDS_HELP
+            # Gentle, supportive message
+            self.audio_system.play_gentle_tone()
+            self.audio_system.speak(f"Let's practice more. {self.planet_result.first_attempt_correct} out of 5 words mastered.")
     
     def get_title_text(self) -> str:
         """Get the title text for the results screen."""

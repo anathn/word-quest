@@ -24,14 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Install Xvfb
+      - name: Run tests (headless with dummy audio driver)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb
-
-      - name: Run tests
-        run: |
-          xvfb-run -a -s "-screen 0 1024x768x24" pytest tests/ -v --cov=src --cov-report=term-missing
+          SDL_AUDIODRIVER=dummy pytest tests/ -v --cov=src --cov-report=term-missing
 
       - name: Upload test results
         if: always()

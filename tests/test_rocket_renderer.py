@@ -4,21 +4,15 @@ Unit Tests for Rocket Renderer (STORY-004-05)
 Tests for rocket color tinting functionality.
 """
 
-import os
-
-# CRITICAL: Set environment variables BEFORE any pygame import
-os.environ["SDL_VIDEODRIVER"] = "dummy"
-os.environ["SDL_AUDIODRIVER"] = "dummy"
-os.environ["TESTING"] = "1"
-
 import pytest
 import pygame
+import os
 import sys
 
-# Initialize pygame at module level to prevent circular import issues
-pygame.init()
-pygame.display.init()
-pygame.font.init()
+# Set TESTING environment variable and headless display before importing
+os.environ["TESTING"] = "1"
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ["SDL_AUDIODRIVER"] = "dummy"
 
 from src.components.rocket_renderer import (
     RocketRenderer,
@@ -52,9 +46,15 @@ class TestRocketRenderer:
     """Tests for RocketRenderer component."""
     
     @pytest.fixture
-    def screen(self):
-        """Create test screen with proper initialization."""
-        # pygame is already initialized at module level
+    def pygame_init(self):
+        """Initialize pygame for testing."""
+        pygame.init()
+        yield
+        pygame.quit()
+    
+    @pytest.fixture
+    def screen(self, pygame_init):
+        """Create test screen."""
         return pygame.display.set_mode((800, 600))
     
     @pytest.fixture
@@ -167,8 +167,16 @@ class TestTinting:
     """Tests for color tinting logic."""
     
     @pytest.fixture
+    def pygame_init(self):
+        """Initialize pygame."""
+        pygame.init()
+        yield
+        pygame.quit()
+    
+    @pytest.fixture
     def renderer(self):
         """Create renderer with small test screen."""
+        pygame.init()
         screen = pygame.display.set_mode((100, 100))
         return RocketRenderer(screen)
     
@@ -208,14 +216,21 @@ class TestTinting:
 class TestCreateRocketRenderer:
     """Tests for factory function."""
     
-    def test_factory_creates_instance(self):
+    @pytest.fixture
+    def pygame_init(self):
+        """Initialize pygame."""
+        pygame.init()
+        yield
+        pygame.quit()
+    
+    def test_factory_creates_instance(self, pygame_init):
         """Test factory function creates renderer."""
         screen = pygame.display.set_mode((200, 200))
         renderer = create_rocket_renderer(screen)
         
         assert isinstance(renderer, RocketRenderer)
     
-    def test_factory_with_color(self):
+    def test_factory_with_color(self, pygame_init):
         """Test factory function with initial color."""
         screen = pygame.display.set_mode((200, 200))
         renderer = create_rocket_renderer(screen, color="#FF4444")
