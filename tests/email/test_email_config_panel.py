@@ -6,7 +6,7 @@ Implements STORY-003-06: Email Notification Configuration
 
 import os
 
-# Set environment variables BEFORE pygame import
+# Set environment variables BEFORE pygame import (conftest.py also sets these)
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 os.environ["SDL_AUDIODRIVER"] = "dummy"
 
@@ -14,10 +14,8 @@ import pytest
 import pygame
 from datetime import datetime, time
 
-# Initialize pygame at module level
-pygame.init()
-pygame.display.init()
-pygame.font.init()
+# NOTE: pygame initialization is handled by conftest.py session-scoped fixture
+# Do NOT initialize pygame at module level to avoid conflicts with xdist workers
 
 from src.email.email_config import EmailConfig, DayOfWeek
 from src.email.email_service import EmailService

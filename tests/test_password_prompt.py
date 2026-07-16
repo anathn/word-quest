@@ -14,10 +14,8 @@ import pytest
 import pygame
 from unittest.mock import MagicMock, call
 
-# Initialize pygame for tests
-pygame.init()
-pygame.display.set_mode((1, 1))  # Need a display for font operations
-pygame.font.init()  # Explicitly initialize font module
+# NOTE: pygame initialization is handled by conftest.py session-scoped fixture
+# Do NOT initialize pygame at module level to avoid conflicts with xdist workers
 
 from src.ui.password_prompt import PasswordPrompt
 from src.auth.session_manager import SessionManager
