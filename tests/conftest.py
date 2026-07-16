@@ -40,3 +40,10 @@ def ensure_pygame():
     if not pygame.font.get_init():
         pygame.font.init()
     yield
+
+
+@pytest.fixture(scope="function")
+def test_screen():
+    """Create a test screen surface."""
+    import pygame
+    return pygame.display.set_mode((800, 600))
