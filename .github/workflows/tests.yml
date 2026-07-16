@@ -26,9 +26,9 @@ jobs:
 
       - name: Run tests with parallel execution
         # Using pytest-xdist for parallel execution (-n auto) to avoid pygame segfaults
-        # Retry failed tests up to 2 times to handle flaky parallel tests
+        # Note: --reruns removed due to segfault issues with pygame
         run: |
-          SDL_VIDEODRIVER=dummy TESTING=1 pytest tests/ -v --cov=src --cov-report=term-missing -n auto --reruns=2
+          SDL_VIDEODRIVER=dummy TESTING=1 pytest tests/ -v --cov=src --cov-report=term-missing -n auto
 
       - name: Upload test results
         if: always()
