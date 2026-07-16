@@ -4,10 +4,21 @@ Unit tests for Words Needing Practice List (STORY-002-05)
 Tests the PracticeListDisplay UI component and ProgressTracker integration.
 """
 
+import os
+
+# Set environment variables BEFORE pygame import
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ["SDL_AUDIODRIVER"] = "dummy"
+
 import pytest
 import pygame
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta
+
+# Initialize pygame at module level
+pygame.init()
+pygame.display.init()
+pygame.font.init()
 
 from src.components.progress_tracker import ProgressTracker, create_progress_tracker
 from src.components.session_tracker import SessionTracker, WordAttempt
@@ -19,14 +30,7 @@ class TestPracticeListDisplay:
     
     def setup_method(self):
         """Set up test fixtures."""
-        # Initialize pygame for testing
-        if not pygame.get_init():
-            pygame.init()
-        if not pygame.display.get_init():
-            pygame.display.init()
-        if not pygame.font.get_init():
-            pygame.font.init()
-        
+        # pygame is already initialized at module level
         self.screen_width = 800
         self.screen_height = 600
     
@@ -335,15 +339,7 @@ class TestPracticeListIntegration:
     
     def setup_method(self):
         """Set up test fixtures."""
-        import pygame
-        # Initialize pygame display/font for UI tests
-        if not pygame.get_init():
-            pygame.init()
-        if not pygame.display.get_init():
-            pygame.display.init()
-        if not pygame.font.get_init():
-            pygame.font.init()
-        
+        # pygame is already initialized at module level
         self.tracker = create_progress_tracker(student_id="test_student")
     
     def teardown_method(self):

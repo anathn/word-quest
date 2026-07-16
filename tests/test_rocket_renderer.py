@@ -4,15 +4,21 @@ Unit Tests for Rocket Renderer (STORY-004-05)
 Tests for rocket color tinting functionality.
 """
 
-import pytest
-import pygame
 import os
-import sys
 
-# Set TESTING environment variable and headless display before importing
-os.environ["TESTING"] = "1"
+# CRITICAL: Set environment variables BEFORE any pygame import
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 os.environ["SDL_AUDIODRIVER"] = "dummy"
+os.environ["TESTING"] = "1"
+
+import pytest
+import pygame
+import sys
+
+# Initialize pygame at module level to prevent circular import issues
+pygame.init()
+pygame.display.init()
+pygame.font.init()
 
 from src.components.rocket_renderer import (
     RocketRenderer,
@@ -48,10 +54,7 @@ class TestRocketRenderer:
     @pytest.fixture
     def screen(self):
         """Create test screen with proper initialization."""
-        import pygame
-        # Make sure display is initialized
-        if not pygame.display.get_init():
-            pygame.display.init()
+        # pygame is already initialized at module level
         return pygame.display.set_mode((800, 600))
     
     @pytest.fixture
@@ -166,10 +169,6 @@ class TestTinting:
     @pytest.fixture
     def renderer(self):
         """Create renderer with small test screen."""
-        import pygame
-        # Make sure display is initialized
-        if not pygame.display.get_init():
-            pygame.display.init()
         screen = pygame.display.set_mode((100, 100))
         return RocketRenderer(screen)
     
@@ -211,10 +210,6 @@ class TestCreateRocketRenderer:
     
     def test_factory_creates_instance(self):
         """Test factory function creates renderer."""
-        import pygame
-        # Make sure display is initialized
-        if not pygame.display.get_init():
-            pygame.display.init()
         screen = pygame.display.set_mode((200, 200))
         renderer = create_rocket_renderer(screen)
         
@@ -222,10 +217,6 @@ class TestCreateRocketRenderer:
     
     def test_factory_with_color(self):
         """Test factory function with initial color."""
-        import pygame
-        # Make sure display is initialized
-        if not pygame.display.get_init():
-            pygame.display.init()
         screen = pygame.display.set_mode((200, 200))
         renderer = create_rocket_renderer(screen, color="#FF4444")
         

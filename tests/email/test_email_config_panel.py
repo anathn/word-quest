@@ -4,9 +4,20 @@ Tests for EmailConfigPanel
 Implements STORY-003-06: Email Notification Configuration
 """
 
+import os
+
+# Set environment variables BEFORE pygame import
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ["SDL_AUDIODRIVER"] = "dummy"
+
 import pytest
 import pygame
 from datetime import datetime, time
+
+# Initialize pygame at module level
+pygame.init()
+pygame.display.init()
+pygame.font.init()
 
 from src.email.email_config import EmailConfig, DayOfWeek
 from src.email.email_service import EmailService
@@ -54,14 +65,9 @@ class TestEmailConfigPanelRendering:
     """Test panel rendering."""
     
     def setup_method(self):
-        """Initialize pygame display for tests."""
-        import pygame
-        if not pygame.get_init():
-            pygame.init()
-        if not pygame.display.get_init():
-            pygame.display.init()
-        if not pygame.font.get_init():
-            pygame.font.init()
+        """Ensure pygame is properly initialized for rendering tests."""
+        # pygame is already initialized at module level
+        pass
     
     def teardown_method(self):
         """Cleanup after tests."""
@@ -69,7 +75,6 @@ class TestEmailConfigPanelRendering:
     
     def test_render_creates_fonts(self):
         """Test that render initializes fonts."""
-        import pygame
         config = EmailConfig()
         service = EmailService("smtp.test.com", 587, "user", "pass", "sender@test.com")
         panel = EmailConfigPanel(config, service)
@@ -83,7 +88,6 @@ class TestEmailConfigPanelRendering:
     
     def test_render_enabled_panel(self):
         """Test rendering enabled email config panel."""
-        import pygame
         config = EmailConfig(
             enabled=True,
             email_address="test@example.com",

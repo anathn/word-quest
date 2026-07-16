@@ -4,15 +4,21 @@ Unit Tests for Rocket Sprite (STORY-005-02)
 Tests for rocket rendering, color customization, and rotation.
 """
 
-import pytest
-import pygame
 import os
-import sys
 
-# Set TESTING environment variable and headless display before importing
-os.environ["TESTING"] = "1"
+# Set environment variables BEFORE pygame import
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 os.environ["SDL_AUDIODRIVER"] = "dummy"
+os.environ["TESTING"] = "1"
+
+import pytest
+import pygame
+import sys
+
+# Initialize pygame at module level
+pygame.init()
+pygame.display.init()
+pygame.font.init()
 
 from src.ui.rocket_sprite import RocketSprite, create_rocket_sprite
 from src.models.rocket_config import ROCKET_COLOR_PRESETS
@@ -21,21 +27,9 @@ from src.models.rocket_config import ROCKET_COLOR_PRESETS
 class TestRocketSprite:
     """Tests for RocketSprite class."""
     
-    @pytest.fixture(autouse=True)
-    def setup_pygame(self):
-        """Ensure pygame display is initialized for all tests."""
-        import pygame
-        if not pygame.get_init():
-            pygame.init()
-        if not pygame.display.get_init():
-            pygame.display.init()
-        yield
-        # Don't quit pygame here - let other tests use it
-    
     @pytest.fixture
     def screen(self):
         """Create test screen."""
-        import pygame
         return pygame.display.set_mode((800, 600))
     
     @pytest.fixture
