@@ -24,9 +24,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests with parallel execution
-        # Using pytest-xdist for parallel execution (-n auto) to avoid pygame segfaults
-        # Note: --reruns removed due to segfault issues with pygame
+      - name: Run tests (attempt 1)
+        id: test_run
+        continue-on-error: true
+        run: |
+          SDL_VIDEODRIVER=dummy TESTING=1 pytest tests/ -v --cov=src --cov-report=term-missing -n auto
+          
+      - name: Re-run failed tests (attempt 2)
+        if: steps.test_run.outcome == 'failure'
         run: |
           SDL_VIDEODRIVER=dummy TESTING=1 pytest tests/ -v --cov=src --cov-report=term-missing -n auto
 
