@@ -4,19 +4,20 @@ Unit tests for PasswordPrompt UI component
 Tests for STORY-003-01: Parent Authentication
 """
 
+import os
+
+# Set environment variables BEFORE any pygame import
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
+
 import pytest
 import pygame
 from unittest.mock import MagicMock, call
 
 # Initialize pygame for tests
-try:
-    import os
-    os.environ['SDL_VIDEODRIVER'] = 'dummy'
-    pygame.init()
-    pygame.display.set_mode((1, 1))  # Need a display for font operations
-    pygame.font.init()  # Explicitly initialize font module
-except pygame.error:
-    pass  # Display/font not available, continue anyway
+pygame.init()
+pygame.display.set_mode((1, 1))  # Need a display for font operations
+pygame.font.init()  # Explicitly initialize font module
 
 from src.ui.password_prompt import PasswordPrompt
 from src.auth.session_manager import SessionManager
@@ -109,30 +110,16 @@ class TestPasswordPrompt:
         password_prompt._active = True
         password_prompt._password = "testpass"
         
-        # Create mock event
+        # Mock event properly (pygame is already imported at module level)
         event = MagicMock()
-        event.type = "KEYDOWN"
-        event.key = "RETURN"
-        
-        # Mock pygame events
-        import pygame
-        original_keys = pygame.key
-        pygame.key = MagicMock()
-        pygame.key.get_pressed.return_value = [False] * 256
-        
-        # Mock event properly
-        event = MagicMock()
-        event.type = pygame.KEYDOWN if hasattr(pygame, 'KEYDOWN') else "KEYDOWN"
-        event.key = pygame.K_RETURN if hasattr(pygame, 'K_RETURN') else 13
+        event.type = pygame.KEYDOWN
+        event.key = pygame.K_RETURN
         
         result = password_prompt.handle_event(event)
         
         # Verify authenticate was called
         mock_session_manager.authenticate.assert_called_once()
         assert result is True
-        
-        # Restore
-        pygame.key = original_keys
     
     def test_handle_keydown_esc_cancels(self, password_prompt):
         """Test that Escape key cancels the prompt."""

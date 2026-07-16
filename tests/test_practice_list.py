@@ -22,6 +22,10 @@ class TestPracticeListDisplay:
         # Initialize pygame for testing
         if not pygame.get_init():
             pygame.init()
+        if not pygame.display.get_init():
+            pygame.display.init()
+        if not pygame.font.get_init():
+            pygame.font.init()
         
         self.screen_width = 800
         self.screen_height = 600
@@ -331,6 +335,15 @@ class TestPracticeListIntegration:
     
     def setup_method(self):
         """Set up test fixtures."""
+        import pygame
+        # Initialize pygame display/font for UI tests
+        if not pygame.get_init():
+            pygame.init()
+        if not pygame.display.get_init():
+            pygame.display.init()
+        if not pygame.font.get_init():
+            pygame.font.init()
+        
         self.tracker = create_progress_tracker(student_id="test_student")
     
     def teardown_method(self):

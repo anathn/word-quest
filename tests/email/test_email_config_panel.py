@@ -54,9 +54,14 @@ class TestEmailConfigPanelRendering:
     """Test panel rendering."""
     
     def setup_method(self):
-        """Initialize pygame for tests."""
+        """Initialize pygame display for tests."""
+        import pygame
         if not pygame.get_init():
             pygame.init()
+        if not pygame.display.get_init():
+            pygame.display.init()
+        if not pygame.font.get_init():
+            pygame.font.init()
     
     def teardown_method(self):
         """Cleanup after tests."""
@@ -64,6 +69,7 @@ class TestEmailConfigPanelRendering:
     
     def test_render_creates_fonts(self):
         """Test that render initializes fonts."""
+        import pygame
         config = EmailConfig()
         service = EmailService("smtp.test.com", 587, "user", "pass", "sender@test.com")
         panel = EmailConfigPanel(config, service)
@@ -77,6 +83,7 @@ class TestEmailConfigPanelRendering:
     
     def test_render_enabled_panel(self):
         """Test rendering enabled email config panel."""
+        import pygame
         config = EmailConfig(
             enabled=True,
             email_address="test@example.com",

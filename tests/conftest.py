@@ -23,31 +23,54 @@ def pytest_configure(config):
     os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 
-@pytest.fixture(autouse=True)
-def pygame_cleanup():
+@pytest.fixture(scope="function")
+def pygame_setup():
     """
-    Clean up pygame state between tests to prevent accumulation and segfaults.
+    Fixture to properly initialize pygame for each test.
     
-    This runs before and after each test to ensure clean pygame state.
-    Only calls pygame.quit() if pygame is actually loaded.
+    This ensures pygame display and font modules are initialized before tests
+    that use pygame.display, pygame.mouse, or pygame.font.
+    
+    Usage:
+        def test_something(pygame_setup):
+            # pygame is now properly initialized
+            screen = pygame.display.set_mode((800, 600))
     """
-    # Check if pygame is already loaded
-    pygame_loaded = False
-    try:
-        import pygame
-        pygame_loaded = pygame.get_init()
-    except (ImportError, AttributeError):
-        pass
+    import pygame
+    
+    # Initialize pygame if not already initialized
+    if not pygame.get_init():
+        pygame.init()
+    
+    # Ensure display is initialized for tests that need it
+    if not pygame.display.get_init():
+        pygame.display.init()
+    
+    # Ensure font is initialized for tests that need it
+    if not pygame.font.get_init():
+        pygame.font.init()
     
     yield
     
-    # After test: only quit pygame if it was loaded during the test
-    # and only if we detect it might cause issues
-    if pygame_loaded:
-        try:
-            import pygame
-            # Only quit display/mixer, not the whole pygame
-            if pygame.display.get_init():
-                pygame.display.quit()
-        except (ImportError, RuntimeError, AttributeError):
-            pass
+    # Cleanup: quit display after test to free resources
+    # This helps prevent resource leaks between tests
+    try:
+        if pygame.display.get_init():
+            pygame.display.quit()
+    except (RuntimeError, AttributeError):
+        # pygame may already be quit
+        pass
+
+
+@pytest.fixture(scope="function")
+def test_screen(pygame_setup):
+    """
+    Fixture that creates a test screen with proper pygame initialization.
+    
+    Usage:
+        def test_something(test_screen):
+            # test_screen is a valid pygame display surface
+            test_screen.fill((0, 0, 0))
+    """
+    import pygame
+    return pygame.display.set_mode((800, 600))
