@@ -27,7 +27,6 @@ class TestRocketAnimator:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def rocket(self):
@@ -235,7 +234,6 @@ class TestAnimationStates:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     def test_idle_to_approach_to_hover(self):
         """Test idle -> approach -> hover transition."""
@@ -285,7 +283,6 @@ class TestEasingFunctions:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     def test_ease_in_out_valid_range(self):
         """Test ease-in-out returns values in valid range."""
@@ -327,7 +324,6 @@ class TestAnimationTiming:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):

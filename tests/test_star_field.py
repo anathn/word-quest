@@ -84,7 +84,6 @@ class TestStar:
         # Should not raise any exceptions
         assert True
         
-        pygame.quit()
     
     def test_reset_position(self):
         """Test that reset_position moves star to new random location."""
@@ -135,7 +134,6 @@ class TestStarField:
         
         assert True
         
-        pygame.quit()
     
     def test_performance_under_5ms_for_200_stars(self):
         """Test that rendering 200 stars takes less than 5ms."""
@@ -156,7 +154,6 @@ class TestStarField:
         avg_time = (elapsed / 100) * 1000  # Convert to ms
         assert avg_time < 5.0, f"Rendering took {avg_time:.2f}ms (should be < 5ms)"
         
-        pygame.quit()
     
     def test_resize_adjusts_dimensions(self):
         """Test that resize updates width and height."""

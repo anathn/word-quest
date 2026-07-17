@@ -243,28 +243,32 @@ class TestSoundManager:
     def sound_manager(self):
         """Create a sound manager instance."""
         from audio.sound_manager import SoundManager
-        # Mock pygame to avoid needing actual audio hardware
+        # Mock pygame.mixer to avoid needing actual audio hardware
         import sys
-        from unittest.mock import MagicMock
-        
+        from unittest.mock import MagicMock, patch
+
         # Create mock pygame module
         mock_pygame = MagicMock()
         mock_pygame.mixer.get_init.return_value = None
         mock_pygame.mixer.init.return_value = None
-        
+
         # Mock Sound object
         mock_sound_class = MagicMock()
         mock_sound_instance = MagicMock()
         mock_sound_class.return_value = mock_sound_instance
         mock_pygame.mixer.Sound = mock_sound_class
-        
+
+        original_pygame = sys.modules.get('pygame')
         sys.modules['pygame'] = mock_pygame
-        
+
         manager = SoundManager()
         yield manager
-        
-        # Cleanup
-        del sys.modules['pygame']
+
+        # Restore the real pygame module so subsequent tests aren't broken
+        if original_pygame is not None:
+            sys.modules['pygame'] = original_pygame
+        else:
+            sys.modules.pop('pygame', None)
     
     def test_create_sound_manager(self):
         """Test sound manager creation."""

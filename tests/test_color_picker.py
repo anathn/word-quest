@@ -93,7 +93,6 @@ class TestColorPicker:
         """Initialize pygame for testing."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):
@@ -234,7 +233,6 @@ class TestCreateColorPicker:
         """Initialize pygame for testing."""
         pygame.init()
         yield
-        pygame.quit()
     
     def test_factory_creates_instance(self, pygame_init):
         """Test that factory function creates ColorPicker."""
@@ -253,7 +251,6 @@ class TestRocketColorPersistence:
         """Initialize pygame for testing."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def temp_profiles_file(self, tmp_path):
