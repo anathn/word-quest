@@ -45,7 +45,6 @@ class TestGraphRenderer:
         """Initialize pygame before each test."""
         pygame.init()
         yield
-        pygame.quit()
     
     def test_initialization(self):
         """Test GraphRenderer initialization."""
@@ -238,7 +237,6 @@ class TestGraphRendererEdgeCases:
         """Initialize pygame before each test."""
         pygame.init()
         yield
-        pygame.quit()
     
     def test_render_insufficient_data(self):
         """Test rendering with no data."""
@@ -327,7 +325,6 @@ class TestGraphLayout:
         """Initialize pygame before each test."""
         pygame.init()
         yield
-        pygame.quit()
     
     def test_margin_configuration(self):
         """Test that margins are applied correctly."""
@@ -382,7 +379,6 @@ class TestIntegrationWithAnalytics:
         """Initialize pygame before each test."""
         pygame.init()
         yield
-        pygame.quit()
     
     def test_render_analytics_data(self):
         """Test rendering data from AnalyticsEngine."""

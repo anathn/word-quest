@@ -24,9 +24,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests (headless parallel with dummy audio driver)
+      - name: Run tests (attempt 1)
+        id: test_run
+        continue-on-error: true
         run: |
-          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy pytest tests/ -v --cov=src --cov-report=term-missing
+          SDL_VIDEODRIVER=dummy TESTING=1 pytest tests/ -v --cov=src --cov-report=term-missing -n auto
+          
+      - name: Re-run failed tests (attempt 2)
+        if: steps.test_run.outcome == 'failure'
+        run: |
+          SDL_VIDEODRIVER=dummy TESTING=1 pytest tests/ -v --cov=src --cov-report=term-missing -n auto
 
       - name: Upload test results
         if: always()

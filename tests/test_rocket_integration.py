@@ -28,7 +28,6 @@ class TestRocketInMainCampaign:
         """Initialize pygame for testing."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):
@@ -136,7 +135,6 @@ class TestRocketInPlanetTransition:
         """Initialize pygame for testing."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):
@@ -206,7 +204,6 @@ class TestRocketInSpellingChallenge:
         """Initialize pygame for testing."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):
@@ -255,7 +252,6 @@ class TestRocketPerformance:
         """Initialize pygame for testing."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):
@@ -338,7 +334,6 @@ class TestRocketColorCustomization:
         """Initialize pygame for testing."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):

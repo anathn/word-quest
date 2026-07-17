@@ -96,7 +96,6 @@ class TestEngineFlames:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def flames(self):
@@ -236,7 +235,6 @@ class TestFlameIntensity:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     def test_intensity_affects_spawn_rate(self, intensity):
         """Test that intensity affects particle spawn rate."""
@@ -259,7 +257,6 @@ class TestEngineFlameRendering:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):
@@ -355,7 +352,6 @@ class TestFlamePerformance:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):

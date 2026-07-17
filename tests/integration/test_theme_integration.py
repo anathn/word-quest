@@ -17,7 +17,6 @@ class TestThemeIntegration:
     def teardown_method(self):
         """Clean up after tests."""
         reset_theme()
-        pygame.quit()
     
     def test_theme_applies_consistently_across_components(self):
         """Test that theme colors are used consistently by all components."""
@@ -89,7 +88,6 @@ class TestThemeConfig:
     def teardown_method(self):
         """Clean up after tests."""
         reset_theme()
-        pygame.quit()
     
     def test_config_file_is_valid_json(self):
         """Test that theme config file is valid JSON."""

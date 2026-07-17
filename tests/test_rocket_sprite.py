@@ -26,7 +26,6 @@ class TestRocketSprite:
         """Initialize pygame for testing."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):
@@ -165,7 +164,6 @@ class TestRocketRendering:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):
@@ -239,7 +237,6 @@ class TestRocketPerformance:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):

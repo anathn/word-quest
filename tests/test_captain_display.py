@@ -18,7 +18,6 @@ def pygame_initialized():
     """Initialize pygame for testing."""
     pygame.init()
     yield
-    pygame.quit()
 
 
 @pytest.fixture

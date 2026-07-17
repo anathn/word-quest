@@ -119,7 +119,6 @@ class TestThemeManager:
         small_font = self.theme.get_font_small()
         assert small_font is not None
         
-        pygame.quit()
     
     def test_save_config_creates_file(self):
         """Test that save_config creates the config file."""

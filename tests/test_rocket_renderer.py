@@ -50,7 +50,6 @@ class TestRocketRenderer:
         """Initialize pygame for testing."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def screen(self, pygame_init):
@@ -171,7 +170,6 @@ class TestTinting:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     @pytest.fixture
     def renderer(self):
@@ -221,7 +219,6 @@ class TestCreateRocketRenderer:
         """Initialize pygame."""
         pygame.init()
         yield
-        pygame.quit()
     
     def test_factory_creates_instance(self, pygame_init):
         """Test factory function creates renderer."""

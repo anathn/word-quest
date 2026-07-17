@@ -43,7 +43,6 @@ class TestPlanetSprite:
         # Should not raise any exceptions
         assert True
         
-        pygame.quit()
     
     def test_planet_render_various_planet_types(self):
         """Test that all planet types render correctly."""
@@ -55,7 +54,6 @@ class TestPlanetSprite:
             planet.render(screen, (200, 200))
         
         assert True
-        pygame.quit()
     
     def test_completed_state_renders_bloom_effect(self):
         """Test that completed state renders bloom effect."""
@@ -71,7 +69,6 @@ class TestPlanetSprite:
         # Should not raise any exceptions
         assert True
         
-        pygame.quit()
     
     def test_set_completed_updates_state(self):
         """Test that set_completed updates the completed state."""
@@ -200,7 +197,6 @@ class TestPlanetManager:
         # Should not raise exceptions
         assert True
         
-        pygame.quit()
     
     def test_set_planet_completed_updates_specific_planet(self):
         """Test that set_planet_completed updates specific planet."""
