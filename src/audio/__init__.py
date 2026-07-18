@@ -1,12 +1,14 @@
 """
 Audio Package
 
-Sound effect management and generation for Word Quest.
+Sound effect and music management for Word Quest.
 
 Modules:
 - sound_manager: Centralized SFX playback and control
 - sfx_generator: Procedural sound generation
 - sfx_config: Sound configuration and mappings
+- music_manager: Background music playback and control
+- music_config: Music configuration and states
 """
 
 from .sound_manager import (
@@ -36,6 +38,27 @@ from .sfx_config import (
 
 from .sfx_generator import SFXGenerator
 
+from .music_manager import (
+    MusicManager,
+    get_music_manager,
+    reset_music_manager,
+    play_music,
+    stop_music,
+    set_music_volume,
+    toggle_music_mute,
+)
+
+from .music_config import (
+    MusicState,
+    MusicTrack,
+    MUSIC_CONFIG,
+    PROCEDURAL_CONFIG,
+    AudioDefaults,
+    AudioPaths,
+    get_music_track,
+    get_all_music_states,
+)
+
 
 __all__ = [
     # Sound Manager
@@ -63,4 +86,23 @@ __all__ = [
     
     # SFX Generation
     'SFXGenerator',
+    
+    # Music Manager
+    'MusicManager',
+    'get_music_manager',
+    'reset_music_manager',
+    'play_music',
+    'stop_music',
+    'set_music_volume',
+    'toggle_music_mute',
+    
+    # Music Configuration
+    'MusicState',
+    'MusicTrack',
+    'MUSIC_CONFIG',
+    'PROCEDURAL_CONFIG',
+    'AudioDefaults',
+    'AudioPaths',
+    'get_music_track',
+    'get_all_music_states',
 ]
