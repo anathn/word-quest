@@ -794,10 +794,10 @@ epics:
     progress_percent: 100  # STORY-005-01 approved, STORY-005-02 approved, STORY-005-03 approved (SFX complete)
     dependencies: ["EPIC-001"]
     blockers: []
-    notes: "STORY-005-01 approved. STORY-005-02 approved (rocket sprite, animations, color customization). STORY-005-03 approved (procedural SFX, 25 tests passing, 4 screens integrated). 3/6 stories complete, 11 points earned. Ready for merge of approved stories."
+    notes: "STORY-005-01 approved. STORY-005-02 approved (rocket sprite, animations, color customization). STORY-005-03 approved (procedural SFX, 25 tests passing). STORY-005-04 approved (background music, 66 tests passing). 4/6 stories complete, 16 points earned. Ready for merge of approved stories."
     target_sprint: 3
     estimated_points: 31
-    completed_points: 11
+    completed_points: 16
     stories:
       - id: STORY-005-01
         title: "Space theme visuals"
@@ -979,11 +979,21 @@ epics:
         title: "Background music"
         description: "Ambient space music"
         priority: P1
-        status: "in-progress"
+        status: "approved"
         assignee: "agent"
         started_date: "2026-07-17"
-        completed_date: null
+        completed_date: "2026-07-17"
         branch: "EPIC-005-STORY-004"
+        notes: "Implementation complete. 66 tests passing. MusicManager created with procedural generation, volume control (30% default), mute toggle, 500ms fade transitions for 6 game states. Ready for merge."
+        acceptance_criteria:
+          - "LPing ambient space track plays during gameplay"
+          - "Music is low volume by default (30% or lower)"
+          - "On/off toggle available in settings"
+          - "Smooth fade in/out on state changes (500ms transition)"
+          - "Different music tracks for different game states"
+          - "Music volume adjustable (0-100%)"
+          - "Music state persists across game sessions"
+          - "Music playback works on Windows, macOS, Linux"
         acceptance_criteria:
           - "Looping ambient space track"
           - "Low volume by default"
