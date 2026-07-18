@@ -13,6 +13,7 @@ import time
 from src.components.planet_manager import PlanetManager, PlanetStatus, PlanetResult
 from src.components.audio_system import AudioSystem
 from src.ui.typography import Typography
+from src.audio.music_manager import get_music_manager, MusicState
 
 
 class ResultsState(Enum):
@@ -74,6 +75,23 @@ class PlanetResultsScreen:
         self.title_position = (400, 100)
         self.results_position = (400, 250)
         self.button_position = (400, 500)
+        
+        # Music manager (STORY-005-04)
+        self.music_manager = get_music_manager()
+    
+    def on_enter(self):
+        """Called when screen becomes active - play celebration music for success."""
+        try:
+            self.music_manager.initialize()
+            # Play celebration music if planet was completed successfully
+            if self.planet_result and self.planet_result.words_correct >= 4:
+                self.music_manager.play(MusicState.CELEBRATION)
+            else:
+                # Still play celebration for motivation even on retry
+                self.music_manager.play(MusicState.CELEBRATION)
+        except Exception as e:
+            # Music initialization failed - continue without music
+            print(f"Warning: Could not initialize music in planet results: {e}")
     
     def show_results(self, planet_result: PlanetResult):
         """

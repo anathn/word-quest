@@ -17,6 +17,7 @@ from src.components.audio_system import get_audio_system
 from src.ui.rocket_sprite import RocketSprite
 from src.ui.rocket_animator import RocketAnimator, create_rocket_animator
 from src.models.rocket_config import RocketConfig
+from src.audio.music_manager import get_music_manager, MusicState
 
 
 @dataclass
@@ -90,11 +91,23 @@ class MainMenuScreen:
         self.rocket_sprite: Optional[RocketSprite] = None
         self.rocket_animator: Optional[RocketAnimator] = None
         
+        # Music manager (STORY-005-04)
+        self.music_manager = get_music_manager()
+        
         # Initialize buttons
         self._setup_buttons()
         
         # Initialize rocket
         self._setup_rocket()
+    
+    def on_enter(self):
+        """Called when screen becomes active - play main menu music."""
+        try:
+            self.music_manager.initialize()
+            self.music_manager.play(MusicState.MAIN_MENU)
+        except Exception as e:
+            # Music initialization failed - continue without music
+            print(f"Warning: Could not initialize music in main menu: {e}")
     
     def _setup_rocket(self):
         """Set up the animated rocket (STORY-005-02)."""

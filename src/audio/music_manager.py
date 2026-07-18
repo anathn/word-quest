@@ -232,8 +232,9 @@ class MusicManager:
                         min(AudioDefaults.MAX_VOLUME, volume))
             self._music_volume = volume
             
-            # Apply to current music
-            if self._is_playing and not self._is_muted:
+            # Apply to current music if mixer is available
+            if (self._is_playing and not self._is_muted and 
+                pygame.mixer.get_init() and self._mixer_initialized):
                 pygame.mixer.music.set_volume(volume)
             
             return True
@@ -241,7 +242,7 @@ class MusicManager:
             print(f"Error setting music volume: {e}")
             return False
     
-    def getVolume(self) -> float:
+    def get_volume(self) -> float:
         """
         Get current music volume.
         
@@ -249,6 +250,9 @@ class MusicManager:
             Volume level from 0.0 to 1.0
         """
         return self._music_volume
+    
+    # Alias for backwards compatibility (deprecated)
+    getVolume = get_volume
     
     def toggle_mute(self) -> bool:
         """
@@ -259,10 +263,11 @@ class MusicManager:
         """
         self._is_muted = not self._is_muted
         
-        if self._is_muted:
-            pygame.mixer.music.set_volume(0.0)
-        elif self._is_playing:
-            pygame.mixer.music.set_volume(self._music_volume)
+        if pygame.mixer.get_init() and self._mixer_initialized:
+            if self._is_muted:
+                pygame.mixer.music.set_volume(0.0)
+            elif self._is_playing:
+                pygame.mixer.music.set_volume(self._music_volume)
         
         return self._is_muted
     
@@ -274,7 +279,8 @@ class MusicManager:
             True if muted successfully
         """
         self._is_muted = True
-        pygame.mixer.music.set_volume(0.0)
+        if pygame.mixer.get_init() and self._mixer_initialized:
+            pygame.mixer.music.set_volume(0.0)
         return True
     
     def unmute(self) -> bool:
@@ -285,7 +291,7 @@ class MusicManager:
             True if unmuted successfully
         """
         self._is_muted = False
-        if self._is_playing:
+        if pygame.mixer.get_init() and self._mixer_initialized and self._is_playing:
             pygame.mixer.music.set_volume(self._music_volume)
         return True
     
@@ -351,6 +357,39 @@ class MusicManager:
             Error message or None
         """
         return self._initialization_error
+    
+    # Persistence methods for music settings
+    
+    def load_settings(self, preferences):
+        """
+        Load music settings from player preferences.
+        
+        Args:
+            preferences: PlayerPreferencesManager instance
+        """
+        try:
+            self._music_volume = preferences.get_music_volume()
+            self._is_muted = preferences.get_music_muted()
+            
+            # Apply to mixer if playing and initialized
+            if (self._is_playing and not self._is_muted and 
+                pygame.mixer.get_init() and self._mixer_initialized):
+                pygame.mixer.music.set_volume(self._music_volume)
+        except Exception as e:
+            print(f"Error loading music settings: {e}")
+    
+    def save_settings(self, preferences):
+        """
+        Save current music settings to player preferences.
+        
+        Args:
+            preferences: PlayerPreferencesManager instance
+        """
+        try:
+            preferences.set_music_volume(self._music_volume)
+            preferences.set_music_muted(self._is_muted)
+        except Exception as e:
+            print(f"Error saving music settings: {e}")
     
     def _play_file(self, track: MusicTrack) -> bool:
         """
@@ -666,7 +705,7 @@ class MusicManager:
         for i in range(5):
             delay = delay_samples * (i + 1)
             if delay < len(signal):
-                delayed[start:] = signal[:-delay] * (echo_decay ** (i + 1))
+                delayed[delay:] = signal[:-delay] * (echo_decay ** (i + 1))
                 reverb += delayed
         
         # Mix dry and wet
@@ -735,6 +774,16 @@ def set_music_volume(volume: float) -> bool:
         True if set successfully
     """
     return get_music_manager().set_volume(volume)
+
+
+def get_music_volume() -> float:
+    """
+    Get music volume.
+    
+    Returns:
+        Volume level 0.0-1.0
+    """
+    return get_music_manager().get_volume()
 
 
 def toggle_music_mute() -> bool:

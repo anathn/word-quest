@@ -90,12 +90,12 @@ class TestMusicManagerBasicBehavior:
             assert manager is not None
     
     def test_get_default_volume(self):
-        """Test getVolume returns default."""
+        """Test get_volume returns default."""
         with patch('pygame.mixer.get_init', return_value=None):
             from src.audio.music_manager import MusicManager
             manager = MusicManager()
             # Should return AudioDefaults.MUSIC_VOLUME
-            assert manager.getVolume() == AudioDefaults.MUSIC_VOLUME
+            assert manager.get_volume() == AudioDefaults.MUSIC_VOLUME
     
     def test_set_volume_clamps_values(self):
         """Test volume clamping."""
@@ -106,17 +106,21 @@ class TestMusicManagerBasicBehavior:
             
             # Test below minimum
             manager.set_volume(-0.5)
-            assert manager.getVolume() == 0.0
+            assert manager.get_volume() == 0.0
             
             # Test above maximum
             manager.set_volume(1.5)
-            assert manager.getVolume() == 1.0
+            assert manager.get_volume() == 1.0
     
     def test_mute_functionality(self):
         """Test mute methods."""
-        with patch('pygame.mixer.get_init', return_value=None):
+        with patch('pygame.mixer.get_init', return_value=(44100, -16, 2, 1024)), \
+             patch('pygame.mixer.music.set_volume'):
             from src.audio.music_manager import MusicManager
             manager = MusicManager()
+            
+            # Initialize the manager (sets up internal state)
+            manager.initialize()
             
             assert not manager.is_muted()
             manager.mute()
@@ -126,9 +130,13 @@ class TestMusicManagerBasicBehavior:
     
     def test_toggle_mute(self):
         """Test mute toggle."""
-        with patch('pygame.mixer.get_init', return_value=None):
+        with patch('pygame.mixer.get_init', return_value=(44100, -16, 2, 1024)), \
+             patch('pygame.mixer.music.set_volume'):
             from src.audio.music_manager import MusicManager
             manager = MusicManager()
+            
+            # Initialize the manager
+            manager.initialize()
             
             result = manager.toggle_mute()
             assert result == True
