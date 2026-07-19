@@ -20,6 +20,7 @@ from src.auth.password_manager import PasswordManager
 from src.ui.password_prompt import PasswordPrompt
 from src.ui.star_field import StarField
 from src.ui.theme import get_theme
+from src.audio.music_manager import get_music_manager, MusicState
 
 
 @dataclass
@@ -78,6 +79,18 @@ class ParentDashboardScreen:
         # UI elements
         self._buttons: List[DashboardButton] = []
         self._hovered_button: Optional[DashboardButton] = None
+        
+        # Music manager (STORY-005-04)
+        self.music_manager = get_music_manager()
+    
+    def on_enter(self):
+        """Called when screen becomes active - play dashboard music."""
+        try:
+            self.music_manager.initialize()
+            self.music_manager.play(MusicState.PARENT_DASHBOARD)
+        except Exception as e:
+            # Music initialization failed - continue without music
+            print(f"Warning: Could not initialize music in parent dashboard: {e}")
         self._insufficient_data: bool = False
         
         # Fonts

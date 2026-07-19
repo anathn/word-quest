@@ -22,7 +22,8 @@ class PlayerPreferences:
     player_id: str
     rocket_color: str = "#FFFFFF"  # Hex color
     audio_enabled: bool = True
-    music_volume: float = 0.5  # 0.0 to 1.0
+    music_volume: float = 0.3  # 0.0 to 1.0 (default 30% as per story)
+    music_muted: bool = False  # Music mute state
     sfx_volume: float = 0.7    # 0.0 to 1.0
     text_size: str = "medium"  # "small", "medium", "large"
     animations_enabled: bool = True
@@ -173,7 +174,7 @@ class PlayerPreferencesManager:
         """Get music volume (0.0 to 1.0)."""
         if self._preferences:
             return self._preferences.music_volume
-        return 0.5
+        return 0.3  # Default 30% as per story
     
     def set_music_volume(self, volume: float):
         """Set music volume (0.0 to 1.0)."""
@@ -181,6 +182,26 @@ class PlayerPreferencesManager:
         if self._preferences:
             self._preferences.music_volume = volume
             self._save_preferences(self._preferences)
+    
+    def get_music_muted(self) -> bool:
+        """Get music mute state."""
+        if self._preferences:
+            return self._preferences.music_muted
+        return False
+    
+    def set_music_muted(self, muted: bool):
+        """Set music mute state."""
+        if self._preferences:
+            self._preferences.music_muted = muted
+            self._save_preferences(self._preferences)
+    
+    def toggle_music_muted(self) -> bool:
+        """Toggle music mute state. Returns new mute state."""
+        if self._preferences:
+            self._preferences.music_muted = not self._preferences.music_muted
+            self._save_preferences(self._preferences)
+            return self._preferences.music_muted
+        return False
     
     def get_sfx_volume(self) -> float:
         """Get SFX volume (0.0 to 1.0)."""

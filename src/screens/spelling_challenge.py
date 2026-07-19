@@ -33,6 +33,7 @@ from src.components.captain_cosmos import CaptainCosmos, get_captain_cosmos
 from src.components.audio_system import get_audio_system
 from src.ui.star_field import StarField
 from src.ui.theme import get_theme, SPACE_BLUE
+from src.audio.music_manager import get_music_manager, MusicState
 
 # Performance threshold constants
 WORD_PRESENTATION_TIMEOUT_MS = 200  # Maximum allowed time for word presentation
@@ -138,6 +139,18 @@ class SpellingChallengeScreen:
         # Space theme integration (STORY-005-01)
         self.theme = get_theme()
         self.star_field: Optional[StarField] = None
+        
+        # Music manager (STORY-005-04)
+        self.music_manager = get_music_manager()
+    
+    def on_enter(self):
+        """Called when screen becomes active - start gameplay music."""
+        try:
+            self.music_manager.initialize()
+            self.music_manager.play(MusicState.GAMEPLAY)
+        except Exception as e:
+            # Music initialization failed - continue without music
+            print(f"Warning: Could not initialize music in spelling challenge: {e}")
     
     def present_word(self, word, planet_id: Optional[str] = None, planet_name: Optional[str] = None, screen_width: int = 800, screen_height: int = 600):
         """
