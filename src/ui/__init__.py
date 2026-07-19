@@ -21,6 +21,10 @@ from .sticker_notification import StickerNotification, create_sticker_notificati
 from .theme import ThemeManager, get_theme, reset_theme, SPACE_BLUE, STAR_WHITE, STAR_PALE_YELLOW
 from .star_field import Star, StarField, create_star_field
 from .planet_sprite import PlanetSprite, PlanetManager, create_planet
+from .letter_animator import LetterAnimator, create_letter_animator, AnimationConfig
+from .letter_renderer import LetterRenderer, LetterState, LetterType
+from .animation_utils import Easing, AnimationIntensity, get_easing_function, lerp, lerp_color
+from .animated_word_display import AnimatedWordDisplay, create_animated_word_display
 
 __all__ = [
     'Typography',
@@ -70,5 +74,18 @@ __all__ = [
     'create_star_field',
     'PlanetSprite',
     'PlanetManager',
-    'create_planet'
+    'create_planet',
+    'LetterAnimator',
+    'create_letter_animator',
+    'AnimationConfig',
+    'LetterRenderer',
+    'LetterState',
+    'LetterType',
+    'Easing',
+    'AnimationIntensity',
+    'get_easing_function',
+    'lerp',
+    'lerp_color',
+    'AnimatedWordDisplay',
+    'create_animated_word_display'
 ]

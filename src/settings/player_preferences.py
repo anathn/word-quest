@@ -27,6 +27,7 @@ class PlayerPreferences:
     sfx_volume: float = 0.7    # 0.0 to 1.0
     text_size: str = "medium"  # "small", "medium", "large"
     animations_enabled: bool = True
+    animation_intensity: str = "full"  # "full", "reduced", "off" (STORY-005-05)
 
 
 class PlayerPreferencesManager:
@@ -245,6 +246,30 @@ class PlayerPreferencesManager:
             self._preferences.animations_enabled = enabled
             self._save_preferences(self._preferences)
     
+    def get_animation_intensity(self) -> str:
+        """Get animation intensity level.
+        
+        Returns:
+            Animation intensity: 'full', 'reduced', or 'off'
+        """
+        if self._preferences:
+            return self._preferences.animation_intensity
+        return "full"
+    
+    def set_animation_intensity(self, intensity: str):
+        """Set animation intensity level for accessibility.
+        
+        Args:
+            intensity: Animation intensity ('full', 'reduced', or 'off')
+        """
+        valid_intensities = ["full", "reduced", "off"]
+        if intensity not in valid_intensities:
+            raise ValueError(f"Invalid animation intensity: {intensity}. Must be one of {valid_intensities}")
+        
+        if self._preferences:
+            self._preferences.animation_intensity = intensity
+            self._save_preferences(self._preferences)
+    
     # Utility Methods
     
     @staticmethod
@@ -292,7 +317,8 @@ class PlayerPreferencesManager:
                 'music_volume': self._preferences.music_volume,
                 'sfx_volume': self._preferences.sfx_volume,
                 'text_size': self._preferences.text_size,
-                'animations_enabled': self._preferences.animations_enabled
+                'animations_enabled': self._preferences.animations_enabled,
+                'animation_intensity': self._preferences.animation_intensity
             }
         return {}
 

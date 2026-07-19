@@ -34,6 +34,7 @@ from src.components.audio_system import get_audio_system
 from src.ui.star_field import StarField
 from src.ui.theme import get_theme, SPACE_BLUE
 from src.audio.music_manager import get_music_manager, MusicState
+from src.ui.animated_word_display import AnimatedWordDisplay, create_animated_word_display
 
 # Performance threshold constants
 WORD_PRESENTATION_TIMEOUT_MS = 200  # Maximum allowed time for word presentation
@@ -142,6 +143,9 @@ class SpellingChallengeScreen:
         
         # Music manager (STORY-005-04)
         self.music_manager = get_music_manager()
+        
+        # Animated word display (STORY-005-05)
+        self.animated_word_display: Optional[AnimatedWordDisplay] = None
     
     def on_enter(self):
         """Called when screen becomes active - start gameplay music."""
@@ -236,6 +240,20 @@ class SpellingChallengeScreen:
             if not self.streak_bonus_manager:
                 self.streak_bonus_manager = create_streak_bonus_manager()
                 self.streak_bonus_manager.on_bonus_triggered = self._on_bonus_triggered
+            
+            # Initialize animated word display (STORY-005-05)
+            if not self.animated_word_display:
+                self.animated_word_display = create_animated_word_display(
+                    typography=self.typography,
+                    font_size=48,
+                    letter_spacing=20,
+                    starter_count=len(self.starter_letters)
+                )
+            
+            # Set the word and show starter letters
+            self.animated_word_display.set_word(word.text, starter_count=len(self.starter_letters))
+            self.animated_word_display.show_starter_letters()
+            self.animated_word_display.start_animation()
         
         # Start tracking the word (STORY-002-01)
         if self.progress_tracker:
@@ -410,8 +428,8 @@ class SpellingChallengeScreen:
                 hint_data.revealed_indices,
                 encouragement_message=encouragement
             )
-            # Also update the word display with revealed letters
-            self._update_word_display_with_hints()
+            # Also update the animated word display with revealed letters
+            self._update_animated_word_display_with_hints(hint_data.revealed_indices)
     
     def _on_bonus_triggered(self, bonus):
         """Handle bonus milestone triggered event.
@@ -573,12 +591,29 @@ class SpellingChallengeScreen:
                     hint.revealed_indices,
                     encouragement_message=encouragement
                 )
-                self._update_word_display_with_hints()
+                # Update animated word display with revealed hint letters
+                if self.animated_word_display:
+                    for index in hint.revealed_indices:
+                        self.animated_word_display.reveal_letter(index)
                 # Disable button after use until next incorrect answer
                 self.hint_display.disable_help_button()
     
+    def _update_animated_word_display_with_hints(self, revealed_indices):
+        """Update the animated word display to show revealed hint letters.
+        
+        Args:
+            revealed_indices: Set or list of indices revealed by hints
+        """
+        if not self.animated_word_display or not self.current_word:
+            return
+        
+        # Mark revealed letters as hints in the animated display
+        for index in revealed_indices:
+            if index >= len(self.starter_letters):  # Only hint-revealed, not starters
+                self.animated_word_display.set_letter_as_hint(index)
+    
     def _update_word_display_with_hints(self):
-        """Update the word display to show revealed hint letters."""
+        """Update the input display (typed letters) to show revealed hint letters."""
         if not self.hint_manager or not self.input_display or not self.current_word:
             return
         
@@ -728,6 +763,10 @@ class SpellingChallengeScreen:
         if self.hint_display:
             self.hint_display.update(current_time)
         
+        # Update animated word display animations (STORY-005-05)
+        if self.animated_word_display:
+            self.animated_word_display.update()
+        
         # Update bonus animations (STORY-004-02)
         if self.active_bonus_animation or self.active_bonus_message:
             self.update_bonus_animation(current_time)
@@ -799,6 +838,10 @@ class SpellingChallengeScreen:
         self.active_bonus_message = None
         if self.streak_bonus_manager:
             self.streak_bonus_manager.reset_session()
+        
+        # Reset animated word display (STORY-005-05)
+        if self.animated_word_display:
+            self.animated_word_display.reset()
         
         # Reset star field (STORY-005-01)
         if self.star_field:
