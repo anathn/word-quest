@@ -6,6 +6,7 @@ Provides planet visuals with bloom effects for completed planets.
 
 from typing import Tuple, Optional
 import pygame
+import math
 
 from .theme import get_theme, PLANET_1, PLANET_2, PLANET_3, PLANET_4, PLANET_5
 
@@ -42,6 +43,7 @@ class PlanetSprite:
         self.bloom_direction = 1
         self.bloom_timer = 0
         self._bloom_surface: Optional[pygame.Surface] = None
+        self._crystal_density = 0.0
     
     def set_completed(self, completed: bool = True) -> None:
         """
@@ -147,6 +149,122 @@ class PlanetSprite:
         # Draw planet to screen
         screen.blit(planet_surface, (x - self.radius, y - self.radius))
     
+    def render_with_bloom(self, screen: pygame.Surface, position: Tuple[int, int],
+                         bloom_intensity: float = 1.0, 
+                         crystal_density: float = 1.0) -> None:
+        """
+        Render planet with dynamic bloom animation and crystals.
+        
+        Args:
+            screen: Pygame surface to render on
+            position: (x, y) center position
+            bloom_intensity: Bloom intensity (0.0-1.0)
+            crystal_density: Crystal overlay density (0.0-1.0)
+        """
+        x, y = position
+        
+        # Render base bloom effect
+        if self._bloom_surface is None:
+            self._bloom_surface = self._create_bloom_surface()
+        
+        # Scale bloom intensity
+        if self._bloom_surface:
+            bloom_surface = self._bloom_surface.copy()
+            bloom_surface.set_alpha(int(self._bloom_surface.get_alpha() * bloom_intensity))
+            
+            bloom_x = x - (self._bloom_surface.get_width() // 2)
+            bloom_y = y - (self._bloom_surface.get_height() // 2)
+            screen.blit(bloom_surface, (bloom_x, bloom_y))
+        
+        # Draw planet with bloom color adjustment
+        planet_surface = pygame.Surface((self.size, self.size), pygame.SRCALPHA)
+        
+        if bloom_intensity > 0:
+            # Interpolate between base and bloom colors
+            bloom_color = self.theme.get_planet_bloom_color(self.planet_type)
+            r = int(self.base_color[0] + (bloom_color[0] - self.base_color[0]) * bloom_intensity)
+            g = int(self.base_color[1] + (bloom_color[1] - self.base_color[1]) * bloom_intensity)
+            b = int(self.base_color[2] + (bloom_color[2] - self.base_color[2]) * bloom_intensity)
+            planet_color = (r, g, b, 255)
+        else:
+            planet_color = (*self.base_color, 255)
+        
+        # Main planet circle
+        pygame.draw.circle(planet_surface, planet_color, 
+                          (self.radius, self.radius), self.radius)
+        
+        # Add subtle highlight
+        highlight_color = (min(255, self.base_color[0] + 50), 
+                          min(255, self.base_color[1] + 50), 
+                          min(255, self.base_color[2] + 50), 100)
+        highlight_radius = self.radius // 3
+        highlight_offset = self.radius // 4
+        pygame.draw.circle(planet_surface, highlight_color,
+                          (self.radius - highlight_offset, self.radius - highlight_offset),
+                          highlight_radius)
+        
+        # Draw crystals/flowers on planet surface
+        if crystal_density > 0 and self._crystal_density > 0.3:
+            self._render_crystals(planet_surface, crystal_density)
+        
+        # Add glowing border for completed planet
+        if bloom_intensity > 0.5:
+            border_alpha = int(200 * bloom_intensity)
+            border_color = (*self.base_color[:3], border_alpha)
+            pygame.draw.circle(planet_surface, border_color,
+                              (self.radius, self.radius), self.radius, 3)
+        
+        # Draw planet to screen
+        screen.blit(planet_surface, (x - self.radius, y - self.radius))
+    
+    def _render_crystals(self, surface: pygame.Surface, density: float) -> None:
+        """
+        Render crystal/flower overlay on planet.
+        
+        Args:
+            surface: Pygame surface to draw crystals on
+            density: Crystal density (0.0-1.0)
+        """
+        import random
+        
+        # Set seed for consistent crystal positions
+        random.seed(self.planet_type * 1000)
+        
+        # Crystal colors
+        crystal_colors = [
+            (255, 235, 59, 200),   # Yellow
+            (244, 143, 177, 200),  # Pink
+            (255, 255, 255, 220),  # White
+            (173, 216, 230, 180),  # Light blue
+        ]
+        
+        # Draw crystals based on density
+        num_crystals = int(10 * density)
+        
+        for _ in range(num_crystals):
+            # Random position on planet edge
+            angle = random.uniform(0, 2 * 3.14159)
+            radius_offset = random.uniform(0.7, 1.0) * self.radius
+            
+            crystal_x = self.radius + radius_offset * math.cos(angle)
+            crystal_y = self.radius + radius_offset * math.sin(angle)
+            
+            # Choose crystal color
+            color = random.choice(crystal_colors)
+            
+            # Draw crystal as small triangle/polygon
+            crystal_size = max(2, int(4 * density))
+            
+            # Simple crystal shape
+            points = [
+                (crystal_x, crystal_y - crystal_size),
+                (crystal_x - crystal_size // 2, crystal_y + crystal_size // 2),
+                (crystal_x + crystal_size // 2, crystal_y + crystal_size // 2),
+            ]
+            
+            pygame.draw.polygon(surface, color, points)
+            pygame.draw.polygon(surface, (255, 255, 255, 100), points, 1)
+    
     def get_bounds(self, position: Tuple[int, int]) -> pygame.Rect:
         """
         Get bounding rectangle for the planet.
@@ -170,6 +288,15 @@ class PlanetSprite:
         self.planet_type = max(1, min(5, planet_type))
         self.base_color = self.theme.get_planet_color(self.planet_type)
         self._bloom_surface = None  # Reset bloom surface
+    
+    def set_crystal_density(self, density: float) -> None:
+        """
+        Set crystal overlay density for bloom animation.
+        
+        Args:
+            density: Crystal density (0.0-1.0)
+        """
+        self._crystal_density = max(0.0, min(1.0, density))
 
 
 def create_planet(planet_number: int, size: int = 100) -> PlanetSprite:

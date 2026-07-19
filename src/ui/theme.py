@@ -126,6 +126,26 @@ class ThemeManager:
         color_name = f"planet_{planet_number}"
         return self._colors.get(color_name, PLANET_1)
     
+    def get_planet_bloom_color(self, planet_number: int) -> Tuple[int, int, int]:
+        """
+        Get brighter bloom color for a completed planet.
+        
+        Args:
+            planet_number: Planet number (1-5)
+            
+        Returns:
+            RGB tuple for the brighter bloom color
+        """
+        # Planet bloom colors (brighter versions)
+        PLANET_BLOOM_COLORS = {
+            1: (255, 183, 77),   # Bright Orange
+            2: (100, 181, 246),  # Bright Blue
+            3: (186, 104, 200),  # Bright Purple
+            4: (129, 199, 132),  # Bright Green
+            5: (229, 115, 115),  # Bright Red
+        }
+        return PLANET_BLOOM_COLORS.get(planet_number, PLANET_1)
+    
     def set_color(self, name: str, color: Tuple[int, int, int]) -> None:
         """
         Set a color in the theme.

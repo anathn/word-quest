@@ -9,17 +9,23 @@ from typing import Optional, Callable, List, Dict
 from dataclasses import dataclass
 from enum import Enum
 import time
+import pygame
 
 from src.components.planet_manager import PlanetManager, PlanetStatus, PlanetResult
 from src.components.audio_system import AudioSystem
 from src.ui.typography import Typography
 from src.audio.music_manager import get_music_manager, MusicState
+from src.ui.planet_sprite import PlanetSprite
+from src.ui.planet_bloom import PlanetBloom, create_planet_bloom
+from src.ui.sparkle_effect import SparkleEffect, create_sparkle_effect
+from src.ui.celebration_renderer import CelebrationRenderer, create_celebration_renderer
 
 
 class ResultsState(Enum):
     """State of the results screen."""
     IDLE = "idle"
     SHOWING_RESULTS = "showing_results"
+    CELEBRATING = "celebrating"
     AWAITING_ACTION = "awaiting_action"
 
 
@@ -76,6 +82,14 @@ class PlanetResultsScreen:
         self.results_position = (400, 250)
         self.button_position = (400, 500)
         
+        # Planet bloom celebration (STORY-005-06)
+        self.planet_sprite: Optional[PlanetSprite] = None
+        self.planet_bloom: Optional[PlanetBloom] = None
+        self.sparkles: Optional[SparkleEffect] = None
+        self.celebration: Optional[CelebrationRenderer] = None
+        self.bloom_planet_number = 1
+        self.bloom_triggered = False
+        
         # Music manager (STORY-005-04)
         self.music_manager = get_music_manager()
     
@@ -118,8 +132,41 @@ class PlanetResultsScreen:
         # Play appropriate audio based on result
         self._play_result_audio()
         
+        # Trigger bloom celebration if planet completed (STORY-005-06)
+        if planet_result.status == PlanetStatus.COMPLETED:
+            self._trigger_bloom_celebration()
+        
         # Transition to awaiting action after showing results
         self.state = ResultsState.AWAITING_ACTION
+    
+    def _trigger_bloom_celebration(self):
+        """Trigger planet bloom celebration animation (STORY-005-06)."""
+        if not self.planet_result:
+            return
+        
+        # Initialize celebration components
+        # Get planet number from planet name or default to 1
+        planet_name = self.planet_result.planet_name if self.planet_result else "Planet 1"
+        planet_num_str = planet_name.replace("Planet", "").strip() if planet_name else "1"
+        try:
+            self.bloom_planet_number = int(planet_num_str)
+        except ValueError:
+            self.bloom_planet_number = 1
+        
+        # Create planet sprite for bloom (this is a decorative planet for the celebration)
+        self.planet_sprite = PlanetSprite(self.bloom_planet_number, 120)
+        self.planet_bloom = create_planet_bloom(self.planet_sprite, self.bloom_planet_number)
+        self.sparkles = create_sparkle_effect((400, 350))  # Center-bottom of screen
+        self.celebration = create_celebration_renderer(
+            planet_bloom=self.planet_bloom,
+            sparkles=self.sparkles,
+            rocket=None
+        )
+        
+        # Start celebration
+        self.celebration.start_celebration((400, 350))
+        self.bloom_triggered = True
+        self.state = ResultsState.CELEBRATING
     
     def _play_result_audio(self):
         """Play audio feedback based on planet result."""
@@ -278,8 +325,98 @@ class PlanetResultsScreen:
         Args:
             current_time: Current time in seconds
         """
-        # Animation updates if needed
-        pass
+        # Update bloom celebration if active (STORY-005-06)
+        if self.state == ResultsState.CELEBRATING:
+            if self.celebration:
+                # Convert current_time to delta_time (approximate)
+                delta_time = 1/60.0  # Assuming 60 FPS
+                self.celebration.update(delta_time)
+                
+                # Check if celebration is complete
+                if self.celebration.is_complete():
+                    self.state = ResultsState.AWAITING_ACTION
+    
+    def render(self, screen: pygame.Surface):
+        """
+        Render the results screen.
+        
+        Args:
+            screen: Pygame surface to render on
+        """
+        if not self.planet_result:
+            return
+        
+        # Render bloom celebration if active (STORY-005-06)
+        if self.state == ResultsState.CELEBRATING and self.celebration:
+            # Draw dark overlay
+            overlay = pygame.Surface(screen.get_size())
+            overlay.fill((26, 26, 62))  # Deep space blue
+            overlay.set_alpha(200)
+            screen.blit(overlay, (0, 0))
+            
+            # Render celebration
+            self.celebration.render(screen)
+            
+            # Draw "Planet Complete!" text
+            if self.typography:
+                font = self.typography.get_font_large()
+                text = font.render("Planet Complete!", True, (255, 255, 255))
+                text_rect = text.get_rect(center=(400, 150))
+                screen.blit(text, text_rect)
+            
+            return
+        
+        # Standard results rendering
+        self._render_results_content(screen)
+    
+    def _render_results_content(self, screen: pygame.Surface):
+        """
+        Render standard results content.
+        
+        Args:
+            screen: Pygame surface to render on
+        """
+        # Render title
+        if self.typography:
+            font = self.typography.get_font_large()
+            title_text = self.get_title_text()
+            title = font.render(title_text, True, (255, 255, 255))
+            title_rect = title.get_rect(center=self.title_position)
+            screen.blit(title, title_rect)
+            
+            # Render summary
+            font_small = self.typography.get_font_small()
+            summary = self.get_summary_text()
+            summary_surface = font_small.render(summary, True, (255, 255, 255))
+            summary_rect = summary_surface.get_rect(center=(400, 200))
+            screen.blit(summary_surface, summary_rect)
+            
+            # Render word results
+            y_offset = 250
+            for i, word_result in enumerate(self.word_displays):
+                # Word text
+                word_text = font_small.render(word_result.word_text, True, 
+                                               (76, 175, 80) if word_result.is_correct else (244, 67, 54))
+                word_rect = word_text.get_rect(center=(300, y_offset))
+                screen.blit(word_text, word_rect)
+                
+                # Attempt count
+                attempts_text = font_small.render(f"x{word_result.attempts}", True, (189, 189, 189))
+                attempts_rect = attempts_text.get_rect(center=(500, y_offset))
+                screen.blit(attempts_text, attempts_rect)
+                
+                y_offset += 40
+            
+            # Render action button background
+            button_rect = pygame.Rect(self.button_position[0] - 100, 
+                                      self.button_position[1] - 25,
+                                      200, 50)
+            pygame.draw.rect(screen, self.get_action_button_color(), button_rect, border_radius=10)
+            
+            # Render button text
+            button_text = font.render(self.get_action_button_text(), True, (255, 255, 255))
+            button_text_rect = button_text.get_rect(center=self.button_position)
+            screen.blit(button_text, button_text_rect)
     
     def get_performance_ms(self) -> float:
         """
@@ -292,7 +429,8 @@ class PlanetResultsScreen:
             return 0.0
         import time
         return (time.time() - self.results_start_time) * 1000
-    
+
+
     def reset(self):
         """
         Reset the screen to idle state.
@@ -303,6 +441,13 @@ class PlanetResultsScreen:
         self.planet_result = None
         self.word_displays.clear()
         self.results_start_time = 0
+        
+        # Reset bloom celebration
+        self.planet_sprite = None
+        self.planet_bloom = None
+        self.sparkles = None
+        self.celebration = None
+        self.bloom_triggered = False
 
 
 # Factory function
