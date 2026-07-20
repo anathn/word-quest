@@ -303,7 +303,10 @@ class FeedbackController:
             self._render_retry_indicator(screen, intensity)
     
     def _render_message(self, screen, message: str):
-        """Render feedback message text."""
+        """
+        Render feedback message text with shape indicator.
+        STORY-006-01: Uses both color AND shape for color-blind accessibility.
+        """
         import pygame
         
         # Create font (should be configurable)
@@ -312,8 +315,12 @@ class FeedbackController:
         # Calculate alpha based on animation progress
         alpha = int(255 * self.animation_progress)
         
+        # Color-blind safe: Green for success (with checkmark shape)
+        # Note: Green is OK here because we also use a visual shape indicator
+        success_color = (76, 175, 80)  # Material green
+        
         # Render text
-        text_surf = font.render(message, True, (0, 200, 83))  # Green
+        text_surf = font.render(message, True, success_color)
         
         # Apply transparency
         text_surf.set_alpha(alpha)
@@ -322,12 +329,83 @@ class FeedbackController:
         text_rect = text_surf.get_rect(center=(self.render_center_x, self.render_center_y - 50))
         
         screen.blit(text_surf, text_rect)
+        
+        # STORY-006-01: Draw checkmark shape indicator (visible even without color)
+        self._draw_checkmark(screen, self.render_center_x, self.render_center_y + 40, alpha)
+    
+    def _draw_checkmark(self, screen, x: int, y: int, alpha: int):
+        """
+        Draw a checkmark shape indicator for success feedback.
+        STORY-006-01: Shape-based feedback for color-blind accessibility.
+        
+        Args:
+            screen: Pygame surface
+            x: Center X position
+            y: Center Y position  
+            alpha: Transparency value (0-255)
+        """
+        import pygame
+        
+        # Create a circular background
+        size = 60
+        circle_surf = pygame.Surface((size, size), pygame.SRCALPHA)
+        circle_color = (76, 175, 80, alpha)  # Green with alpha
+        pygame.draw.circle(circle_surf, circle_color, (size // 2, size // 2), size // 2)
+        
+        # Draw checkmark shape
+        check_width = 35
+        points = [
+            (size // 2 - check_width, size // 2 + check_width // 2),  # Start (left)
+            (size // 2 - check_width // 3, size // 2 - check_width // 2),  # Bottom of V
+            (size // 2 + check_width, size // 2 - check_width),  # End (right, up)
+        ]
+        
+        check_color = (255, 255, 255, alpha)  # White checkmark
+        pygame.draw.aalines(circle_surf, True, points, width=4)
+        # Also draw solid line for visibility
+        pygame.draw.lines(circle_surf, check_color, False, points, width=4)
+        
+        screen.blit(circle_surf, (x - size // 2, y - size // 2))
     
     def _render_retry_indicator(self, screen, intensity: float):
-        """Render retry indicator with pulse intensity."""
-        # Placeholder - actual implementation depends on screen layout
-        # Could draw a pulsing border around input area
-        pass
+        """
+        Render retry indicator with pulse intensity.
+        STORY-006-01: Uses both color AND shape for color-blind accessibility.
+        
+        Args:
+            screen: Pygame surface
+            intensity: Pulse intensity (0.0 to 1.0)
+        """
+        import pygame
+        
+        # Color-blind safe: Blue for retry/incorrect (NOT red)
+        retry_color = (33, 150, 243)  # Material blue (not red!)
+        
+        # Draw pulsing X shape indicator
+        pulse_size = 50 + int(10 * intensity)
+        
+        # Create square background
+        square_surf = pygame.Surface((pulse_size, pulse_size), pygame.SRCALPHA)
+        square_color = (*retry_color, int(180 * intensity))  # Blue with alpha
+        pygame.draw.rect(square_surf, square_color, (0, 0, pulse_size, pulse_size), border_radius=8)
+        
+        # Draw X shape (visible without color)
+        x_color = (255, 255, 255, int(200 * intensity))  # White X
+        margin = pulse_size // 5
+        points = [
+            (margin, margin),           # Top-left
+            (pulse_size - margin, pulse_size - margin),  # Bottom-right
+            (pulse_size - margin, margin),  # Top-right
+            (margin, pulse_size - margin),  # Bottom-left
+        ]
+        pygame.draw.aalines(square_surf, True, points, width=3)
+        pygame.draw.lines(square_surf, x_color, False, points, width=3)
+        
+        # Center of screen
+        center_x = self.render_center_x + 100  # Offset for retry indicator
+        center_y = self.render_center_y + 50
+        
+        screen.blit(square_surf, (center_x - pulse_size // 2, center_y - pulse_size // 2))
     
     def reset(self):
         """Reset the feedback controller to idle state."""
@@ -340,13 +418,14 @@ class FeedbackController:
         self._auto_advance_triggered = False
 
 
-# Celebration animation constants
+# Celebration animation constants - color-blind safe palette
 CELEBRATION_PARTICLE_COUNT = 20
 CELEBRATION_PARTICLE_COLORS = [
     (255, 215, 0),   # Gold
     (255, 255, 255), # White
-    (0, 200, 83),    # Green
-    (255, 153, 0),   # Orange
+    (76, 175, 80),   # Green (success color)
+    (255, 152, 0),   # Orange
+    (33, 150, 243),  # Blue (retry color - also used in celebration for variety)
 ]
 
 

@@ -183,10 +183,10 @@ class TestColorConstants:
         assert PLANET_2 == (33, 150, 243)
         # Purple
         assert PLANET_3 == (156, 39, 176)
-        # Green
-        assert PLANET_4 == (76, 175, 80)
-        # Red (color-blind safe alternative)
-        assert PLANET_5 == (244, 67, 54)
+        # Brown (color-blind safe - NOT green)
+        assert PLANET_4 == (121, 85, 72)
+        # Gold/Yellow (color-blind safe - distinguishable from blue)
+        assert PLANET_5 == (205, 170, 80)
 
 
 if __name__ == "__main__":

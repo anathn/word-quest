@@ -3,6 +3,7 @@ Theme management for Word Quest space-themed visuals.
 
 Provides centralized color management, theme configuration, and utilities
 for applying the space theme across all game screens.
+Updated with color-blind safe palette for accessibility (STORY-006-01).
 """
 
 import json
@@ -10,26 +11,31 @@ import os
 from typing import Dict, Tuple, Optional
 import pygame
 
+from .color_validator import ColorValidator
 
-# Color constants for space theme
+
+# Color constants for space theme - COLOR-BLIND SAFE PALETTE
+# Updated to avoid red-green combinations for accessibility
+
 SPACE_BLUE = (26, 26, 62)  # #1a1a3e - Deep space blue background
 STAR_WHITE = (255, 255, 255)  # White stars
 STAR_PALE_YELLOW = (255, 255, 224)  # #FFFFE0 - Pale yellow stars
 
 # Planet colors (color-blind safe palette)
+# Key changes: PLANET_4 is brown (not green), PLANET_5 is yellow-gold (not red/teal)
 PLANET_1 = (255, 152, 0)   # Orange
 PLANET_2 = (33, 150, 243)  # Blue
 PLANET_3 = (156, 39, 176)  # Purple
-PLANET_4 = (76, 175, 80)   # Green
-PLANET_5 = (244, 67, 54)   # Red (color-blind safe alternative)
+PLANET_4 = (121, 85, 72)   # Brown (instead of green)
+PLANET_5 = (205, 170, 80)  # Gold/Yellow (instead of teal - more distinguishable from blue)
 
-# UI Element colors
+# UI Element colors - color-blind safe
 UI_TEXT_NORMAL = (255, 255, 255)  # White text
 UI_TEXT_MUTED = (189, 189, 189)   # Grey text
 UI_ACCENT = (255, 152, 0)         # Orange accent
-UI_SUCCESS = (76, 175, 80)        # Green success
+UI_SUCCESS = (76, 175, 80)        # Green success (always used with shape indicator)
+UI_ERROR = (33, 150, 243)         # Blue error (NOT red - color-blind safe!)
 UI_WARNING = (255, 152, 0)        # Orange warning
-UI_ERROR = (244, 67, 54)          # Red error
 UI_BG_LIGHT = (42, 42, 80)        # Slightly lighter blue for panels
 UI_BG_DARK = (26, 26, 62)         # Deep blue for backgrounds
 UI_BORDER = (100, 100, 150)       # Muted purple-blue for borders
@@ -44,15 +50,39 @@ class ThemeManager:
     """
     Central configuration for all theme colors and assets.
     Provides colors by name and handles theme switching.
+    Color-blind safe palette is the default.
+    
+    STORY-006-01: Updated to ensure all colors are distinguishable
+    for users with deuteranopia, protanopia, and tritanopia.
     """
     
     def __init__(self, config_path: str = "data/theme_config.json"):
         """Initialize theme manager with configuration."""
         self.config_path = config_path
         self._colors: Dict[str, Tuple[int, int, int]] = {}
+        self._color_validator = ColorValidator()
         self._load_default_colors()
         self._load_config()
+        self._validate_colors()
+    
+    def _validate_colors(self) -> None:
+        """Validate all colors for color-blind accessibility."""
+        # Check critical color pairs for distinguishability
+        critical_pairs = [
+            ("ui_success", "ui_error"),      # Success vs error
+            ("planet_1", "planet_2"),        # Adjacent planets
+            ("planet_3", "planet_4"),        # Adjacent planets
+            ("planet_4", "planet_5"),        # Adjacent planets
+        ]
         
+        for name1, name2 in critical_pairs:
+            color1 = self._colors.get(name1)
+            color2 = self._colors.get(name2)
+            if color1 and color2:
+                passes, reason = self._color_validator.validate_color_pair_with_reason(color1, color2)
+                if not passes:
+                    print(f"Warning: {name1} vs {name2} may not be distinguishable: {reason}")
+    
     def _load_default_colors(self) -> None:
         """Load default color palette."""
         self._colors = {
@@ -65,12 +95,12 @@ class ThemeManager:
             "star_white": STAR_WHITE,
             "star_pale_yellow": STAR_PALE_YELLOW,
             
-            # Planet colors
+            # Planet colors - color-blind safe palette
             "planet_1": PLANET_1,
             "planet_2": PLANET_2,
             "planet_3": PLANET_3,
             "planet_4": PLANET_4,
-            "planet_5": PLANET_5,
+            "planet_5": PLANET_5,  # Gold/Yellow - distinguishable from all others
             
             # Text colors
             "text_normal": UI_TEXT_NORMAL,
@@ -136,13 +166,13 @@ class ThemeManager:
         Returns:
             RGB tuple for the brighter bloom color
         """
-        # Planet bloom colors (brighter versions)
+        # Planet bloom colors (brighter versions) - color-blind safe
         PLANET_BLOOM_COLORS = {
             1: (255, 183, 77),   # Bright Orange
             2: (100, 181, 246),  # Bright Blue
             3: (186, 104, 200),  # Bright Purple
-            4: (129, 199, 132),  # Bright Green
-            5: (229, 115, 115),  # Bright Red
+            4: (161, 136, 127),  # Lighter Brown (NOT bright green)
+            5: (230, 200, 120),  # Light Gold (NOT teal)
         }
         return PLANET_BLOOM_COLORS.get(planet_number, PLANET_1)
     
@@ -191,6 +221,85 @@ class ThemeManager:
     def get_font_small(self) -> pygame.font.Font:
         """Return small themed font."""
         return self.get_font(24)
+    
+    # Color-blind accessibility methods (STORY-006-01)
+    
+    def validate_color_against_background(self, color: Tuple[int, int, int],
+                                           background: Tuple[int, int, int] = None) -> Tuple[bool, float]:
+        """
+        Validate a color has sufficient contrast against background.
+        
+        Args:
+            color: Color to validate (R, G, B)
+            background: Background color (defaults to space_blue)
+            
+        Returns:
+            Tuple of (passes_contrast_check, contrast_ratio)
+        """
+        if background is None:
+            background = self._colors.get("space_blue", SPACE_BLUE)
+        
+        return self._color_validator.validate_contrast(color, background)
+    
+    def get_luminance(self, color: Tuple[int, int, int]) -> float:
+        """
+        Get the luminance of a color.
+        
+        Args:
+            color: Color (R, G, B)
+            
+        Returns:
+            Luminance value (0.0 to 1.0)
+        """
+        return self._color_validator.get_luminance(color)
+    
+    def simulate_color_deuteranopia(self, color: Tuple[int, int, int]) -> Tuple[int, int, int]:
+        """
+        Simulate how a color appears to someone with deuteranopia.
+        
+        Args:
+            color: Color (R, G, B)
+            
+        Returns:
+            Simulated color (R, G, B)
+        """
+        return self._color_validator.simulate_deuteranopia(color)
+    
+    def simulate_color_protanopia(self, color: Tuple[int, int, int]) -> Tuple[int, int, int]:
+        """
+        Simulate how a color appears to someone with protanopia.
+        
+        Args:
+            color: Color (R, G, B)
+            
+        Returns:
+            Simulated color (R, G, B)
+        """
+        return self._color_validator.simulate_protanopia(color)
+    
+    def simulate_color_tritanopia(self, color: Tuple[int, int, int]) -> Tuple[int, int, int]:
+        """
+        Simulate how a color appears to someone with tritanopia.
+        
+        Args:
+            color: Color (R, G, B)
+            
+        Returns:
+            Simulated color (R, G, B)
+        """
+        return self._color_validator.simulate_tritanopia(color)
+    
+    def generate_theme_audit_report(self) -> str:
+        """
+        Generate an accessibility audit report for the current theme.
+        
+        Returns:
+            Formatted audit report string
+        """
+        return self._color_validator.generate_audit_report(
+            self._colors,
+            "Word Quest Theme Color Accessibility Audit"
+        )
 
 
 # Global theme instance
