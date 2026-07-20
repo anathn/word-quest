@@ -1,6 +1,6 @@
 # Word Quest - Epics
 
-**Last Updated:** July 12, 2026  
+**Last Updated:** July 20, 2026  
 **Based on PRD Version:** 1.0  
 **Based on Architecture Version:** 1.0  
 **Total Epics:** 8  
@@ -18,7 +18,7 @@
 | EPIC-003 | Parent Dashboard | P0 | ready-for-dev | 21 | Sprint 2 |
 | EPIC-004 | Motivation Systems | P1 | ready-for-dev | 27 | Sprint 3 |
 | EPIC-005 | Visual & Audio Polish | P1 | ready-for-dev | 31 | Sprint 3 |
-| EPIC-006 | Accessibility | P1 | planning | 19 | Sprint 4 |
+| EPIC-006 | Accessibility | P1 | ready-for-dev | 19 | Sprint 4 |
 | EPIC-007 | Student Progress View | P1 | planning | 16 | Sprint 4 |
 | EPIC-008 | Email Reports | P2 | planning | 17 | Sprint 5 |
 
@@ -369,10 +369,24 @@ Transform the functional MVP into a polished, delightful experience that kids wa
 ## EPIC-006: Accessibility
 
 **Priority:** P1 (Should Have)  
-**Status:** planning  
+**Status:** ready-for-dev  
 **Progress:** 0%  
 **Estimated Points:** 19  
 **Target Sprint:** Sprint 4
+
+### Status
+
+**Overall Progress:** 0% (Stories refined, ready for development)
+
+#### Stories (All detailed, ready for dev)
+- ✅ STORY-006-01 - Color-blind safe palette (2pts) - Story file created  
+- ✅ STORY-006-02 - Text-to-speech engine (5pts) - Story file created  
+- ✅ STORY-006-03 - Closed captions (3pts) - Story file created  
+- ✅ STORY-006-04 - Keyboard navigation (5pts) - Story file created  
+- ✅ STORY-006-05 - OpenDyslexic font (2pts) - Story file created  
+- ✅ STORY-006-06 - High contrast mode (2pts) - Story file created  
+
+*All 6 stories have detailed implementation guides in `docs/stories/`. Ready for Sprint 4 development.*
 
 ### Description
 Inclusive design features ensuring the game is usable by students with diverse needs.
@@ -398,17 +412,18 @@ Make Word Quest accessible to all learners, including those with visual, auditor
 
 | ID | Title | Status | Points |
 |----|-------|--------|--------|
-| STORY-006-01 | Color-blind safe palette | planning | 2 |
-| STORY-006-02 | Text-to-speech engine | planning | 5 |
-| STORY-006-03 | Closed captions | planning | 3 |
-| STORY-006-04 | Keyboard navigation | planning | 5 |
-| STORY-006-05 | OpenDyslexic font | planning | 2 |
-| STORY-006-06 | High contrast mode | planning | 2 |
+| STORY-006-01 | Color-blind safe palette | ready-for-dev | 2 |
+| STORY-006-02 | Text-to-speech engine | ready-for-dev | 5 |
+| STORY-006-03 | Closed captions | ready-for-dev | 3 |
+| STORY-006-04 | Keyboard navigation | ready-for-dev | 5 |
+| STORY-006-05 | OpenDyslexic font | ready-for-dev | 2 |
+| STORY-006-06 | High contrast mode | ready-for-dev | 2 |
 
 ### Dependencies
 - **EPIC-005 (Visual & Audio Polish)** - Needs audio/visual to make accessible
 
 ### Acceptance Criteria
+- [x] All 6 stories have detailed implementation guides in `docs/stories/`
 - [ ] All 6 stories completed and tested
 - [ ] WCAG 2.1 Level AA compliance target met
 - [ ] Game fully playable with keyboard only
