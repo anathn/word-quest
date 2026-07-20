@@ -25,6 +25,9 @@ from .letter_animator import LetterAnimator, create_letter_animator, AnimationCo
 from .letter_renderer import LetterRenderer, LetterState, LetterType
 from .animation_utils import Easing, AnimationIntensity, get_easing_function, lerp, lerp_color
 from .animated_word_display import AnimatedWordDisplay, create_animated_word_display
+from .sparkle_effect import Particle, SparkleEffect, create_sparkle_effect
+from .planet_bloom import PlanetBloom, BloomState, create_planet_bloom
+from .celebration_renderer import CelebrationRenderer, create_celebration_renderer
 
 __all__ = [
     'Typography',
@@ -87,5 +90,13 @@ __all__ = [
     'lerp',
     'lerp_color',
     'AnimatedWordDisplay',
-    'create_animated_word_display'
+    'create_animated_word_display',
+    'Particle',
+    'SparkleEffect',
+    'create_sparkle_effect',
+    'PlanetBloom',
+    'BloomState',
+    'create_planet_bloom',
+    'CelebrationRenderer',
+    'create_celebration_renderer'
 ]
