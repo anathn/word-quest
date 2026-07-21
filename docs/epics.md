@@ -3,9 +3,9 @@
 **Last Updated:** July 20, 2026  
 **Based on PRD Version:** 1.0  
 **Based on Architecture Version:** 1.0  
-**Total Epics:** 8  
-**Total Stories:** 48  
-**Total Points:** 150
+**Total Epics:** 10  
+**Total Stories:** 50  
+**Total Points:** 155
 
 ---
 
@@ -13,6 +13,7 @@
 
 | ID | Name | Priority | Status | Points | Target Sprint |
 |----|------|----------|--------|--------|---------------|
+| EPIC-999 | Foundation (Critical Pre-requisite) | P0 | planning | 5 | Immediate |
 | EPIC-001 | Core Gameplay | P0 | completed | 26 | Sprint 1 |
 | EPIC-002 | Progress Tracking | P0 | ready-for-dev | 36 | Sprint 1 |
 | EPIC-003 | Parent Dashboard | P0 | ready-for-dev | 21 | Sprint 2 |
@@ -21,6 +22,65 @@
 | EPIC-006 | Accessibility | P1 | ready-for-dev | 19 | Sprint 4 |
 | EPIC-007 | Student Progress View | P1 | planning | 16 | Sprint 4 |
 | EPIC-008 | Email Reports | P2 | planning | 17 | Sprint 5 |
+| EPIC-9999 | DevOps & Deployment | P0 | planning | 5 | Sprint 1 |
+
+---
+
+## EPIC-999: Foundation (Critical Pre-requisite)
+
+**Priority:** P0 (Must Have)  
+**Status:** planning  
+**Progress:** 0%  
+**Estimated Points:** 5  
+**Target Sprint:** Immediate (Blocker for all other epics)
+
+### Description
+Create a functional entry point for the Word Quest game that allows it to be launched and played. Currently, the game cannot be started - there is no main entry point module. This epic establishes the foundational launch infrastructure that all other features depend on.
+
+### Goal
+Enable the game to be launched, tested, demonstrated, and developed upon. Without this, no other features can be verified or shown to stakeholders.
+
+### Scope
+**Included:**
+- Main entry point (`src/__main__.py`) for `python -m src`
+- Main game loop and initialization
+- Screen management system
+- Basic audio manager
+- Launch on Windows, macOS, and Linux
+- Clean exit with Escape key or window close
+- Loading screen during initialization
+- Main menu display on launch
+
+**Excluded:**
+- Complex game features (covered in other epics)
+- Advanced animations (EPIC-005)
+- User authentication (EPIC-003)
+- Data persistence (EPIC-002)
+
+### Stories
+
+| ID | Title | Status | Points |
+|----|-------|--------|--------|
+| STORY-999-01 | Game Entry Point and Runnable Application | planning | 5 |
+
+### Dependencies
+- **None** - This is the foundational epic with no dependencies
+
+### Acceptance Criteria
+- [ ] Game launches successfully with `python -m src` on all platforms
+- [ ] Main menu displays correctly on launch
+- [ ] Game window opens at 1024x768 resolution
+- [ ] Game initializes all required components (audio, graphics, input)
+- [ ] Game can be exited cleanly with Escape key or window close
+- [ ] Error messages displayed if critical dependencies missing
+- [ ] All 5 points of work completed and tested
+
+### Risks & Blockers
+- **Risk:** Existing screens (main_menu.py) may have issues that block launch
+- **Mitigation:** Create minimal fallback screen if needed
+- **Risk:** Missing assets may cause crashes
+- **Mitigation:** Use procedural generation or Pygame shapes as fallback
+- **Blockers:** None currently - this epic removes blockers for all other work
 
 ---
 
@@ -546,9 +606,71 @@ Keep parents informed of progress without requiring them to actively check the d
 
 ---
 
+## EPIC-9999: DevOps & Deployment
+
+**Priority:** P0 (Must Have)  
+**Status:** planning  
+**Progress:** 0%  
+**Estimated Points:** 5  
+**Target Sprint:** Sprint 1
+
+### Description
+CI/CD pipeline, automated testing infrastructure, and deployment workflows for reliable, continuous integration.
+
+### Goal
+Establish automated testing, code quality checks, and deployment pipelines to ensure code quality and enable reliable releases without manual intervention.
+
+### Scope
+**Included:**
+- GitHub Actions CI/CD workflow setup
+- Automated testing on every push/PR
+- Code coverage reporting (target: 80%+)
+- Linting integration (flake8, black, isort)
+- Build validation
+- Automated dependency updates (Dependabot)
+- Deployment workflow to staging/production
+- CI status badges in README
+
+**Excluded:**
+- Complex deployment orchestrations (Kubernetes, etc.)
+- Multi-environment promotion workflows
+- Performance testing automation
+- Security scanning integration (can be added later)
+
+### Stories
+
+| ID | Title | Status | Points |
+|----|-------|--------|-------|
+| STORY-9999-01 | CI/CD Pipeline Setup | ready-for-dev | 5 |
+
+### Dependencies
+- **None** - Can be implemented independently
+
+### Acceptance Criteria
+- [ ] CI pipeline runs on all Python versions (3.10, 3.11, 3.12)
+- [ ] All tests run automatically with timeout enforcement
+- [ ] Code coverage ≥80% reported and visible
+- [ ] Linting passes with zero errors
+- [ ] README updated with CI badges
+- [ ] Deployment workflow functional
+- [ ] Dependabot configured for automated updates
+
+### Risks & Blockers
+- **Risk:** CI pipeline may be slow
+- **Mitigation:** Optimize workflow, use caching for dependencies
+- **Risk:** Coverage requirements may be too high initially
+- **Mitigation:** Start at 70%, ramp up to 80% over time
+- **Blockers:** None - can be implemented immediately
+
+---
+
 ## Epic Dependencies Graph
 
 ```
+EPIC-9999 (DevOps & Deployment)
+EPIC-999  (Foundation - Critical Pre-requisite)
+    └── All other epics
+
 EPIC-001 (Core Gameplay)
     ├── EPIC-002 (Progress Tracking)
     │     ├── EPIC-003 (Parent Dashboard)
@@ -566,12 +688,12 @@ EPIC-001 (Core Gameplay)
 
 | Sprint | Focus | Epics | Points |
 |--------|-------|-------|--------|
-| Sprint 1 | MVP Foundation | EPIC-001, EPIC-002 | 62 |
+| Sprint 1 | MVP Foundation | EPIC-001, EPIC-002, EPIC-9999 | 67 |
 | Sprint 2 | Parent Tools | EPIC-003 | 21 |
 | Sprint 3 | Engagement | EPIC-004, EPIC-005 | 58 |
 | Sprint 4 | Inclusion | EPIC-006, EPIC-007 | 35 |
 | Sprint 5 | Polish | EPIC-008 | 17 |
-| **Total** | | **8 epics** | **150** |
+| **Total** | | **9 epics** | **155** |
 
 ---
 
@@ -616,6 +738,12 @@ EPIC-001 (Core Gameplay)
 - [ ] All stories done
 - [ ] Delivery reliable
 - [ ] Compliance verified
+
+### EPIC-9999: DevOps & Deployment
+- [ ] All stories done
+- [ ] CI pipeline running successfully
+- [ ] Tests automated
+- [ ] Coverage reporting active
 
 ---
 

@@ -352,6 +352,20 @@ class DataStore:
             True if progress file exists
         """
         return self._get_file_path(student_id).exists()
+    
+    def has_profiles(self) -> bool:
+        """
+        Check if any student profiles exist.
+        
+        Returns:
+            True if at least one profile exists, False otherwise
+        """
+        try:
+            students = self.list_students()
+            return len(students) > 0
+        except Exception as e:
+            self.logger.debug(f"No profiles found: {e}")
+            return False
 
 
 # Factory function

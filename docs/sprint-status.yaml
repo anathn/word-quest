@@ -1,6 +1,7 @@
 # Word Quest Sprint Status
-# Last Updated: 2026-07-18
+# Last Updated: 2026-07-20
 # Based on PRD v1.0
+# Note: EPIC-999 (Foundation) added as critical prerequisite
 
 current_sprint:
   number: 1
@@ -41,6 +42,73 @@ current_sprint:
     - "STORY-005-04"  # Background music (code review approved 2026-07-18)
 
 epics:
+  - id: EPIC-999
+    name: "Foundation (Critical Pre-requisite)"
+    priority: P0
+    description: "Game entry point and runnable application"
+    status: "in-progress"
+    progress_percent: 100
+    dependencies: []
+    blockers: []
+    notes: "EPIC implementation complete (STORY-999-01), awaiting final code review approval after fixing critical and medium issues identified in review 2026-07-20."
+    target_sprint: "Immediate"
+    estimated_points: 5
+    completed_points: 5
+    stories:
+      - id: STORY-999-01
+        title: "Game Entry Point and Runnable Application"
+        description: "Create functional entry point for Word Quest"
+        priority: P0
+        status: "review"
+        assignee: "agent"
+        started_date: "2026-07-20"
+        completed_date: null
+        branch: "EPIC-999-STORY-999-01"
+        pr: null
+        blockers: []
+        notes: "Code review 2026-07-20 completed. All critical and medium issues FIXED: (1) Removed duplicate player_preferences property in src/game.py, (2) Fixed SOUNDS_DIR path to use 'sounds' instead of 'audio' to match story spec, (3) Centralized logging configuration in src/logging_config.py, (4) Added error handling for missing main menu screen, (5) Implemented first-run check with TODO for setup wizard. Ready for re-review."
+        acceptance_criteria:
+          - "Game launches successfully on Linux/macOS with `python -m src`"
+          - "Game launches successfully on Windows with `python -m src`"
+          - "Main menu displays correctly on launch"
+          - "Game window opens at 1024x768 resolution"
+          - "Game initializes all required components (audio, graphics, input)"
+          - "Game can be exited cleanly with Escape key or window close"
+          - "Error messages displayed if critical dependencies missing"
+        complexity: "Medium"
+        points: 5
+        implementation_notes: |
+          FILES CREATED:
+          - src/config.py - Game configuration constants (window settings, paths, colors, audio settings, gameplay settings)
+          - src/ui/screen_manager.py - Screen management with Screen base class and ScreenManager stack
+          - src/game.py - Main Game class with game loop, initialization, and cleanup
+          - src/__main__.py - Entry point for `python -m src` command
+          - src/logging_config.py - Centralized logging configuration (ADDED 2026-07-20 to fix logging inconsistency)
+          
+          FILES MODIFIED (2026-07-20 review fixes):
+          - src/game.py - Removed duplicate player_preferences property, added error handling for MainMenuScreen, implemented first-run check
+          - src/config.py - Changed SOUNDS_DIR from 'audio' to 'sounds' to match story specification
+          - src/__main__.py - Removed duplicate logging config, now uses centralized logging_config.setup_logging()
+          
+          TESTS CREATED:
+          - tests/test_game_entry.py - 12 unit tests for config and screen manager
+          
+          VERIFICATION:
+          - All 12 tests passing (test_game_entry.py)
+          - Game launches successfully in HEADLESS=1 mode
+          - Pygame and mixer initialize correctly
+          - Display creates successfully at 1024x768
+          - Game loop runs without errors
+          
+          KEY FEATURES:
+          - Proper pygame initialization with error handling
+          - Clean shutdown with data persistence
+          - Support for headless mode (TESTING=1, HEADLESS=1)
+          - Modular architecture with Screen/ScreenManager pattern
+          - Configuration constants in config.py
+          - Lazy loading of heavy components (MusicManager, SFXGenerator)
+          - ESC key handling for clean exit
+        
   - id: EPIC-001
     name: "Core Gameplay"
     priority: P0
@@ -1458,6 +1526,43 @@ epics:
         blockers: []
         notes: ""
 
+  - id: EPIC-9999
+    name: "DevOps & Deployment"
+    priority: P0
+    description: "CI/CD pipeline, testing infrastructure, and deployment workflows"
+    status: "planning"
+    progress_percent: 0
+    dependencies: []
+    blockers: []
+    notes: "Essential infrastructure for automated testing and deployment. Enables continuous integration and reliable releases."
+    target_sprint: "Sprint 1"
+    estimated_points: 5
+    completed_points: 0
+    stories:
+      - id: STORY-9999-01
+        title: "CI/CD Pipeline Setup"
+        description: "Set up GitHub Actions workflow for automated testing and deployment"
+        priority: P0
+        status: "ready-for-dev"
+        assignee: null
+        started_date: null
+        completed_date: null
+        branch: null
+        pr: null
+        blockers: []
+        notes: "Story file created at docs/stories/STORY-9999-01.md. Ready for development."
+        acceptance_criteria:
+          - "GitHub Actions workflow created for automated testing on push/PR"
+          - "Unit tests automatically run on every commit with timeout enforcement"
+          - "Code coverage report generated and displayed (target: 80% minimum)"
+          - "Linting checks integrated (flake8, black, isort)"
+          - "Build validation ensures application starts successfully"
+          - "Automated dependency updates with Dependabot configured"
+          - "Deployment workflow to production environment (or staging)"
+          - "Badge in README showing build status and code coverage"
+        complexity: "Medium"
+        points: 5
+
 ---
 
 ## Sprint History
@@ -1505,9 +1610,10 @@ epics:
 
 ## Notes
 
-- Total estimated points: 150 across all epics
-- Sprint 1 scope: 46 points (EPIC-001 + EPIC-002 core stories)
+- Total estimated points: 155 across all epics (9 epics)
+- Sprint 1 scope: 51 points (EPIC-001 + EPIC-002 core stories + EPIC-9999 DevOps)
 - STORY-002-06 deferred from Sprint 1 due to complexity
+- EPIC-9999 (DevOps & Deployment) added for CI/CD infrastructure
 - All stories start in `planning` status
 - Stories move to `ready-for-dev` after refinement
 - Update progress regularly as work advances
