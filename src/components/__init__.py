@@ -19,6 +19,9 @@ from .streak_tracker import StreakTracker, create_streak_tracker
 from .streak_bonus import StreakBonusManager, BonusType, BonusMilestone, create_streak_bonus_manager
 from .captain_cosmos import CaptainCosmos, CaptainState, VoiceLine, get_captain_cosmos, reset_captain_cosmos
 from .sticker_manager import StickerManager, StickerDefinition, StickerRarity, StickerProgress, create_sticker_manager
+from .tts_engine import TTSEngine, PlatformTTSWrapper, FallbackTTSEngine, create_tts_engine
+from .tts_manager import TTSManager
+from .tts_settings import TTSSettings, TTSConfigManager, create_tts_config
 
 __all__ = [
     'AudioSystem',
@@ -67,5 +70,14 @@ __all__ = [
     'StickerDefinition',
     'StickerRarity',
     'StickerProgress',
-    'create_sticker_manager'
+    'create_sticker_manager',
+    # TTS components
+    'TTSEngine',
+    'PlatformTTSWrapper',
+    'FallbackTTSEngine',
+    'create_tts_engine',
+    'TTSManager',
+    'TTSSettings',
+    'TTSConfigManager',
+    'create_tts_config'
 ]

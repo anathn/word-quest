@@ -1244,11 +1244,11 @@ epics:
     name: "Accessibility"
     priority: P1
     description: "Inclusive design features"
-    status: "completed"
-    progress_percent: 17  # STORY-006-01 complete, remaining 5 stories planning
+    status: "in-progress"
+    progress_percent: 32  # STORY-006-01 approved (2pts), STORY-006-02 in-progress (5pts), remaining 4 stories ready-for-dev (12pts)
     dependencies: ["EPIC-005"]
     blockers: []
-    notes: "STORY-006-01 ALL ISSUES RESOLVED 2026-07-21 and APPROVED FOR MERGE. All 5 issues from review fixed: (1) PLANET_5 confirmed as Gold #C9AA50, (2) Shape indicators verified (checkmark/X mark), (3) Test count corrected to 42, (4) PLANET_4/PLANET_5 validated (123.0 distance), (5) Comments added. 42 tests passing. READY FOR MERGE."
+    notes: "EPIC-006 IN PROGRESS 2026-07-21: STORY-006-01 (Color-blind palette) approved and complete. STORY-006-02 (TTS engine) started - all core components implemented with 141 tests passing. STORY-006-03 through STORY-006-06 ready-for-dev."
     target_sprint: 4
     estimated_points: 19
     completed_points: 2
@@ -1277,10 +1277,13 @@ epics:
         title: "Text-to-speech engine"
         description: "Audio pronunciation for all words"
         priority: P1
-        status: "planning"
-        assignee: null
-        started_date: null
-        completed_date: "2026-07-14"
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-21"
+        completed_date: null
+        branch: "EPIC-6-STORY-2"
+        created_date: "2026-07-20"
+        story_file: "docs/stories/STORY-006-02.md"
         acceptance_criteria:
           - "Integrate TTS library"
           - "Adjustable speech speed"
@@ -1289,16 +1292,19 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "Implementation started 2026-07-21. TTS engine, manager, and settings components created. UI settings panel created. Unit tests written (141 tests passing). Ready for TTS integration into spelling challenge screen."
+        dependencies: []
 
       - id: STORY-006-03
         title: "Closed captions"
         description: "Text backup for all audio"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
-        completed_date: "2026-07-14"
+        completed_date: null
+        created_date: "2026-07-20"
+        story_file: "docs/stories/STORY-006-03.md"
         acceptance_criteria:
           - "All voice lines have text"
           - "Toggle captions on/off"
@@ -1306,16 +1312,19 @@ epics:
         complexity: "Low"
         points: 3
         blockers: []
-        notes: ""
+        notes: "Story file created with full technical implementation details. Ready for Sprint 4 development."
+        dependencies: ["STORY-006-02"]
 
       - id: STORY-006-04
         title: "Keyboard navigation"
         description: "Full game playable without mouse"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
-        completed_date: "2026-07-14"
+        completed_date: null
+        created_date: "2026-07-20"
+        story_file: "docs/stories/STORY-006-04.md"
         acceptance_criteria:
           - "Tab navigation between elements"
           - "Enter/Space to activate"
@@ -1324,16 +1333,19 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: ""
+        notes: "Story file created with full technical implementation details. Ready for Sprint 4 development."
+        dependencies: []
 
       - id: STORY-006-05
         title: "OpenDyslexic font"
         description: "Optional dyslexia-friendly font"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
-        completed_date: "2026-07-14"
+        completed_date: null
+        created_date: "2026-07-20"
+        story_file: "docs/stories/STORY-006-05.md"
         acceptance_criteria:
           - "Include OpenDyslexic font files"
           - "Toggle in settings"
@@ -1341,16 +1353,19 @@ epics:
         complexity: "Low"
         points: 2
         blockers: []
-        notes: ""
+        notes: "Story file created with full technical implementation details. Ready for Sprint 4 development."
+        dependencies: []
 
       - id: STORY-006-06
         title: "High contrast mode"
         description: "Toggle for improved visibility"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
-        completed_date: "2026-07-14"
+        completed_date: null
+        created_date: "2026-07-20"
+        story_file: "docs/stories/STORY-006-06.md"
         acceptance_criteria:
           - "High contrast color scheme"
           - "Toggle in settings"
@@ -1358,7 +1373,8 @@ epics:
         complexity: "Low"
         points: 2
         blockers: []
-        notes: ""
+        notes: "Story file created with full technical implementation details. Ready for Sprint 4 development."
+        dependencies: ["STORY-006-01"]
 
   - id: EPIC-007
     name: "Student Progress View"
