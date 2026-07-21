@@ -19,6 +19,10 @@ from src.ui.rocket_animator import RocketAnimator, create_rocket_animator
 from src.models.rocket_config import RocketConfig
 from src.audio.music_manager import get_music_manager, MusicState
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class MenuButton:
@@ -107,7 +111,7 @@ class MainMenuScreen:
             self.music_manager.play(MusicState.MAIN_MENU)
         except Exception as e:
             # Music initialization failed - continue without music
-            print(f"Warning: Could not initialize music in main menu: {e}")
+            logger.warning(f"Could not initialize music in main menu: {e}")
     
     def _setup_rocket(self):
         """Set up the animated rocket (STORY-005-02)."""
