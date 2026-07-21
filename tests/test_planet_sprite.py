@@ -268,11 +268,11 @@ class TestPlanetColors:
         # Purple (planet 3)
         assert PLANET_3 == (156, 39, 176)
         
-        # Green (planet 4)
-        assert PLANET_4 == (76, 175, 80)
+        # Brown (planet 4 - color-blind safe, NOT green)
+        assert PLANET_4 == (121, 85, 72)
         
-        # Red (planet 5)
-        assert PLANET_5 == (244, 67, 54)
+        # Gold/Yellow (planet 5 - color-blind safe, distinguishable from blue)
+        assert PLANET_5 == (205, 170, 80)
 
 
 if __name__ == "__main__":
