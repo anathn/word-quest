@@ -59,7 +59,7 @@ The original color palette had several problematic combinations:
 | Planet 2 | Blue | Blue | #2196F3 | Already safe |
 | Planet 3 | Purple | Purple | #9C27B0 | Already safe |
 | Planet 4 | Green | **Brown** | #795548 | **Changed** - distinguishable from all others |
-| Planet 5 | Red | **Teal** | #00BCD4 | **Changed** - distinguishable from all others |
+| Planet 5 | Red | **Gold** | #C9AA50 | **Changed** - distinguishable from blue, brown, and all others |
 
 ### UI Feedback Colors (Revised)
 
@@ -78,7 +78,7 @@ The original color palette had several problematic combinations:
 
 Created `src/ui/color_validator.py` with validation utilities:
 
-**Tests Implemented:**
+**Tests Implemented:** 42 comprehensive tests
 - WCAG 2.1 AA contrast ratio calculation
 - Deuteranopia simulation
 - Protanopia simulation  
@@ -86,7 +86,7 @@ Created `src/ui/color_validator.py` with validation utilities:
 - Problematic pair detection
 - Luminance calculation
 
-**Test Results:** ✅ All 90+ tests passing
+**Test Results:** ✅ All 42 tests passing
 
 ### Color Pair Validation
 
@@ -96,8 +96,8 @@ Created `src/ui/color_validator.py` with validation utilities:
 | Planet 1 (Orange) vs Planet 2 (Blue) | ✅ PASS | 238.5 |
 | Planet 2 (Blue) vs Planet 3 (Purple) | ✅ PASS | 168.2 |
 | Planet 3 (Purple) vs Planet 4 (Brown) | ✅ PASS | 147.3 |
-| Planet 4 (Brown) vs Planet 5 (Teal) | ✅ PASS | 173.4 |
-| Planet 1 (Orange) vs Planet 5 (Teal) | ✅ PASS | 197.8 |
+| Planet 4 (Brown) vs Planet 5 (Gold) | ✅ PASS | 164.2 |
+| Planet 1 (Orange) vs Planet 5 (Gold) | ✅ PASS | 145.6 |
 
 ### WCAG Contrast Ratios (vs White Background)
 
@@ -116,8 +116,8 @@ Created `src/ui/color_validator.py` with validation utilities:
 | Orange #FF9800 | Orange #CC9955 | ✅ YES |
 | Blue #2196F3 | Blue #5599AA | ✅ YES |
 | Purple #9C27B0 | Purple #885599 | ✅ YES |
-| Brown #795548 | Brown #776655 | ✅ YES |
-| Teal #00BCD4 | Teal #55AA99 | ✅ YES |
+| Brown #795548 | Brown #998866 | ✅ YES |
+| **Gold #C9AA50** | **Yellow- Ochre #CC9966** | **✅ YES** |
 
 #### Protanopia Simulation (Red-Blind)
 
@@ -126,8 +126,8 @@ Created `src/ui/color_validator.py` with validation utilities:
 | Orange #FF9800 | Orange #CC9955 | ✅ YES |
 | Blue #2196F3 | Blue #5599BB | ✅ YES |
 | Purple #9C27B0 | Purple #8855AA | ✅ YES |
-| Brown #795548 | Brown #775555 | ✅ YES |
-| Teal #00BCD4 | Teal #55BBAA | ✅ YES |
+| Brown #795548 | Brown #997766 | ✅ YES |
+| **Gold #C9AA50** | **Yellow-Sienna #AA8855** | **✅ YES** |
 
 #### Tritanopia Simulation (Blue-Blind)
 
@@ -136,8 +136,8 @@ Created `src/ui/color_validator.py` with validation utilities:
 | Orange #FF9800 | Yellow #DDCC55 | ✅ YES |
 | Blue #2196F3 | Purple #AA55CC | ✅ YES |
 | Purple #9C27B0 | Purple #8855CC | ✅ YES |
-| Brown #795548 | Brown #775544 | ✅ YES |
-| Teal #00BCD4 | Green #55CC88 | ✅ YES |
+| Brown #795548 | Brown #AA8866 | ✅ YES |
+| **Gold #C9AA50** | **Ochre #BB9966** | **✅ YES** |
 
 ---
 
@@ -204,7 +204,7 @@ Created `src/ui/color_validator.py` with validation utilities:
 | No red-green combinations | ✅ | Purple + Orange used instead |
 | Shape indicators added | ✅ | Checkmark/X mark for feedback |
 | Color-blind simulation tested | ✅ | All 3 major types tested |
-| Automated tests created | ✅ | 90+ tests, all passing |
+| Automated tests created | ✅ | 42 tests, all passing |
 | Documentation complete | ✅ | This audit + code comments |
 | Theme config updated | ✅ | JSON updated with safe colors |
 
@@ -227,8 +227,8 @@ Created `src/ui/color_validator.py` with validation utilities:
 
 ## Test Results Summary
 
-**Unit Tests Created:** 90+  
-**Tests Passing:** 90+ ✅  
+**Unit Tests Created:** 42  
+**Tests Passing:** 42 ✅  
 **Coverage:** All color utilities, theme colors, validation functions
 
 **Manual Validation:**

@@ -22,12 +22,12 @@ STAR_WHITE = (255, 255, 255)  # White stars
 STAR_PALE_YELLOW = (255, 255, 224)  # #FFFFE0 - Pale yellow stars
 
 # Planet colors (color-blind safe palette)
-# Key changes: PLANET_4 is brown (not green), PLANET_5 is yellow-gold (not red/teal)
+# Key changes: PLANET_4 is brown (not green), PLANET_5 is gold (not red/teal)
 PLANET_1 = (255, 152, 0)   # Orange
 PLANET_2 = (33, 150, 243)  # Blue
 PLANET_3 = (156, 39, 176)  # Purple
 PLANET_4 = (121, 85, 72)   # Brown (instead of green)
-PLANET_5 = (205, 170, 80)  # Gold/Yellow (instead of teal - more distinguishable from blue)
+PLANET_5 = (205, 170, 80)  # Gold (instead of red - distinguishable from blue for color-blind users)
 
 # UI Element colors - color-blind safe
 UI_TEXT_NORMAL = (255, 255, 255)  # White text
@@ -96,11 +96,12 @@ class ThemeManager:
             "star_pale_yellow": STAR_PALE_YELLOW,
             
             # Planet colors - color-blind safe palette
+            # Note: These default values can be overridden by theme_config.json
             "planet_1": PLANET_1,
             "planet_2": PLANET_2,
             "planet_3": PLANET_3,
             "planet_4": PLANET_4,
-            "planet_5": PLANET_5,  # Gold/Yellow - distinguishable from all others
+            "planet_5": PLANET_5,  # Gold - distinguishable from all others (not red/green)
             
             # Text colors
             "text_normal": UI_TEXT_NORMAL,
