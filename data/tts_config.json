@@ -1,0 +1,8 @@
+{
+  "tts": {
+    "enabled": false,
+    "speed": 1.5,
+    "volume": 0.7,
+    "voice_id": "voice123"
+  }
+}
