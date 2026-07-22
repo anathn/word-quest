@@ -91,6 +91,10 @@ class PlatformTTSWrapper(TTSEngine):
         if not text or not text.strip():
             logger.debug("Empty text provided to TTS, skipping")
             return
+        
+        # Stop any ongoing speech to prevent overlap
+        if self.is_speaking():
+            self.stop()
             
         with self._lock:
             try:
@@ -160,11 +164,17 @@ class PlatformTTSWrapper(TTSEngine):
             return []
     
     def set_voice(self, voice_id: str) -> bool:
-        """Set the voice to use"""
+        """Set the voice to use. Returns True on success."""
         if not self.initialized or not self.engine:
             return False
             
         try:
+            # Validate voice exists in available voices
+            voices = self.get_available_voices()
+            if not any(voice['id'] == voice_id for voice in voices):
+                logger.error(f"Voice '{voice_id}' not found in available voices")
+                return False
+            
             self.engine.setProperty('voice', voice_id)
             self._current_voice_id = voice_id
             logger.info(f"TTS voice set to: {voice_id}")

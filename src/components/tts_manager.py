@@ -30,6 +30,9 @@ class TTSManager:
         Args:
             config_manager: Optional TTS config manager for persistence
         """
+        # Measure initialization time
+        init_start = time.time()
+        
         self.engine: TTSEngine = create_tts_engine()
         self.config_manager = config_manager or TTSConfigManager()
         
@@ -37,8 +40,8 @@ class TTSManager:
         self.config_manager.load()
         self.settings: TTSSettings = self.config_manager.settings
         
-        # Speech queue and threading
-        self.speech_queue: Queue = Queue()
+        # Speech queue and threading - limit queue size to prevent DoS
+        self.speech_queue: Queue = Queue(maxsize=20)
         self._speaker_thread: Optional[Thread] = None
         self._running = False
         self._lock = Lock()
@@ -55,6 +58,12 @@ class TTSManager:
         self._initialized = self.engine.initialize()
         if not self._initialized:
             logger.warning("TTS engine failed to initialize")
+        
+        init_time = time.time() - init_start
+        if init_time > 2.0:
+            logger.warning(f"TTS initialization took {init_time:.2f}s (exceeds 2s target)")
+        else:
+            logger.info(f"TTS initialized in {init_time*1000:.0f}ms")
         
         logger.info(f"TTS Manager initialized (enabled={self.settings.enabled}, "
                    f"speed={self.settings.speed}, volume={self.settings.volume})")
@@ -201,13 +210,24 @@ class TTSManager:
     
     def set_speed(self, speed: float) -> None:
         """
-        Set speech speed (0.5 to 2.0).
+        Set speech speed with immediate application to running engine.
         
         Args:
             speed: Speed multiplier (0.5 = slow, 1.0 = normal, 2.0 = fast)
         """
         speed = max(0.5, min(2.0, speed))
         self.settings.speed = speed
+        
+        # Apply to engine immediately if initialized
+        if self.engine and self.engine.initialized:
+            try:
+                base_rate = int(getattr(self.engine, '_base_rate', 200))  # Default 200 WPM
+                adjusted_rate = int(base_rate * speed)
+                self.engine.engine.setProperty('rate', adjusted_rate)
+                logger.debug(f"TTS rate set to {adjusted_rate} WPM")
+            except Exception as e:
+                logger.error(f"Failed to apply speed change immediately: {e}")
+        
         self.config_manager.settings = self.settings
         self.config_manager.save()
         logger.debug(f"TTS speed set to {speed}x")
@@ -302,9 +322,10 @@ class TTSManager:
                 # Get text from queue with timeout
                 text = self.speech_queue.get(timeout=0.2)
                 
-                # Mark as speaking
-                self._current_text = text
-                self._is_speaking = True
+                # Mark as speaking - protected by lock to prevent race condition
+                with self._lock:
+                    self._current_text = text
+                    self._is_speaking = True
                 
                 # Call speech start callback
                 if self._on_speech_start:
@@ -313,9 +334,10 @@ class TTSManager:
                 # Speak the text
                 self.engine.speak(text, self.settings.speed, self.settings.volume)
                 
-                # Mark as not speaking
-                self._is_speaking = False
-                self._current_text = None
+                # Mark as not speaking - protected by lock
+                with self._lock:
+                    self._is_speaking = False
+                    self._current_text = None
                 
                 # Call speech end callback
                 if self._on_speech_end:

@@ -60,10 +60,16 @@ class TestTTSManagerBasic:
     
     def test_settings_getter(self):
         """Test that get_settings returns current settings"""
-        with patch('src.components.tts_manager.create_tts_engine') as mock_create:
+        with patch('src.components.tts_manager.create_tts_engine') as mock_create, \
+             patch('src.components.tts_manager.TTSConfigManager') as mock_config_mgr:
             mock_engine = MagicMock()
             mock_engine.initialize.return_value = True
             mock_create.return_value = mock_engine
+            
+            # Mock config manager to return fresh default settings
+            mock_config = MagicMock()
+            mock_config.settings = TTSSettings(enabled=True, speed=1.0, volume=1.0, voice_id=None)
+            mock_config_mgr.return_value = mock_config
             
             manager = TTSManager()
             settings = manager.get_settings()

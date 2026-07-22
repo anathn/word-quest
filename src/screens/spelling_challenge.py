@@ -35,6 +35,7 @@ from src.ui.star_field import StarField
 from src.ui.theme import get_theme, SPACE_BLUE
 from src.audio.music_manager import get_music_manager, MusicState
 from src.ui.animated_word_display import AnimatedWordDisplay, create_animated_word_display
+from src.components.tts_manager import TTSManager
 
 # Performance threshold constants
 WORD_PRESENTATION_TIMEOUT_MS = 200  # Maximum allowed time for word presentation
@@ -137,6 +138,9 @@ class SpellingChallengeScreen:
         # Get singleton instance with audio_system for TTS integration
         self.captain = get_captain_cosmos(audio_system=self.audio_system)
         
+        # Initialize TTS manager for visual indicator (STORY-006-02)
+        self.tts_manager = TTSManager()
+        
         # Space theme integration (STORY-005-01)
         self.theme = get_theme()
         self.star_field: Optional[StarField] = None
@@ -146,6 +150,9 @@ class SpellingChallengeScreen:
         
         # Animated word display (STORY-005-05)
         self.animated_word_display: Optional[AnimatedWordDisplay] = None
+        
+        # TTS Manager for visual indicator (STORY-006-02)
+        self.tts_manager: Optional[TTSManager] = None
     
     def on_enter(self):
         """Called when screen becomes active - start gameplay music."""
@@ -551,6 +558,25 @@ class SpellingChallengeScreen:
         """
         if self.streak_display:
             self.streak_display.render(screen)
+    
+    def render_tts_indicator(self, screen):
+        """
+        Render TTS active indicator (STORY-006-02).
+        
+        Args:
+            screen: Pygame surface to render on
+        """
+        if self.tts_manager and self.tts_manager.is_enabled:
+            self._render_tts_indicator(screen)
+    
+    def _render_tts_indicator(self, screen):
+        """Render TTS active indicator."""
+        font = pygame.font.Font(None, 24)
+        
+        # Show TTS status
+        tts_text = "🔊 TTS Active" if self.tts_manager.is_speaking() else "🔊 TTS Ready"
+        tts_surf = font.render(tts_text, True, (33, 150, 243))  # Blue color
+        screen.blit(tts_surf, (20, 20))  # Top-left position
     
     def _on_planet_complete(self, planet_result):
         """

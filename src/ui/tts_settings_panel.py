@@ -58,6 +58,7 @@ class TTSSettingsPanel:
     COLOR_ACCENT_DISABLED = (189, 189, 189)  # Gray for disabled
     COLOR_ERROR = (244, 67, 54)
     COLOR_SPEAKER = (33, 150, 243)  # Blue for TTS indicator
+    COLOR_VOLUME_BG = (230, 230, 230)  # Light gray for slider background
     
     # Layout constants
     PADDING = 20
@@ -92,7 +93,14 @@ class TTSSettingsPanel:
             height: Panel height in pixels
             on_settings_change: Callback when settings change
             test_word: Word to use for testing pronunciation
+            
+        Raises:
+            TypeError: If on_settings_change is provided but not callable
         """
+        # Validate callback
+        if on_settings_change is not None and not callable(on_settings_change):
+            raise TypeError("on_settings_change must be callable")
+        
         self.tts_manager = tts_manager
         self.width = width
         self.height = height

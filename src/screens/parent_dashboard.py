@@ -12,15 +12,21 @@ Access is protected by password authentication.
 import pygame
 from typing import Dict, List, Optional, Callable
 from dataclasses import dataclass
+import logging
 
 from src.components.analytics import AnalyticsEngine, DataPoint
+from src.components.tts_manager import TTSManager
+from src.components.tts_settings import TTSConfigManager, TTSSettings
 from src.ui.graph_renderer import GraphRenderer, GraphConfig
+from src.ui.tts_settings_panel import TTSSettingsPanel
 from src.auth.session_manager import SessionManager
 from src.auth.password_manager import PasswordManager
 from src.ui.password_prompt import PasswordPrompt
 from src.ui.star_field import StarField
 from src.ui.theme import get_theme
 from src.audio.music_manager import get_music_manager, MusicState
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -76,12 +82,26 @@ class ParentDashboardScreen:
         graph_config = GraphConfig(width=600, height=300)
         self.graph_renderer = GraphRenderer(config=graph_config)
         
+        # TTS components (STORY-006-02) - Declare attributes first
+        self.tts_manager: Optional[TTSManager] = None
+        self.tts_settings_panel: Optional[TTSSettingsPanel] = None
+        self.show_tts_settings: bool = False
+        
         # UI elements
         self._buttons: List[DashboardButton] = []
         self._hovered_button: Optional[DashboardButton] = None
         
         # Music manager (STORY-005-04)
         self.music_manager = get_music_manager()
+        
+        # Initialize TTS manager after all attributes are declared
+        self.tts_manager = TTSManager()
+        self.tts_settings_panel = TTSSettingsPanel(
+            tts_manager=self.tts_manager,
+            width=600,
+            height=350,
+            on_settings_changed=self._on_tts_settings_changed
+        )
     
     def on_enter(self):
         """Called when screen becomes active - play dashboard music."""
@@ -325,6 +345,10 @@ class ParentDashboardScreen:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left click
                 self.handle_mouse_click(event.pos)
+        
+        # Pass events to TTS settings panel if visible
+        if self.show_tts_settings:
+            self.tts_settings_panel.handle_event(event)
     
     def draw(self, screen: pygame.Surface):
         """
@@ -350,6 +374,13 @@ class ParentDashboardScreen:
                 text_surf = self._small_font.render(button.text, True, (255, 255, 255))
                 text_rect = text_surf.get_rect(center=button.rect.center)
                 screen.blit(text_surf, text_rect)
+    
+    def _on_tts_settings_changed(self):
+        """Callback when TTS settings change."""
+        # Reinitialize TTS if enabled state changed
+        if self.tts_manager and not self.tts_manager.is_enabled:
+            self.tts_manager.stop()
+        logger.info("TTS settings changed")
 
 
 def create_parent_dashboard(
