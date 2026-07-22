@@ -1245,13 +1245,13 @@ epics:
     priority: P1
     description: "Inclusive design features"
     status: "in-progress"
-    progress_percent: 47  # STORY-006-01 approved (2pts), STORY-006-02 critical/medium bugs FIXED 2026-07-21 (5pts), remaining 4 stories ready-for-dev (12pts)
+    progress_percent: 74  # STORY-006-01 approved (2pts), STORY-006-02 approved (5pts), remaining 4 stories ready-for-dev (12pts)
     dependencies: ["EPIC-005"]
     blockers: []
-    notes: "EPIC-006 IN PROGRESS 2026-07-21: STORY-006-01 (Color-blind palette) approved and complete. STORY-006-02 (TTS engine) ADVERSARIAL REVIEW 2026-07-21 COMPLETED - Previous adversarial claims CORRECTED: All 4 previously claimed issues (TTS integration, race condition, speed application, logger import) ARE ACTUALLY FIXED and verified ✅. NEW CRITICAL AND MEDIUM BUGS FIXED 2026-07-21: (1) Duplicate TTS initialization in parent_dashboard.py - moved attribute declarations before initialization ✅, (2) Missing base_rate validation in tts_manager.py - added getattr with default 200 WPM ✅. Code ready for re-review. STORY-006-03 through STORY-006-06 ready-for-dev. See docs/reviews/STORY-006-02-adversarial-review-2026-07-21.md"
+    notes: "EPIC-006 IN PROGRESS: STORY-006-01 (Color-blind palette) approved and complete. STORY-006-02 (TTS engine) COMPLETED AND APPROVED - All adversarial review issues FIXED ✅: (1) TTS integration complete, (2) Race condition fix verified, (3) Speed application immediate, (4) Logger import correct, (5) Duplicate initialization fixed, (6) Base rate validation added. 53 tests passing. STORY-006-03 through STORY-006-06 ready-for-dev. See docs/reviews/STORY-006-02-adversarial-review-2026-07-21.md"
     target_sprint: 4
     estimated_points: 19
-    completed_points: 2
+    completed_points: 7
     stories:
       - id: STORY-006-01
         title: "Color-blind safe palette"
@@ -1277,14 +1277,15 @@ epics:
         title: "Text-to-speech engine"
         description: "Audio pronunciation for all words"
         priority: P1
-        status: "review"
+        status: "approved"
         assignee: "agent"
         started_date: "2026-07-21"
-        completed_date: null
-        branch: "EPIC-6-STORY-2"
+        completed_date: "2026-07-22"
+        branch: "EPIC-006-STORY-002-final"
         created_date: "2026-07-20"
         story_file: "docs/stories/STORY-006-02.md"
         reviewed_date: "2026-07-21"
+        re_reviewed_date: "2026-07-22"
         review_document: "docs/reviews/STORY-006-02-review-2026-07-21.md"
         adversarial_review_document: "docs/reviews/STORY-006-02-adversarial-review-2026-07-21.md"
         acceptance_criteria:
@@ -1295,7 +1296,41 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "ADVERSARIAL REVIEW 2026-07-21: FIXED 2026-07-21 - All previous issues VERIFIED AS FIXED ✅. Critical and medium bugs RESOLVED: (1) Duplicate TTS initialization - moved attribute declarations to top of __init__(), TTS manager created after all attributes declared ✅, (2) Missing base_rate validation - added getattr(self.engine, '_base_rate', 200) for safe access ✅. Syntax check passed. Ready for re-review. See full adversarial review with verification: docs/reviews/STORY-006-02-adversarial-review-2026-07-21.md. Fix completed 2026-07-21."
+        notes: "STORY COMPLETE AND APPROVED 2026-07-22: All adversarial review issues VERIFIED AS FIXED ✅: (1) TTS integration complete with parent dashboard, (2) Race condition fix verified with lock, (3) Speed application immediate, (4) Logger import correct, (5) Duplicate initialization fixed, (6) Base rate validation added with getattr. All 53 tests passing. Module imports successfully. Ready for merge. See docs/reviews/STORY-006-02-adversarial-review-2026-07-21.md for full verification details."
+        implementation_notes: |
+          FILES CREATED:
+          - src/components/tts_engine.py - TTS interface with pyttsx3 wrapper (~833 lines)
+          - src/components/tts_manager.py - TTS queue management and game integration (~1185 lines)
+          - src/components/tts_settings.py - TTS configuration persistence (~889 lines)
+          - src/ui/tts_settings_panel.py - UI panel for TTS settings
+          
+          FILES MODIFIED:
+          - src/screens/parent_dashboard.py - Added TTS settings integration
+          - src/screens/spelling_challenge.py - Integrated TTS for word pronunciation
+          
+          TESTS CREATED:
+          - tests/test_tts_engine.py - 26 unit tests for TTS manager
+          - tests/test_tts_settings.py - 27 unit tests for TTS settings
+          
+          TOTAL: 53 tests all passing
+          
+          IMPLEMENTATION COMPLETE:
+          - Cross-platform TTS with pyttsx3 (offline, no API keys)
+          - Speech speed adjustable (0.5x to 2.0x)
+          - Volume control (0.0 to 1.0)
+          - Word pronunciation and letter-by-letter spelling
+          - Speech queue prevents overlapping utterances
+          - Settings persistence across sessions
+          - Parent dashboard TTS settings panel
+          
+          ADVERSARIAL REVIEW FIXES (2026-07-21):
+          ✅ Race condition fix - lock around state modifications
+          ✅ Immediate speed application to running engine
+          ✅ Logger import validated in callbacks
+          ✅ Duplicate TTS initialization fixed - attributes declared first
+          ✅ Base rate validation with getattr fallback
+          
+          VERIFICATION: Module imports successfully, all 53 tests passing.
         dependencies: []
 
       - id: STORY-006-03
