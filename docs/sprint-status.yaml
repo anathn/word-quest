@@ -1245,10 +1245,10 @@ epics:
     priority: P1
     description: "Inclusive design features"
     status: "in-progress"
-    progress_percent: 74  # STORY-006-01 approved (2pts), STORY-006-02 approved (5pts), remaining 4 stories ready-for-dev (12pts)
+    progress_percent: 74  # STORY-006-01 approved (2pts), STORY-006-02 approved (5pts), STORY-006-03 in-progress (3pts), remaining 3 stories ready-for-dev (9pts)
     dependencies: ["EPIC-005"]
     blockers: []
-    notes: "EPIC-006 IN PROGRESS: STORY-006-01 (Color-blind palette) approved and complete. STORY-006-02 (TTS engine) COMPLETED AND APPROVED - All adversarial review issues FIXED ✅: (1) TTS integration complete, (2) Race condition fix verified, (3) Speed application immediate, (4) Logger import correct, (5) Duplicate initialization fixed, (6) Base rate validation added. 53 tests passing. STORY-006-03 through STORY-006-06 ready-for-dev. See docs/reviews/STORY-006-02-adversarial-review-2026-07-21.md"
+    notes: "EPIC-006 IN PROGRESS: STORY-006-01 (Color-blind palette) approved and complete. STORY-006-02 (TTS engine) COMPLETED AND APPROVED. STORY-006-03 (Closed captions) IN PROGRESS - Development started 2026-07-22. STORY-006-04 through STORY-006-06 ready-for-dev. See docs/reviews/STORY-006-02-adversarial-review-2026-07-21.md"
     target_sprint: 4
     estimated_points: 19
     completed_points: 7
@@ -1337,12 +1337,15 @@ epics:
         title: "Closed captions"
         description: "Text backup for all audio"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-22"
+        branch: "EPIC-006-STORY-003"
         completed_date: null
         created_date: "2026-07-20"
         story_file: "docs/stories/STORY-006-03.md"
+        adversarial_review_document: "docs/reviews/STORY-006-03-adversarial-review-2026-07-22.md"
+        adversarial_review_date: "2026-07-22"
         acceptance_criteria:
           - "All voice lines have text"
           - "Toggle captions on/off"
@@ -1350,7 +1353,7 @@ epics:
         complexity: "Low"
         points: 3
         blockers: []
-        notes: "Story file created with full technical implementation details. Ready for Sprint 4 development."
+        notes: "Development started 2026-07-22. Implementing closed captions for all audio content including Captain Cosmos voice lines, sound effects descriptions, and environmental audio cues."
         dependencies: ["STORY-006-02"]
 
       - id: STORY-006-04
