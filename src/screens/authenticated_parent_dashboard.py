@@ -18,6 +18,7 @@ from src.auth.password_manager import PasswordManager
 from src.auth.auth_config import AuthConfig
 from src.ui.password_prompt import PasswordPrompt
 from src.screens.parent_dashboard import ParentDashboardScreen, create_parent_dashboard
+from typing import Any  # For CaptionManager type hint
 
 
 class AuthenticatedParentDashboard:
@@ -49,7 +50,8 @@ class AuthenticatedParentDashboard:
         screen_width: int = 800,
         screen_height: int = 600,
         session_manager: Optional[SessionManager] = None,
-        on_logout: Optional[Callable] = None
+        on_logout: Optional[Callable] = None,
+        caption_manager: Optional[Any] = None
     ):
         """
         Initialize the authenticated parent dashboard.
@@ -60,11 +62,13 @@ class AuthenticatedParentDashboard:
             screen_height: Screen height in pixels
             session_manager: SessionManager instance (creates default if None)
             on_logout: Callback when user logs out
+            caption_manager: Optional CaptionManager instance for caption settings UI
         """
         self.sessions = sessions
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.on_logout = on_logout
+        self.caption_manager = caption_manager  # Store for later panel init
         
         # Initialize authentication components
         if session_manager is None:
@@ -109,6 +113,9 @@ class AuthenticatedParentDashboard:
             screen_width=self.screen_width,
             screen_height=self.screen_height
         )
+        # Initialize caption panel if caption_manager is available
+        if self.caption_manager and self.dashboard_screen:
+            self.dashboard_screen.init_caption_panel(self.caption_manager)
     
     def activate(self):
         """Activate the dashboard (show password prompt)."""

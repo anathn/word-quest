@@ -34,9 +34,9 @@ current_sprint:
     - "STORY-004-04"  # Captain Cosmos character (merged PR #26, 2026-07-14)
     - "STORY-004-05"  # Rocket customization (merged PR #27, 2026-07-14)
     - "STORY-004-06"  # Sticker collection (merged PR #28, 2026-07-14)
-  in_progress_stories:
-    - "STORY-005-05"  # Letter animations (ready for re-review - all issues fixed 2026-07-19, 101 tests passing)
-    - "STORY-005-06"  # Planet bloom on completion (READY FOR MERGE - all issues fixed 2026-07-19, 97 tests passing)
+  in_progress_stories: []
+  ready_for_review_stories:
+    - "STORY-006-03"  # Closed captions (93 tests passing, in-progress 2026-07-22)
   planned_stories: []
   completed_stories_this_sprint:
     - "STORY-005-04"  # Background music (code review approved 2026-07-18)
@@ -1245,10 +1245,10 @@ epics:
     priority: P1
     description: "Inclusive design features"
     status: "in-progress"
-    progress_percent: 74  # STORY-006-01 approved (2pts), STORY-006-02 approved (5pts), remaining 4 stories ready-for-dev (12pts)
+    progress_percent: 63  # STORY-006-01 approved (2pts), STORY-006-02 approved (5pts), STORY-006-03 blocked (3pts), remaining 3 stories ready-for-dev (9pts)
     dependencies: ["EPIC-005"]
-    blockers: []
-    notes: "EPIC-006 IN PROGRESS: STORY-006-01 (Color-blind palette) approved and complete. STORY-006-02 (TTS engine) COMPLETED AND APPROVED - All adversarial review issues FIXED ✅: (1) TTS integration complete, (2) Race condition fix verified, (3) Speed application immediate, (4) Logger import correct, (5) Duplicate initialization fixed, (6) Base rate validation added. 53 tests passing. STORY-006-03 through STORY-006-06 ready-for-dev. See docs/reviews/STORY-006-02-adversarial-review-2026-07-21.md"
+    blockers: ["STORY-006-03 blocked pending integration fixes"]
+    notes: "EPIC-006 IN PROGRESS: STORY-006-01 approved. STORY-006-02 approved. STORY-006-03 (Closed captions) BLOCKED by adversarial review - needs audio/system integration. STORY-006-04 through STORY-006-06 ready-for-dev."
     target_sprint: 4
     estimated_points: 19
     completed_points: 7
@@ -1337,21 +1337,58 @@ epics:
         title: "Closed captions"
         description: "Text backup for all audio"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
+        status: "blocked"
+        assignee: "agent"
+        started_date: "2026-07-22"
+        branch: "EPIC-006-STORY-003"
         completed_date: null
         created_date: "2026-07-20"
         story_file: "docs/stories/STORY-006-03.md"
+        adversarial_review_document: "docs/reviews/STORY-006-03-review-2026-07-22.md"
+        adversarial_review_date: "2026-07-22"
+        review_document: "docs/reviews/STORY-006-03-review-2026-07-23.md"
+        review_date: "2026-07-23"
         acceptance_criteria:
           - "All voice lines have text"
           - "Toggle captions on/off"
           - "Caption style customizable"
         complexity: "Low"
         points: 3
-        blockers: []
-        notes: "Story file created with full technical implementation details. Ready for Sprint 4 development."
-        dependencies: ["STORY-006-02"]
+        blockers: [
+          "Audio system integration required (critical)",
+          "Game screen integration missing (critical)", 
+          "Caption settings UI panel missing (medium)"
+        ]
+        notes: "CODE REVIEW 2026-07-23: BLOCKED - 2 critical, 3 medium issues. Core: 93 tests ✅, excellent quality. CRITICAL: (1) No AudioSystem integration, (2) No Game class init. MEDIUM: (3) Missing UI panel, (4) typo in test, (5) missing integration tests. Review: docs/reviews/STORY-006-03-review-2026-07-23.md. Fix time: 4-8 hrs."
+        dependencies: ["STORY-006-02"],
+        implementation_notes: |
+          FILES CREATED:
+          - src/components/caption_manager.py - CaptionManager for queue/timing (~1000 lines)
+          - src/components/caption_settings.py - CaptionSettings with persistence (~700 lines)
+          - src/ui/caption_display.py - CaptionDisplay for rendering (~300 lines)
+          - data/captions.json - Caption database with templates
+          
+          TESTS CREATED:
+          - tests/test_caption_manager.py - 46 tests
+          - tests/test_caption_display.py - 28 tests
+          - tests/test_caption_settings.py - 19 tests
+          
+          TOTAL: 93 tests all passing
+          
+          FEATURES IMPLEMENTED:
+          - Caption queue system with timing control
+          - Speaker name display in gold
+          - SFX descriptions support (intensity modes)
+          - Font size, position, color customization
+          - High contrast mode
+          - Settings persistence with atomic writes
+          
+          CRITICAL GAPS IDENTIFIED 2026-07-22:
+          ✗ No AudioSystem integration - captions never auto-trigger
+          ✗ No game screen integration - no CaptionManager lifecycle
+          ✗ No caption settings UI panel - parent cannot toggle captions
+          
+          REVIEW STATUS: BLOCKED - Must fix integration before merge
 
       - id: STORY-006-04
         title: "Keyboard navigation"

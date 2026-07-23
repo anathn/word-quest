@@ -1,0 +1,51 @@
+{
+  "captions": {
+    "captain_cosmos": {
+      "welcome": "Welcome aboard, Space Speller! I'm Captain Cosmos!",
+      "good_job": "Excellent spelling! You're a star traveler!",
+      "try_again": "No worries, mistakes help us learn. Try again!",
+      "streak_3": "Amazing! You're on a roll with 3 in a row!",
+      "streak_5": "Incredible! 5 perfect words! You've discovered a new planet!",
+      "planet_complete": "Planet cleared! Ready for the next adventure?",
+      "hint_1": "Here's a hint: The word has {count} letters.",
+      "hint_2": "The {n} letter is '{char}'.",
+      "hint_final": "The word is: {word}",
+      "encouragement_1": "You can do it! Keep trying!",
+      "encouragement_2": "Great effort! Let's keep going!",
+      "tutorial_start": "Let me show you how to play!",
+      "tutorial_end": "Now you're ready to explore the galaxy!"
+    },
+    "system": {
+      "level_complete": "Planet Complete! 5 out of 5 words mastered!",
+      "game_over": "Great game! See you next time!",
+      "save_complete": "Progress saved successfully",
+      "loaded": "Profile loaded - ready to explore!",
+      "welcome_message": "Welcome to Word Quest!",
+      "planet_unlocked": "New planet unlocked!",
+      "achievement_unlocked": "Achievement unlocked: {achievement}!",
+      "streak_bonus": "Streak Bonus! {count} words in a row!"
+    },
+    "sfx_descriptions": {
+      "correct_chime": "[SUCCESSFUL CHIME]",
+      "incorrect_tone": "[GENTLE DESCENDING TONE]",
+      "streak_bonus": "[EXCITING BOOST SOUND]",
+      "planet_bloom": "[MAGICAL SPARKLE SOUND]",
+      "rocket_launch": "[ROCKET ENGINE SOUND]",
+      "star_twinkle": "[GENTLE TWINKLE SOUND]",
+      "button_click": "[SOFT CLICK SOUND]",
+      "level_up": "[ACHIEVEMENT SOUND]"
+    },
+    "feedback": {
+      "correct": "Correct! Great job!",
+      "incorrect": "Not quite. Try again!",
+      "almost": "So close! Keep trying!",
+      "perfect_planet": "Perfect! All 5 words correct!"
+    }
+  },
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-07-22",
+    "language": "en",
+    "description": "Caption texts for Word Quest accessibility features"
+  }
+}
