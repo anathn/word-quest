@@ -16,6 +16,11 @@ class FocusIndicator:
     elements that have keyboard focus.
     """
     
+    # Pulse animation constants
+    PULSE_SPEED_DEFAULT = 5  # Pulse speed multiplier
+    PULSE_ALPHA_MIN = 120  # Minimum alpha value
+    PULSE_ALPHA_MAX = 220  # Maximum alpha value
+    
     def __init__(self, screen: pygame.Surface):
         """
         Initialize focus indicator.
@@ -29,7 +34,7 @@ class FocusIndicator:
         self.border_radius = 8
         self.pulse_alpha = 180
         self.pulse_direction = 1
-        self.pulse_speed = 5
+        self.pulse_speed = self.PULSE_SPEED_DEFAULT
         self.enabled = True
         self._current_rect: Optional[pygame.Rect] = None
         
@@ -92,9 +97,9 @@ class FocusIndicator:
         # Update pulse alpha
         self.pulse_alpha += self.pulse_speed * delta_time * 60
         
-        if self.pulse_alpha >= 220:
+        if self.pulse_alpha >= self.PULSE_ALPHA_MAX:
             self.pulse_direction = -1
-        elif self.pulse_alpha <= 120:
+        elif self.pulse_alpha <= self.PULSE_ALPHA_MIN:
             self.pulse_direction = 1
             
     def set_enabled(self, enabled: bool) -> None:

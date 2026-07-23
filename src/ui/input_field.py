@@ -88,6 +88,10 @@ class InputField(Focusable):
         self.cursor_blink_interval = 0.5  # seconds
         self._last_cursor_update = 0
         
+        # Initialize allowed chars for editor mode
+        import string
+        self._allowed_chars = set(string.ascii_letters + string.digits)
+        
     def on_focus(self) -> None:
         """Called when the input field receives focus."""
         self._cursor_blink_timer = 0
@@ -155,6 +159,11 @@ class InputField(Focusable):
             
         if len(self._text) + len(text) > self.max_length:
             return False
+            
+        # Validate characters in editor mode
+        if self.editor_mode:
+            if not all(c in self._allowed_chars for c in text):
+                return False
             
         # Insert text at cursor position
         self._text = (

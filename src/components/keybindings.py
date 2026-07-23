@@ -155,7 +155,7 @@ class Keybindings:
         if action in self.callbacks:
             del self.callbacks[action]
             
-    def handle_event(self, event) -> bool:
+    def handle_event(self, event: "pygame.event.Event") -> bool:
         """
         Handle a pygame key event.
         
