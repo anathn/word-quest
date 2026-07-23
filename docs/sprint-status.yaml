@@ -1248,7 +1248,7 @@ epics:
     progress_percent: 74  # STORY-006-01 approved (2pts), STORY-006-02 approved (5pts), STORY-006-03 blocked (3pts), STORY-006-04 ready for re-review (5pts), remaining 2 stories ready-for-dev (4pts)
     dependencies: ["EPIC-005"]
     blockers: ["STORY-006-03 blocked pending integration fixes"]
-    notes: "EPIC-006 IN PROGRESS: STORY-006-01 approved (2pts). STORY-006-02 approved (5pts). STORY-006-03 (Closed captions) BLOCKED by integration issues. STORY-006-04 (Keyboard navigation) READY FOR RE-REVIEW - all code review issues FIXED (3 medium issues resolved), 98 tests passing. STORY-006-05/006-06 ready-for-dev."
+    notes: "EPIC-006 IN PROGRESS: STORY-006-01 approved (2pts). STORY-006-02 approved (5pts). STORY-006-03 (Closed captions) BLOCKED by integration issues. STORY-006-04 (Keyboard navigation) APPROVED - all code review issues FIXED, PR #48 created for merge. STORY-006-05/006-06 ready-for-dev."
     target_sprint: 4
     estimated_points: 19
     completed_points: 12  # Increased from 7 to include STORY-006-04 pending approval
@@ -1394,7 +1394,7 @@ epics:
         title: "Keyboard navigation"
         description: "Full game playable without mouse"
         priority: P1
-        status: "review"
+        status: "approved"
         assignee: "agent"
         started_date: "2026-07-23"
         completed_date: null
@@ -1403,6 +1403,7 @@ epics:
         branch: "EPIC-6-STORY-004"
         review_document: "docs/reviews/STORY-006-04-review-2026-07-23.md"
         reviewed_date: "2026-07-23"
+        pr: 48
         acceptance_criteria:
           - "Tab navigation between elements"
           - "Enter/Space to activate"
@@ -1411,7 +1412,7 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "CODE REVIEW 2026-07-23: All medium-priority issues FIXED ✅. Status: READY FOR RE-REVIEW. Verification complete - all 3 medium issues from review resolved: (1) InputField.editor_mode validates characters (lines 164-167), (2) Keybindings.handle_event has pygame.Event type hint (line 158), (3) FocusIndicator uses constants PULSE_SPEED_DEFAULT/PULSE_ALPHA_MIN/MAX (lines 20-22). On-screen keyboard navigation deferred to STORY-006-06. Critical issues resolved - analysis confirmed core architecture sound, on-screen keyboard deferred. 98 tests passing. See review: docs/reviews/STORY-006-04-review-2026-07-23.md"
+        notes: "CODE REVIEW 2026-07-23 APPROVED ✅: All medium-priority issues FIXED and verified. PR #48 created for merge. Verification complete - all 3 medium issues resolved: (1) InputField.editor_mode validates characters (lines 164-167), (2) Keybindings.handle_event has pygame.Event type hint (line 158), (3) FocusIndicator uses constants PULSE_SPEED_DEFAULT/PULSE_ALPHA_MIN/MAX (lines 20-22). On-screen keyboard navigation deferred to STORY-006-06. Critical issues resolved via analysis. Code review APPROVED. 98 tests passing. Ready for merge. See review: docs/reviews/STORY-006-04-review-2026-07-23.md"
         dependencies: []
         implementation_notes: |
           FILES CREATED (2026-07-23):
