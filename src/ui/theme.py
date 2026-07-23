@@ -4,14 +4,17 @@ Theme management for Word Quest space-themed visuals.
 Provides centralized color management, theme configuration, and utilities
 for applying the space theme across all game screens.
 Updated with color-blind safe palette for accessibility (STORY-006-01).
+Updated with OpenDyslexic font support for accessibility (STORY-006-05).
 """
 
 import json
 import os
+import logging
 from typing import Dict, Tuple, Optional
 import pygame
 
 from .color_validator import ColorValidator
+from .font_manager import FontManager, get_font_manager
 
 
 # Color constants for space theme - COLOR-BLIND SAFE PALETTE
@@ -61,9 +64,20 @@ class ThemeManager:
         self.config_path = config_path
         self._colors: Dict[str, Tuple[int, int, int]] = {}
         self._color_validator = ColorValidator()
+        self._font_manager: Optional[FontManager] = None
         self._load_default_colors()
         self._load_config()
         self._validate_colors()
+        self._init_font_manager()
+    
+    def _init_font_manager(self) -> None:
+        """Initialize font manager."""
+        try:
+            self._font_manager = get_font_manager()
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Could not initialize font manager: {e}")
+            self._font_manager = None
     
     def _validate_colors(self) -> None:
         """Validate all colors for color-blind accessibility."""
@@ -200,7 +214,7 @@ class ThemeManager:
     
     def get_font(self, size: int) -> pygame.font.Font:
         """
-        Return themed font at specified size.
+        Return themed font at specified size using current typography settings.
         
         Args:
             size: Font size in pixels
@@ -208,7 +222,9 @@ class ThemeManager:
         Returns:
             pygame.font.Font object
         """
-        # Use default pygame font for MVP
+        if self._font_manager:
+            return self._font_manager.get_font(size=size)
+        # Fallback if font manager not available
         return pygame.font.Font(None, size)
     
     def get_font_large(self) -> pygame.font.Font:
