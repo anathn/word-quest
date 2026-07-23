@@ -272,7 +272,7 @@ class TestCaptionManager:
         
         assert text == "Welcome aboard!"
     
-    def test_get_capton_with_formatting(self, temp_data_dir):
+    def test_get_caption_with_formatting(self, temp_data_dir):
         """Test getting formatted caption from database."""
         manager = CaptionManager(data_dir=temp_data_dir)
         

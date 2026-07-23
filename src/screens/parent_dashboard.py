@@ -10,7 +10,7 @@ Access is protected by password authentication.
 """
 
 import pygame
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass
 import logging
 
@@ -19,6 +19,8 @@ from src.components.tts_manager import TTSManager
 from src.components.tts_settings import TTSConfigManager, TTSSettings
 from src.ui.graph_renderer import GraphRenderer, GraphConfig
 from src.ui.tts_settings_panel import TTSSettingsPanel
+from src.ui.caption_settings_panel import CaptionSettingsPanel
+from src.components.caption_settings import CaptionSettingsManager
 from src.auth.session_manager import SessionManager
 from src.auth.password_manager import PasswordManager
 from src.ui.password_prompt import PasswordPrompt
@@ -87,6 +89,12 @@ class ParentDashboardScreen:
         self.tts_settings_panel: Optional[TTSSettingsPanel] = None
         self.show_tts_settings: bool = False
         
+        # Caption components (STORY-006-03)
+        self.caption_settings_mgr: Optional[CaptionSettingsManager] = None
+        self.caption_panel: Optional[CaptionSettingsPanel] = None
+        self.show_caption_settings: bool = False
+        self._caption_manager: Optional[Any] = None  # Store for later init
+        
         # UI elements
         self._buttons: List[DashboardButton] = []
         self._hovered_button: Optional[DashboardButton] = None
@@ -102,6 +110,11 @@ class ParentDashboardScreen:
             height=350,
             on_settings_changed=self._on_tts_settings_changed
         )
+        
+        # Initialize caption settings manager
+        self.caption_settings_mgr = CaptionSettingsManager()
+        # Caption panel will be initialized when caption_manager is available
+        # via init_caption_panel() method
     
     def on_enter(self):
         """Called when screen becomes active - play dashboard music."""
@@ -121,6 +134,24 @@ class ParentDashboardScreen:
         # Data
         self._weekly_data: List[DataPoint] = []
         self._load_data()
+        
+        # Create dashboard buttons
+        self._create_dashboard_buttons()
+    
+    def init_caption_panel(self, caption_manager: Any) -> None:
+        """Initialize caption settings panel with caption manager.
+        
+        Args:
+            caption_manager: CaptionManager instance from Game class
+        """
+        self._caption_manager = caption_manager
+        self.caption_panel = CaptionSettingsPanel(
+            caption_manager=caption_manager,
+            settings_manager=self.caption_settings_mgr,
+            width=600,
+            height=500,
+            on_settings_changed=self._on_caption_settings_changed
+        )
     
     def _init_fonts(self):
         """Initialize Pygame fonts."""
@@ -263,6 +294,40 @@ class ParentDashboardScreen:
             text_surf = self._small_font.render(note_text, True, self.COLOR_TEXT_LIGHT)
             screen.blit(text_surf, (card_rect.x + 50, y_offset + 60))
     
+    def _create_dashboard_buttons(self) -> None:
+        """Create the main dashboard buttons."""
+        # Create buttons in a row near the bottom of the card
+        button_y = self.screen_height - 120
+        button_width = 150
+        button_height = 40
+        spacing = 20
+        
+        # TTS Settings button
+        tts_button_rect = pygame.Rect(
+            self.screen_width // 2 - button_width - spacing,
+            button_y,
+            button_width, button_height
+        )
+        self._buttons.append(DashboardButton(
+            text="TTS Settings",
+            rect=tts_button_rect,
+            callback=self._toggle_tts_settings,
+            color=(33, 150, 243)  # Blue
+        ))
+        
+        # Caption Settings button
+        caption_button_rect = pygame.Rect(
+            self.screen_width // 2 + spacing,
+            button_y,
+            button_width, button_height
+        )
+        self._buttons.append(DashboardButton(
+            text="Caption Settings",
+            rect=caption_button_rect,
+            callback=self._toggle_caption_settings,
+            color=(156, 39, 176)  # Purple
+        ))
+    
     def _create_export_button(self, graph_rect: pygame.Rect):
         """Create export button."""
         button_rect = pygame.Rect(
@@ -346,9 +411,19 @@ class ParentDashboardScreen:
             if event.button == 1:  # Left click
                 self.handle_mouse_click(event.pos)
         
-        # Pass events to TTS settings panel if visible
+        # Pass events to settings panels if visible
         if self.show_tts_settings:
             self.tts_settings_panel.handle_event(event)
+        
+        if self.show_caption_settings and self.caption_panel:
+            # Check for close button click first
+            close_rect = pygame.Rect(self.caption_panel.width - 40, 20, 25, 25)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if close_rect.collidepoint(event.pos):
+                    self.show_caption_settings = False
+                    return
+            
+            self.caption_panel.handle_event(event)
     
     def draw(self, screen: pygame.Surface):
         """
@@ -374,6 +449,55 @@ class ParentDashboardScreen:
                 text_surf = self._small_font.render(button.text, True, (255, 255, 255))
                 text_rect = text_surf.get_rect(center=button.rect.center)
                 screen.blit(text_surf, text_rect)
+        
+        # Draw caption settings panel if visible
+        if self.show_caption_settings and self.caption_panel:
+            # Center the panel on screen
+            panel_x = (self.screen_width - self.caption_panel.width) // 2
+            panel_y = (self.screen_height - self.caption_panel.height) // 2
+            self.caption_panel.rect.topleft = (panel_x, panel_y)
+            
+            # Render panel at centered position
+            self.caption_panel.render(screen)
+            
+            # Panel close button
+            close_rect = pygame.Rect(panel_x + self.caption_panel.width - 40, panel_y + 20, 25, 25)
+            pygame.draw.rect(screen, (255, 82, 82), close_rect, border_radius=4)
+            if close_rect.collidepoint(pygame.mouse.get_pos()):
+                pygame.draw.rect(screen, (255, 52, 52), close_rect, border_radius=4)
+            
+            # Draw X
+            if self._small_font:
+                x_surf = self._small_font.render("X", True, (255, 255, 255))
+                x_rect = x_surf.get_rect(center=close_rect.center)
+                screen.blit(x_surf, x_rect)
+        
+        # Draw TTS settings panel if visible
+        if self.show_tts_settings:
+            # Center the panel on screen
+            panel_x = (self.screen_width - self.tts_settings_panel.width) // 2
+            panel_y = (self.screen_height - self.tts_settings_panel.height) // 2
+            self.tts_settings_panel.rect.topleft = (panel_x, panel_y)
+            self.tts_settings_panel.render(screen)
+            
+            # Panel close button
+            close_rect = pygame.Rect(panel_x + self.tts_settings_panel.width - 40, panel_y + 20, 25, 25)
+            pygame.draw.rect(screen, (255, 82, 82), close_rect, border_radius=4)
+    
+    def _toggle_tts_settings(self) -> None:
+        """Toggle TTS settings panel visibility."""
+        self.show_tts_settings = not self.show_tts_settings
+        if self.show_tts_settings:
+            self.show_caption_settings = False  # Close other panel
+    
+    def _toggle_caption_settings(self) -> None:
+        """Toggle caption settings panel visibility."""
+        if self.caption_panel is None:
+            logger.warning("Caption panel not initialized")
+            return
+        self.show_caption_settings = not self.show_caption_settings
+        if self.show_caption_settings:
+            self.show_tts_settings = False  # Close other panel
     
     def _on_tts_settings_changed(self):
         """Callback when TTS settings change."""
@@ -381,6 +505,10 @@ class ParentDashboardScreen:
         if self.tts_manager and not self.tts_manager.is_enabled:
             self.tts_manager.stop()
         logger.info("TTS settings changed")
+    
+    def _on_caption_settings_changed(self) -> None:
+        """Callback when caption settings change."""
+        logger.info("Caption settings changed")
 
 
 def create_parent_dashboard(

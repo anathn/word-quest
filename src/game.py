@@ -22,6 +22,11 @@ from src.audio.music_manager import MusicManager
 from src.audio.sfx_generator import SFXGenerator
 from src.components.data_store import DataStore
 from src.settings.player_preferences import PlayerPreferencesManager
+from src.components.audio_system import AudioSystem
+from src.components.caption_manager import CaptionManager
+from src.components.caption_settings import CaptionSettingsManager, CaptionSettings
+from src.ui.caption_display import CaptionDisplay
+from src.screens.authenticated_parent_dashboard import AuthenticatedParentDashboard
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +63,26 @@ class Game:
         # Audio managers (lazy loaded for performance)
         self._music_manager: Optional[MusicManager] = None
         self._sfx_generator: Optional[SFXGenerator] = None
+        
+        # Caption system
+        self.caption_manager: Optional[CaptionManager] = None
+        self.caption_settings: Optional[CaptionSettings] = None
+        self.caption_display: Optional[CaptionDisplay] = None
+        
+        # Initialize caption system
+        try:
+            self.caption_settings_mgr = CaptionSettingsManager()
+            self.caption_settings = self.caption_settings_mgr.get_settings()
+            self.caption_display = CaptionDisplay(self.screen, self.caption_settings)
+            self.caption_manager = CaptionManager(self.caption_display)
+            
+            # Pass caption_manager to AudioSystem
+            self.audio_system = AudioSystem(caption_manager=self.caption_manager)
+            
+            logger.info("Caption system initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize caption system: {e}")
+            self.caption_manager = None
         
         # Setup initial screen
         self._setup_initial_screen()
@@ -110,6 +135,11 @@ class Game:
         try:
             initial_screen = MainMenuScreen(self.screen.get_width(), 
                                             self.screen.get_height())
+            
+            # Wire up callbacks
+            initial_screen.on_parent_dashboard = self._show_parent_dashboard
+            initial_screen.on_start_game = self._start_game
+            
             self.screen_manager.push_screen(initial_screen)
         except ImportError as e:
             logger.error(f"Failed to load main menu: {e}")
@@ -149,11 +179,19 @@ class Game:
                 # Update current screen
                 self.screen_manager.update()
                 
+                # Update captions (call every frame)
+                if self.caption_manager:
+                    self.caption_manager.update(1.0 / FPS)
+                
                 # Clear screen with background color
                 self.screen.fill(COLOR_BACKGROUND)
                 
                 # Draw current screen
                 self.screen_manager.draw()
+                
+                # Render captions (after screen draw so they appear on top)
+                if self.caption_display:
+                    self.caption_display.render()
                 
                 # Update display
                 pygame.display.flip()
@@ -163,6 +201,49 @@ class Game:
             
         logger.info("Game loop ended")
         
+    def _show_parent_dashboard(self) -> None:
+        """Show the parent dashboard after authentication."""
+        try:
+            # Create authenticated parent dashboard with caption manager
+            parent_dashboard = AuthenticatedParentDashboard(
+                sessions=[],  # Empty sessions - analytics would be loaded here
+                screen_width=self.screen.get_width(),
+                screen_height=self.screen.get_height(),
+                caption_manager=self.caption_manager
+            )
+            
+            # Create a wrapper screen for the authenticated dashboard
+            # For now, we'll push it directly as a custom screen wrapper
+            # In a full implementation, this would be a Screen subclass
+            from src.ui.screen_manager import Screen
+            
+            class ParentDashboardWrapper(Screen):
+                def __init__(self, dashboard):
+                    super().__init__()
+                    self.dashboard = dashboard
+                    
+                def handle_event(self, event):
+                    return self.dashboard.handle_event(event)
+                
+                def draw(self, screen):
+                    self.dashboard.render(screen)
+                
+                def update(self):
+                    pass
+            
+            wrapper = ParentDashboardWrapper(parent_dashboard)
+            parent_dashboard.activate()
+            self.screen_manager.push_screen(wrapper)
+            
+            logger.info("Parent dashboard activated")
+        except Exception as e:
+            logger.error(f"Failed to show parent dashboard: {e}")
+    
+    def _start_game(self) -> None:
+        """Start the spelling game (placeholder for game screen)."""
+        logger.info("Start game clicked - game screen to be implemented")
+        # TODO: Push game screen
+    
     def _handle_escape(self) -> None:
         """
         Handle Escape key press.

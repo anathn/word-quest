@@ -8,7 +8,7 @@ and handling audio fallback scenarios.
 
 import threading
 import queue
-from typing import Optional, Callable
+from typing import Optional, Callable, Any
 import json
 import os
 import math
@@ -27,13 +27,15 @@ class AudioSystem:
     - Graceful degradation when TTS unavailable
     """
     
-    def __init__(self, data_dir: Optional[str] = None):
+    def __init__(self, data_dir: Optional[str] = None, 
+                caption_manager: Optional[Any] = None):
         """
         Initialize the audio system.
         
         Args:
             data_dir: Directory containing audio assets and configuration.
                      Defaults to WORDQUEST_DATA_DIR env var or 'src/data'.
+            caption_manager: Optional CaptionManager instance for caption integration.
         """
         self.data_dir = data_dir or os.environ.get('WORDQUEST_DATA_DIR', 'src/data')
         self.audio_available = True
@@ -45,6 +47,7 @@ class AudioSystem:
         self._playback_thread = None
         self._stop_playback = False
         self._current_callback: Optional[Callable] = None
+        self.caption_manager = caption_manager
         
         # Initialize TTS
         self._init_tts()
@@ -114,6 +117,14 @@ class AudioSystem:
         Returns:
             True if speech started successfully, False otherwise
         """
+        # Trigger caption if enabled
+        if self.caption_manager and text:
+            self.caption_manager.show_caption(
+                text=text,
+                speaker="System",
+                duration=len(text) / 150.0 + 0.5  # Estimate based on speech rate
+            )
+        
         if not self.audio_available or not text:
             if on_complete:
                 on_complete()
@@ -261,6 +272,22 @@ class AudioSystem:
         Returns:
             True if playback started successfully
         """
+        # Map SFX names to caption keys
+        SFX_CAPTION_MAP = {
+            'correct_chime': 'correct_chime',
+            'incorrect_tone': 'incorrect_tone',
+            'streak_bonus': 'streak_bonus',
+            'planet_bloom': 'planet_bloom'
+        }
+        
+        # Trigger SFX description caption
+        if self.caption_manager and sfx_name in SFX_CAPTION_MAP:
+            self.caption_manager.show_caption_by_id(
+                "sfx_descriptions",
+                SFX_CAPTION_MAP[sfx_name],
+                is_sfx=True
+            )
+        
         # Try pygame first
         try:
             import pygame
