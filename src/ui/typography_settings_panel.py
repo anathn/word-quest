@@ -120,7 +120,7 @@ class TypographySettingsPanel:
             40
         )
     
-    def handle_event(self, event: pygame.Event) -> bool:
+    def handle_event(self, event) -> bool:
         """
         Handle pygame events for the panel.
         
@@ -323,12 +323,7 @@ class TypographySettingsPanel:
         pygame.draw.rect(screen, self.SAMPLE_BG, sample_rect, border_radius=5)
         
         # Draw default font sample
-        try:
-            default_font = get_font_manager(FONT_MANAGER=_font_manager)._font_manager.get_font(
-                family='default', size=24
-            )
-        except:
-            default_font = self.font_manager.get_font(family='default', size=24)
+        default_font = self.font_manager.get_font(family='default', size=24)
         
         default_surf = default_font.render(sample_text, True, self.TEXT_PRIMARY)
         default_rect = default_surf.get_rect(
@@ -348,12 +343,7 @@ class TypographySettingsPanel:
         
         # Draw OpenDyslexic sample if available
         if self.font_manager.is_opendyslexic_available():
-            try:
-                odl_font = get_font_manager()._font_manager.get_font(
-                    family='opendyslexic', size=24
-                )
-            except:
-                odl_font = self.font_manager.get_font(family='opendyslexic', size=24)
+            odl_font = self.font_manager.get_font(family='opendyslexic', size=24)
             
             odl_surf = odl_font.render(sample_text, True, self.TEXT_PRIMARY)
             odl_rect = odl_surf.get_rect(
