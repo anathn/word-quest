@@ -301,7 +301,7 @@ class TypographySettingsPanel:
         Args:
             screen: Pygame surface to render to
         """
-        # Sample text
+        # Sample text and display area setup
         sample_text = "The quick brown fox jumps over the lazy dog"
         
         # Section title
@@ -322,67 +322,45 @@ class TypographySettingsPanel:
         )
         pygame.draw.rect(screen, self.SAMPLE_BG, sample_rect, border_radius=5)
         
-        # Draw default font sample
-        default_font = self.font_manager.get_font(family='default', size=24)
-        
-        default_surf = default_font.render(sample_text, True, self.TEXT_PRIMARY)
-        default_rect = default_surf.get_rect(
-            centerx=sample_rect.centerx,
-            top=sample_rect.top + 10
-        )
-        screen.blit(default_surf, default_rect)
-        
-        # Draw default label
-        default_label = "Default Font:"
-        label_surf = self.small_font.render(default_label, True, self.TEXT_SECONDARY)
-        label_rect = label_surf.get_rect(
-            left=sample_rect.left,
-            bottom=default_rect.top - 2
-        )
-        screen.blit(label_surf, label_rect)
-        
-        # Draw OpenDyslexic sample if available
-        if self.font_manager.is_opendyslexic_available():
-            odl_font = self.font_manager.get_font(family='opendyslexic', size=24)
-            
-            odl_surf = odl_font.render(sample_text, True, self.TEXT_PRIMARY)
-            odl_rect = odl_surf.get_rect(
-                centerx=sample_rect.centerx,
-                top=default_rect.bottom + 10
-            )
-            screen.blit(odl_surf, odl_rect)
-            
-            # Draw OpenDyslexic label
-            odl_label = "OpenDyslexic:"
-            label_surf = self.small_font.render(odl_label, True, self.TEXT_SECONDARY)
-            label_rect = label_surf.get_rect(
-                left=sample_rect.left,
-                bottom=odl_rect.top - 2
-            )
-            screen.blit(label_surf, label_rect)
-        
-        # Ease - without font_manager issues, use simpler approach
-        # Draw samples directly
+        # Draw font samples using helper method
         self._draw_simple_samples(screen, sample_text, sample_rect)
     
     def _draw_simple_samples(self, screen: pygame.Surface, text: str, area_rect: pygame.Rect) -> None:
         """Draw font samples using simpler approach."""
         y_offset = area_rect.top + 10
         
-        # Default font sample
+        # Draw default font sample
         default_font = self.font_manager.get_font(family='default', size=24)
         default_surf = default_font.render(text, True, self.TEXT_PRIMARY)
         default_rect = default_surf.get_rect(centerx=area_rect.centerx, top=y_offset)
         screen.blit(default_surf, default_rect)
         
+        # Draw default label
+        default_label = "Default Font:"
+        label_surf = self.small_font.render(default_label, True, self.TEXT_SECONDARY)
+        label_rect = label_surf.get_rect(
+            left=area_rect.left,
+            bottom=default_rect.top - 2
+        )
+        screen.blit(label_surf, label_rect)
+        
         y_offset = default_rect.bottom + 15
         
-        # OpenDyslexic sample if available
+        # Draw OpenDyslexic sample if available
         if self.font_manager.is_opendyslexic_available():
             odl_font = self.font_manager.get_font(family='opendyslexic', size=24)
             odl_surf = odl_font.render(text, True, self.TEXT_PRIMARY)
             odl_rect = odl_surf.get_rect(centerx=area_rect.centerx, top=y_offset)
             screen.blit(odl_surf, odl_rect)
+            
+            # Draw OpenDyslexic label
+            odl_label = "OpenDyslexic:"
+            label_surf = self.small_font.render(odl_label, True, self.TEXT_SECONDARY)
+            label_rect = label_surf.get_rect(
+                left=area_rect.left,
+                bottom=odl_rect.top - 2
+            )
+            screen.blit(label_surf, label_rect)
     
     def get_current_font_family(self) -> str:
         """
