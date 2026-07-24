@@ -139,6 +139,7 @@ class TestThemeManager:
 class TestGetTheme:
     """Test cases for global theme functions."""
     
+    pass
     def teardown_method(self):
         """Clean up after tests."""
         reset_theme()

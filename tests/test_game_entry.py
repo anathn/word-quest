@@ -61,7 +61,6 @@ class TestScreenManager:
         pygame.init()
         surface = pygame.Surface((800, 600))
         yield surface
-        pygame.quit()
         
     def test_manager_creation(self, surface):
         """Test ScreenManager can be created."""

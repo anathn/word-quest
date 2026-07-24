@@ -148,6 +148,7 @@ class TestPracticeListDisplay:
 class TestProgressTrackerPracticeList:
     """Tests for ProgressTracker.get_words_needing_practice() method."""
     
+    pass
     def setup_method(self):
         """Set up test fixtures."""
         self.tracker = create_progress_tracker(student_id="test_student")
@@ -329,6 +330,7 @@ class TestProgressTrackerPracticeList:
 class TestPracticeListIntegration:
     """Integration tests for practice list functionality."""
     
+    pass
     def setup_method(self):
         """Set up test fixtures."""
         self.tracker = create_progress_tracker(student_id="test_student")

@@ -30,8 +30,8 @@ class TestFontManager:
     
     def teardown_method(self):
         """Clean up after tests."""
-        pygame.quit()
     
+    pass
     def test_font_manager_creation(self):
         """Test that FontManager can be created."""
         fm = FontManager()

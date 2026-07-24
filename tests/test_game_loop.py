@@ -51,7 +51,6 @@ class TestGame:
         pygame.init()
         pygame.mixer.init()
         yield
-        pygame.quit()
         
     def test_game_creation(self):
         """Test Game can be created."""

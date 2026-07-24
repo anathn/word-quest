@@ -36,6 +36,19 @@ def pytest_configure(config):
     os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 
 
+def pytest_sessionstart(session):
+    """Ensure pygame is initialized at the start of the test session.
+    
+    This hook runs before test collection begins, ensuring pygame is ready
+    for any module-level imports in test files.
+    """
+    import pygame
+    if not pygame.get_init():
+        pygame.init()
+    pygame.display.init()
+    pygame.font.init()
+
+
 @pytest.fixture
 def test_screen():
     """Create a test pygame display surface."""

@@ -292,6 +292,7 @@ class TestTypographySettingsPersistence:
 class TestTypographySettingsIntegration:
     """Integration tests for TypographySettings."""
     
+    pass
     def test_full_workflow(self):
         """Test complete workflow of save, load, modify, save."""
         temp_dir = tempfile.mkdtemp()

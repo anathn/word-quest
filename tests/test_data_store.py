@@ -214,6 +214,7 @@ class TestBackupManager:
 class TestFileUtils:
     """Tests for the FileUtils class."""
     
+    pass
     def test_ensure_directory(self, tmp_path):
         """Test directory creation."""
         new_dir = tmp_path / "new" / "nested" / "dir"
@@ -532,6 +533,7 @@ class TestDataStore:
 class TestSaveResult:
     """Tests for SaveResult dataclass."""
     
+    pass
     def test_save_result_success(self):
         """Test SaveResult for successful save."""
         result = SaveResult(
