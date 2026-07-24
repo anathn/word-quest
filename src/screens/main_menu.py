@@ -18,6 +18,7 @@ from src.ui.rocket_sprite import RocketSprite
 from src.ui.rocket_animator import RocketAnimator, create_rocket_animator
 from src.models.rocket_config import RocketConfig
 from src.audio.music_manager import get_music_manager, MusicState
+from src.ui.screen_manager import Screen
 
 import logging
 
@@ -35,7 +36,7 @@ class MenuButton:
     is_primary: bool = False  # Primary buttons Larger and more prominent
 
 
-class MainMenuScreen:
+class MainMenuScreen(Screen):
     """
     Main menu screen for Word Quest.
     
@@ -51,20 +52,21 @@ class MainMenuScreen:
     - Student Settings
     """
     
-    def __init__(self, screen_width: int = 800, screen_height: int = 600):
+    def __init__(self, screen: pygame.Surface):
         """
         Initialize the main menu.
         
         Args:
-            screen_width: Screen width in pixels
-            screen_height: Screen height in pixels
+            screen: The main pygame display surface
         """
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+        super().__init__(screen)
+        
+        self.screen_width = screen.get_width()
+        self.screen_height = screen.get_height()
         
         # Space theme initialization (STORY-005-01)
         self.theme = get_theme()
-        self.star_field = StarField(screen_width, screen_height)
+        self.star_field = StarField(self.screen_width, self.screen_height)
         
         # Typography
         self.typography = get_typography()
@@ -234,56 +236,42 @@ class MainMenuScreen:
             pygame.quit()
             exit()
     
-    def render(self, screen: pygame.Surface):
+    def draw(self) -> None:
         """
-        Render the main menu to the screen.
-        
-        Args:
-            screen: Pygame surface to render to
+        Draw the main menu to the screen.
         """
         # Fill with deep space blue background
-        screen.fill(self.theme.get_color("space_blue"))
+        self.screen.fill(self.theme.get_color("space_blue"))
         
         # Render star field (twinkling animation)
-        self.star_field.render(screen)
+        self.star_field.render(self.screen)
         
         # Render decorative planets
         for planet in self.planets:
-            planet.render(screen, (planet.x, planet.y), completed=False)
+            planet.render(self.screen, (planet.x, planet.y), completed=False)
         
-        # Render title
-        self._render_title(screen)
-        
-        # Render welcome message
-        self._render_welcome(screen)
-        
-        # Render menu buttons
-        self._render_buttons(screen)
-        
-        # Render footer with version
-        self._render_footer(screen)
+        # Render title, welcome, buttons, and footer
+        self._render_title()
+        self._render_welcome()
+        self._render_buttons()
+        self._render_footer()
         
         # Render rocket (STORY-005-02)
         if self.rocket_animator:
-            self.rocket_animator.render(screen)
+            self.rocket_animator.render(self.screen)
     
-    def _render_title(self, screen: pygame.Surface):
+    def _render_title(self) -> None:
         """Render the game title."""
         title_text = "WORD QUEST"
-        
-        # Get large font
         title_font = self.theme.get_font_large()
-        
-        # Main title in bright color
         title_color = self.theme.get_color("font_accent")
         title_surface = title_font.render(title_text, True, title_color)
         title_rect = title_surface.get_rect(
             centerx=self.screen_width // 2,
             top=60
         )
-        screen.blit(title_surface, title_rect)
+        self.screen.blit(title_surface, title_rect)
         
-        # Subtitle
         subtitle_font = self.theme.get_font_medium()
         subtitle_text = "Spelling Adventure"
         subtitle_color = self.theme.get_color("font_secondary")
@@ -292,18 +280,17 @@ class MainMenuScreen:
             centerx=self.screen_width // 2,
             top=title_rect.bottom + 10
         )
-        screen.blit(subtitle_surface, subtitle_rect)
+        self.screen.blit(subtitle_surface, subtitle_rect)
     
-    def _render_welcome(self, screen: pygame.Surface):
+    def _render_welcome(self) -> None:
         """Render welcome message with Captain Cosmos reference."""
-        # Calculate floating animation
         import math
         current_time = pygame.time.get_ticks() / 1000
         if self._menu_start_time == 0:
             self._menu_start_time = current_time
         
         elapsed = current_time - self._menu_start_time
-        self._welcome_y_offset = math.sin(elapsed * 1.5) * 5  # Gentle float
+        self._welcome_y_offset = math.sin(elapsed * 1.5) * 5
         
         welcome_font = self.theme.get_font_small()
         welcome_text = "Welcome, Space Explorer!"
@@ -314,30 +301,25 @@ class MainMenuScreen:
             centerx=self.screen_width // 2,
             top=self.screen_height // 2 - 120 + self._welcome_y_offset
         )
-        screen.blit(welcome_surface, welcome_rect)
+        self.screen.blit(welcome_surface, welcome_rect)
     
-    def _render_buttons(self, screen: pygame.Surface):
+    def _render_buttons(self) -> None:
         """Render all menu buttons."""
         for button in self._buttons:
-            # Determine color based on hover state
             color = button.hover_color if button == self._hovered_button else button.color
+            pygame.draw.rect(self.screen, color, button.rect, border_radius=8)
             
-            # Draw button background
-            pygame.draw.rect(screen, color, button.rect, border_radius=8)
-            
-            # Draw button border
             border_width = 3 if button.is_primary else 2
             border_color = (255, 255, 255) if button == self._hovered_button else self.theme.get_color("ui_border")
-            pygame.draw.rect(screen, border_color, button.rect, border_width, border_radius=8)
+            pygame.draw.rect(self.screen, border_color, button.rect, border_width, border_radius=8)
             
-            # Draw button text
             button_font = self.theme.get_font_medium() if button.is_primary else self.theme.get_font_small()
             text_color = (255, 255, 255)
             text_surface = button_font.render(button.text, True, text_color)
             text_rect = text_surface.get_rect(center=button.rect.center)
-            screen.blit(text_surface, text_rect)
+            self.screen.blit(text_surface, text_rect)
     
-    def _render_footer(self, screen: pygame.Surface):
+    def _render_footer(self) -> None:
         """Render footer with version and credits."""
         from src import __version__
         
@@ -350,25 +332,44 @@ class MainMenuScreen:
             centerx=self.screen_width // 2,
             bottom=self.screen_height - 15
         )
-        screen.blit(footer_surface, footer_rect)
+        self.screen.blit(footer_surface, footer_rect)
     
-    def update(self, delta_time: float):
-        """
-        Update main menu state (call each frame).
-        
-        Args:
-            delta_time: Time since last update in seconds
-        """
-        # Update star field twinkling animation
+    def handle_event(self, event: pygame.event.Event) -> None:
+        """Handle pygame events."""
+        if event.type == pygame.MOUSEMOTION:
+            self.handle_mouse_motion(event.pos)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Left click
+                self.handle_mouse_click(event.pos)
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                self.request_exit()
+    
+    def on_enter(self) -> None:
+        """Called when screen becomes active."""
+        self._welcome_y_offset = 0
+        try:
+            if self.music_manager:
+                self.music_manager.play(MusicState.MAIN_MENU)
+        except Exception as e:
+            logger.warning(f"Could not play menu music: {e}")
+    
+    def on_exit(self) -> None:
+        """Called when screen is deactivated."""
+        try:
+            if self.music_manager:
+                self.music_manager.stop()
+        except Exception as e:
+            logger.warning(f"Could not stop menu music: {e}")
+    
+    def update(self) -> None:
+        """Update main menu state (call each frame)."""
+        delta_time = 1.0 / 60.0
         if self.star_field:
             self.star_field.update(delta_time)
-        
-        # Update planets (if they have animations)
         for planet in self.planets:
             if hasattr(planet, 'update'):
                 planet.update(delta_time)
-        
-        # Update rocket animation (STORY-005-02)
         if self.rocket_animator:
             self.rocket_animator.update(delta_time)
     
@@ -398,7 +399,7 @@ class MainMenuScreen:
             if button.rect.collidepoint(pos) and button.callback:
                 # Play click sound if audio available
                 if self.audio_system and self.audio_system.is_audio_available():
-                    self.audio_system.play_sound("click")
+                    self.audio_system.play_sfx("click")
                 
                 button.callback()
                 return
@@ -459,15 +460,14 @@ class MainMenuScreen:
             )
 
 
-def create_main_menu(screen_width: int = 800, screen_height: int = 600) -> MainMenuScreen:
+def create_main_menu(screen: pygame.Surface) -> MainMenuScreen:
     """
     Factory function to create a MainMenuScreen.
     
     Args:
-        screen_width: Screen width in pixels
-        screen_height: Screen height in pixels
+        screen: The main pygame display surface
         
     Returns:
         Configured MainMenuScreen instance
     """
-    return MainMenuScreen(screen_width, screen_height)
+    return MainMenuScreen(screen)
