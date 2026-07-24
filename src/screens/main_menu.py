@@ -334,25 +334,7 @@ class MainMenuScreen(Screen):
         )
         self.screen.blit(footer_surface, footer_rect)
     
-    def handle_event(self, event: pygame.event.Event) -> None:
-        """Handle pygame events."""
-        if event.type == pygame.MOUSEMOTION:
-            self.handle_mouse_motion(event.pos)
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left click
-                self.handle_mouse_click(event.pos)
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                self.request_exit()
-    
-    def on_enter(self) -> None:
-        """Called when screen becomes active."""
-        self._welcome_y_offset = 0
-        try:
-            if self.music_manager:
-                self.music_manager.play(MusicState.MAIN_MENU)
-        except Exception as e:
-            logger.warning(f"Could not play menu music: {e}")
+
     
     def on_exit(self) -> None:
         """Called when screen is deactivated."""
