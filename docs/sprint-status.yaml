@@ -1250,7 +1250,7 @@ epics:
     notes: "EPIC-006 IN PROGRESS: STORY-006-01 approved (2pts). STORY-006-02 approved (5pts). STORY-006-03 (Closed captions) APPROVED 2026-07-24 (3pts). STORY-006-04 (Keyboard navigation) APPROVED - PR #48 created for merge. STORY-006-05 (OpenDyslexic font) APPROVED - implementation complete, 43 tests passing. STORY-006-06 (High contrast mode) ready-for-dev. Epic at 89% completion (17/19 points)."
     target_sprint: 4
     estimated_points: 19
-    completed_points: 17  # STORY-006-01 (2pts), STORY-006-02 (5pts), STORY-006-03 (3pts in review), STORY-006-04 (5pts), STORY-006-05 (2pts) - 17/19 points
+    completed_points: 17  # STORY-006-01 (2pts), STORY-006-02 (5pts), STORY-006-03 (3pts approved), STORY-006-04 (5pts), STORY-006-05 (2pts) - 17/19 points
     stories:
       - id: STORY-006-01
         title: "Color-blind safe palette"
