@@ -24,8 +24,7 @@ class TestFocusIndicator:
         
     def teardown_method(self):
         """Clean up."""
-        pygame.quit()
-        
+        pass
     def test_initial_state(self):
         """Test initial indicator state."""
         assert self.indicator.indicator_color == (255, 215, 0)
@@ -137,6 +136,7 @@ class TestFocusIndicator:
 class TestFocusIndicatorManager:
     """Tests for FocusIndicatorManager singleton."""
     
+    pass
     def setup_method(self):
         """Set up test fixtures."""
         pygame.init()
@@ -148,7 +148,6 @@ class TestFocusIndicatorManager:
     def teardown_method(self):
         """Clean up."""
         self.manager.clear()
-        pygame.quit()
         
     def test_singleton_pattern(self):
         """Test that FocusIndicatorManager is a singleton."""
@@ -228,14 +227,12 @@ class TestFocusIndicatorManager:
 class TestFocusIndicatorEdgeCases:
     """Edge case tests for focus indicators."""
     
+    pass
     def setup_method(self):
         pygame.init()
         self.screen = pygame.Surface((800, 600))
         self.indicator = FocusIndicator(self.screen)
-        
-    def teardown_method(self):
-        pygame.quit()
-        
+
     def test_render_zero_width_rect(self):
         """Test rendering with zero width rect."""
         rect = pygame.Rect(100, 100, 0, 100)

@@ -13,8 +13,8 @@ from src.components.caption_settings import CaptionSettings
 from src.ui.caption_display import CaptionDisplay
 
 
-# Initialize pygame for testing
-pygame.init()
+# Pygame is initialized in conftest.py with SDL dummy drivers
+# No need to re-initialize here - conftest handles it
 
 
 class TestCaptionDisplay:

@@ -20,7 +20,9 @@ from src.components.tts_settings import TTSConfigManager, TTSSettings
 from src.ui.graph_renderer import GraphRenderer, GraphConfig
 from src.ui.tts_settings_panel import TTSSettingsPanel
 from src.ui.caption_settings_panel import CaptionSettingsPanel
+from src.ui.typography_settings_panel import TypographySettingsPanel
 from src.components.caption_settings import CaptionSettingsManager
+from src.components.typography_settings import get_typography_settings
 from src.auth.session_manager import SessionManager
 from src.auth.password_manager import PasswordManager
 from src.ui.password_prompt import PasswordPrompt
@@ -95,6 +97,11 @@ class ParentDashboardScreen:
         self.show_caption_settings: bool = False
         self._caption_manager: Optional[Any] = None  # Store for later init
         
+        # Typography components (STORY-006-05)
+        self.typography_settings = get_typography_settings()
+        self.typography_panel: Optional[TypographySettingsPanel] = None
+        self.show_typography_settings: bool = False
+        
         # UI elements
         self._buttons: List[DashboardButton] = []
         self._hovered_button: Optional[DashboardButton] = None
@@ -115,6 +122,12 @@ class ParentDashboardScreen:
         self.caption_settings_mgr = CaptionSettingsManager()
         # Caption panel will be initialized when caption_manager is available
         # via init_caption_panel() method
+        
+        # Initialize typography settings panel (STORY-006-05)
+        self.typography_panel = TypographySettingsPanel(
+            x=0, y=0,  # Will be centered when rendered
+            on_font_changed=self._on_font_changed
+        )
     
     def on_enter(self):
         """Called when screen becomes active - play dashboard music."""
@@ -304,7 +317,7 @@ class ParentDashboardScreen:
         
         # TTS Settings button
         tts_button_rect = pygame.Rect(
-            self.screen_width // 2 - button_width - spacing,
+            self.screen_width // 2 - button_width * 3 // 2 - spacing,
             button_y,
             button_width, button_height
         )
@@ -315,9 +328,22 @@ class ParentDashboardScreen:
             color=(33, 150, 243)  # Blue
         ))
         
+        # Font Settings button (STORY-006-05)
+        font_button_rect = pygame.Rect(
+            self.screen_width // 2 - button_width // 2,
+            button_y,
+            button_width, button_height
+        )
+        self._buttons.append(DashboardButton(
+            text="Font Settings",
+            rect=font_button_rect,
+            callback=self._toggle_font_settings,
+            color=(255, 152, 0)  # Orange
+        ))
+        
         # Caption Settings button
         caption_button_rect = pygame.Rect(
-            self.screen_width // 2 + spacing,
+            self.screen_width // 2 + button_width // 2 + spacing,
             button_y,
             button_width, button_height
         )
@@ -415,6 +441,9 @@ class ParentDashboardScreen:
         if self.show_tts_settings:
             self.tts_settings_panel.handle_event(event)
         
+        if self.show_typography_settings and self.typography_panel:
+            self.typography_panel.handle_event(event)
+        
         if self.show_caption_settings and self.caption_panel:
             # Check for close button click first
             close_rect = pygame.Rect(self.caption_panel.width - 40, 20, 25, 25)
@@ -483,12 +512,43 @@ class ParentDashboardScreen:
             # Panel close button
             close_rect = pygame.Rect(panel_x + self.tts_settings_panel.width - 40, panel_y + 20, 25, 25)
             pygame.draw.rect(screen, (255, 82, 82), close_rect, border_radius=4)
+        
+        # Draw font settings panel if visible (STORY-006-05)
+        if self.show_typography_settings and self.typography_panel:
+            # Center the panel on screen
+            panel_x = (self.screen_width - self.typography_panel.rect.width) // 2
+            panel_y = (self.screen_height - self.typography_panel.rect.height) // 2
+            self.typography_panel.rect.topleft = (panel_x, panel_y)
+            self.typography_panel.render(screen)
+            
+            # Panel close button
+            close_rect = pygame.Rect(panel_x + self.typography_panel.rect.width - 40, panel_y + 20, 25, 25)
+            pygame.draw.rect(screen, (255, 82, 82), close_rect, border_radius=4)
+            if close_rect.collidepoint(pygame.mouse.get_pos()):
+                pygame.draw.rect(screen, (255, 52, 52), close_rect, border_radius=4)
+            
+            # Draw X
+            if self._small_font:
+                x_surf = self._small_font.render("X", True, (255, 255, 255))
+                x_rect = x_surf.get_rect(center=close_rect.center)
+                screen.blit(x_surf, x_rect)
     
     def _toggle_tts_settings(self) -> None:
         """Toggle TTS settings panel visibility."""
         self.show_tts_settings = not self.show_tts_settings
         if self.show_tts_settings:
-            self.show_caption_settings = False  # Close other panel
+            self.show_caption_settings = False
+            self.show_typography_settings = False  # Close other panels
+    
+    def _toggle_font_settings(self) -> None:
+        """Toggle font settings panel visibility (STORY-006-05)."""
+        self.show_typography_settings = not self.show_typography_settings
+        if self.show_typography_settings:
+            self.show_tts_settings = False
+            self.show_caption_settings = False  # Close other panels
+        # Apply font selection immediately
+        if self.typography_panel:
+            self.typography_panel.apply_selected_font()
     
     def _toggle_caption_settings(self) -> None:
         """Toggle caption settings panel visibility."""
@@ -505,6 +565,12 @@ class ParentDashboardScreen:
         if self.tts_manager and not self.tts_manager.is_enabled:
             self.tts_manager.stop()
         logger.info("TTS settings changed")
+    
+    def _on_font_changed(self, new_font_family: str) -> None:
+        """Callback when font settings change (STORY-006-05)."""
+        logger.info(f"Font changed to: {new_font_family}")
+        # The font will be applied on next render via theme.get_font()
+        # No additional action needed here as TypographySettingsPanel handles persistence
     
     def _on_caption_settings_changed(self) -> None:
         """Callback when caption settings change."""

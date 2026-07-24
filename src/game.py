@@ -133,8 +133,7 @@ class Game:
             # initial_screen = SetupWizardScreen(...)
         
         try:
-            initial_screen = MainMenuScreen(self.screen.get_width(), 
-                                            self.screen.get_height())
+            initial_screen = MainMenuScreen(self.screen)
             
             # Wire up callbacks
             initial_screen.on_parent_dashboard = self._show_parent_dashboard

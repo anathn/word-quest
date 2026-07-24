@@ -23,8 +23,7 @@ class TestKeybindings:
         
     def teardown_method(self):
         """Clean up."""
-        pygame.quit()
-        
+        pass
     def test_initial_state(self):
         """Test bindings are initialized with defaults."""
         assert self.bindings.get_key('navigate_next') == pygame.K_TAB
@@ -234,13 +233,13 @@ class TestKeybindings:
 class TestKeybindingsEdgeCases:
     """Edge case tests for keybindings."""
     
+    pass
     def setup_method(self):
         pygame.init()
         self.bindings = Keybindings()
         
     def teardown_method(self):
-        pygame.quit()
-        
+        pass
     def test_callback_exception_handling(self):
         """Test that callback exceptions don't crash the system."""
         def bad_callback():

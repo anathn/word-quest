@@ -122,6 +122,7 @@ class TestAudioCaptionIntegration:
 class TestCaptionSettingsIntegration:
     """Tests for CaptionSettings -> CaptionManager integration"""
     
+    pass
     def setup_method(self):
         """Set up test fixtures"""
         self.temp_dir = tempfile.mkdtemp()
@@ -181,6 +182,7 @@ class TestCaptionSettingsIntegration:
 class TestCaptionManagerDisplayIntegration:
     """Tests for CaptionManager -> CaptionDisplay integration"""
     
+    pass
     def setup_method(self):
         """Set up test fixtures"""
         self.temp_dir = tempfile.mkdtemp()
@@ -243,6 +245,7 @@ class TestCaptionManagerDisplayIntegration:
 class TestCaptionLifecycleIntegration:
     """Tests for caption lifecycle across operations"""
     
+    pass
     def setup_method(self):
         """Set up test fixtures"""
         self.temp_dir = tempfile.mkdtemp()
@@ -308,6 +311,7 @@ class TestCaptionLifecycleIntegration:
 class TestEndToEndCaptionFlow:
     """End-to-end integration tests"""
     
+    pass
     def setup_method(self):
         """Set up test fixtures"""
         self.temp_dir = tempfile.mkdtemp()

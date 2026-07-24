@@ -130,8 +130,7 @@ class TestKeyboardNavigator:
         
     def teardown_method(self):
         """Clean up."""
-        pygame.quit()
-        
+        pass
     def test_initial_state(self):
         """Test navigator initial state."""
         assert len(self.navigator.focusable_elements) == 0
@@ -365,13 +364,13 @@ class TestKeyboardNavigator:
 class TestKeyboardNavigatorEdgeCases:
     """Edge case tests for keyboard navigation."""
     
+    pass
     def setup_method(self):
         pygame.init()
         self.navigator = KeyboardNavigator()
         
     def teardown_method(self):
-        pygame.quit()
-        
+        pass
     def test_unregister_when_not_registered(self):
         """Test unregistering non-registered element doesn't crash."""
         element = MockFocusable()

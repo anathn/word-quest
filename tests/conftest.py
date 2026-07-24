@@ -15,12 +15,15 @@ if 'DISPLAY' in os.environ:
 
 # Step 2: Initialize pygame IMMEDIATELY, before importing pytest
 # This ensures pygame is fully initialized before any test module collection
-if not os.environ.get('PYGAME_INITIALIZED_BY_CONFTEST'):
-    import pygame
+# Note: With xdist, each worker process needs its own initialization
+import pygame
+if not pygame.get_init():
     pygame.init()
-    pygame.display.init()
-    pygame.font.init()
-    os.environ['PYGAME_INITIALIZED_BY_CONFTEST'] = '1'
+pygame.display.init()
+pygame.font.init()
+
+# Set environment variable to indicate pygame has been initialized
+os.environ['PYGAME_INITIALIZED_BY_CONFTEST'] = '1'
 
 # Step 3: Now it's safe to import pytest (which will collect test modules)
 import pytest
@@ -31,6 +34,19 @@ def pytest_configure(config):
     # Environment variables should already be set, but double-check
     os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
     os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
+
+
+def pytest_sessionstart(session):
+    """Ensure pygame is initialized at the start of the test session.
+    
+    This hook runs before test collection begins, ensuring pygame is ready
+    for any module-level imports in test files.
+    """
+    import pygame
+    if not pygame.get_init():
+        pygame.init()
+    pygame.display.init()
+    pygame.font.init()
 
 
 @pytest.fixture

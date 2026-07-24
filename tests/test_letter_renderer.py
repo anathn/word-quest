@@ -18,8 +18,11 @@ from src.ui.letter_renderer import (
 from src.ui.animation_utils import AnimationIntensity
 
 
-# Initialize pygame for testing
-pygame.init()
+# Pygame is initialized in conftest.py
+# Ensure font subsystem is ready after conftest initialization
+if not pygame.font.get_init():
+    pygame.font.init()
+
 TEST_FONT = pygame.font.SysFont('arial', 48)
 
 
