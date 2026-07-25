@@ -155,22 +155,42 @@ class SpaceMapState:
                 planet.state = PlanetState.VISITED
             elif planet.planet_id == current_planet_id:
                 planet.state = PlanetState.CURRENT
+            elif self._is_planet_unlocked(planet.planet_id, completed_planets):
+                # Planet is unlocked but not yet visited - show as VISITED
+                planet.state = PlanetState.VISITED
             else:
-                # Check if this planet is unlocked (any previous planet completed)
-                if any(prev_id in completed_planets for prev_id in self._get_previous_planet_ids(planet.planet_id)):
-                    planet.state = PlanetState.LOCKED  # Actually unlocked but not visited
-                else:
-                    planet.state = PlanetState.LOCKED
+                planet.state = PlanetState.LOCKED
         
         self.current_planet_id = current_planet_id
     
-    def _get_previous_planet_ids(self, planet_id: str) -> List[str]:
-        """Get IDs of all planets before this one."""
+    def _is_planet_unlocked(self, planet_id: str, completed_planets: List[str]) -> bool:
+        """Check if a planet is unlocked based on completed planets.
+        
+        A planet is unlocked if:
+        - It's the first planet (planet_number == 1), or
+        - Any planet with a lower planet_number is in completed_planets
+        
+        Args:
+            planet_id: The ID of the planet to check
+            completed_planets: List of completed planet IDs
+            
+        Returns:
+            True if the planet is unlocked, False otherwise
+        """
         planet = self.get_planet(planet_id)
         if not planet:
-            return []
+            return False
         
-        return [p.planet_id for p in self.planets if p.planet_number < planet.planet_number]
+        # First planet is always unlocked
+        if planet.planet_number == 1:
+            return True
+        
+        # Check if any previous planet is completed
+        for prev_planet in self.planets:
+            if prev_planet.planet_number < planet.planet_number and prev_planet.planet_id in completed_planets:
+                return True
+        
+        return False
 
 
 # Factory functions

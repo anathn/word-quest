@@ -8,7 +8,7 @@ Shows planets visited, completed, and current position with navigation.
 from typing import Optional, Callable, Dict, List, Tuple
 import pygame
 
-from src.models.map_state import SpaceMapState, PlanetNode, PlanetState, PlanetState
+from src.models.map_state import SpaceMapState, PlanetNode, PlanetState
 from src.ui.space_map import SpaceMapDisplay, create_space_map_display
 from src.ui.planet_details import PlanetDetailsPanel, create_planet_details_panel
 from src.components.audio_system import AudioSystem
@@ -163,33 +163,37 @@ class SpaceMapScreen:
     
     def _update_from_progress(self):
         """Update planet states from progress tracker data."""
-        # Get progress data from tracker
         completed_planets = []
         visited_planets = []
-        current_planet_id = None
+        current_planet_id = 'planet_1'  # Default to first planet
         
-        # Extract from progress tracker
-        if hasattr(self.progress_tracker, 'galaxy_progress'):
-            # Completed planets
+        # Safely extract progress data with robust defaults
+        if hasattr(self.progress_tracker, 'galaxy_progress') and self.progress_tracker.galaxy_progress:
             galaxy = self.progress_tracker.galaxy_progress
-            if hasattr(galaxy, 'completed_planets') and hasattr(galaxy, 'current_planet_number'):
-                # Mark planets 1 to current-1 as completed
+            if hasattr(galaxy, 'current_planet_number'):
+                current_num = galaxy.current_planet_number
+                current_planet_id = f'planet_{current_num}'
+                
+                # All planets before current are completed
                 for planet in self.map_state.planets:
-                    if planet.planet_number < galaxy.current_planet_number:
+                    if planet.planet_number < current_num:
                         completed_planets.append(planet.planet_id)
-                    elif planet.planet_number == galaxy.current_planet_number:
-                        current_planet_id = planet.planet_id
         
-        # Also check for breadcrumb completed planets
-        if hasattr(self.progress_tracker, '_completed_planet_ids'):
-            completed_planets.extend(self.progress_tracker._completed_planet_ids)
-            completed_planets = list(set(completed_planets))  # Deduplicate
+        # Fallback: check breadcrumb tracking if available
+        if hasattr(self.progress_tracker, '_completed_planet_ids') and self.progress_tracker._completed_planet_ids:
+            # Filter to only valid planet IDs
+            valid_ids = {p.planet_id for p in self.map_state.planets}
+            completed_planets = list(set(completed_planets) & valid_ids)
+        
+        # Always ensure at least first planet is current if no progress
+        if not current_planet_id and self.map_state.planets:
+            current_planet_id = self.map_state.planets[0].planet_id
         
         # Update map state
         self.map_state.update_from_progress(
             completed_planets=completed_planets,
             visited_planets=visited_planets,
-            current_planet_id=current_planet_id or 'planet_1'
+            current_planet_id=current_planet_id
         )
         
         # Reinitialize display with updated state

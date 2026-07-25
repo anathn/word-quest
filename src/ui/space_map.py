@@ -95,8 +95,13 @@ class SpaceMapDisplay:
                 "Arrow keys or click to navigate",
                 True, self.theme.colors['text_secondary']
             )
-        except Exception:
-            # Fallback for testing
+        except KeyError as e:
+            # Theme configuration issue
+            raise RuntimeError(f"Missing theme configuration: {e}") from e
+        except Exception as e:
+            # Log the actual error for debugging
+            print(f"Warning: Failed to render title: {e}")
+            # Create minimal fallback
             self._title_surface = pygame.Surface((200, 30))
             self._instructions_surface = pygame.Surface((250, 25))
     
@@ -105,12 +110,14 @@ class SpaceMapDisplay:
         self.planet_sprites.clear()
         
         for planet in self.map_state.planets:
-            # Ensure minimum touch target size
-            size = max(
-                PlanetSprite.SIZES.get(planet.state, 50),
-                self.MIN_TOUCH_SIZE // 2
-            )
-            self.planet_sprites[planet.planet_id] = create_planet_sprite(planet, size)
+            # Ensure minimum touch target size (diameter, not radius)
+            # MIN_TOUCH_SIZE = 64px is the minimum diameter for accessibility
+            # Planet size is radius, so divide by 2
+            min_radius = self.MIN_TOUCH_SIZE // 2  # 32px radius = 64px diameter
+            base_size = PlanetSprite.SIZES.get(planet.state, 50)
+            size = max(base_size, min_radius)
+            
+            self.planet_sprites[planet.planet_id] = create_planet_sprite(planet, size, self.theme)
     
     def _update_path(self):
         """Update the path renderer."""

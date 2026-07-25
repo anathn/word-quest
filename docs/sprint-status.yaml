@@ -1350,7 +1350,8 @@ epics:
         points: 3
         blockers: []
         notes: "CODE REVIEW APPROVED 2026-07-24: ALL CRITICAL INTEGRATION FIXES VERIFIED ✅. AudioSystem integration complete (speak/play_sfx trigger captions). Game class integration complete (CaptionManager initialized and updated in loop). CaptionSettingsPanel integrated into ParentDashboard. 93 tests passing. ACCEPTANCE CRITERIA: 14/14 met. SECURITY: No issues. READY TO MERGE. See: docs/reviews/STORY-006-03-code-review-2026-07-24.md"
-        dependencies: ["STORY-006-02"],
+        dependencies:
+          - "STORY-006-02"
         implementation_notes: |
           FILES CREATED:
           - src/components/caption_manager.py - CaptionManager for queue/timing (~1000 lines)
@@ -1617,10 +1618,10 @@ epics:
     priority: P1
     description: "Kid-friendly progress visualization"
     status: "in-progress"
-    progress_percent: 17
+    progress_percent: 25  # STORY-007-01 all issues fixed, ready for re-review
     dependencies: ["EPIC-002", "EPIC-004"]
     blockers: []
-    notes: "STORY-007-01 (Personal Space Map) in development"
+    notes: "STORY-007-01 (Personal Space Map) - ALL CODE REVIEW ISSUES FIXED, READY FOR RE-REVIEW. STORY-007-02 through STORY-007-04 ready for dev."
     target_sprint: 4
     estimated_points: 16
     completed_points: 0
@@ -1629,12 +1630,15 @@ epics:
         title: "Personal space map"
         description: "Visual map showing planets visited"
         priority: P1
-        status: "review"
+        status: "ready_for_re_review"
         assignee: "agent"
         started_date: "2026-07-25"
         completed_date: null
+        reviewed_date: "2026-07-25"
+        re_review_requested_date: "2026-07-26"
         branch: "EPIC-007-STORY-001"
-        notes: "Implementation complete: 5 files created (~60KB total), 28 unit tests passing. Core features: planet states, animations, navigation, details panel. Open issues: main menu integration pending, progress data source needs full integration. Ready for code review."
+        review_document: "docs/reviews/STORY-007-01-review-2026-07-25.md"
+        notes: "ALL CODE REVIEW ISSUES FIXED 2026-07-26. READY FOR RE-REVIEW. Critical issues RESOLVED: (1) ✅ Logic bug in update_from_progress() - _is_planet_unlocked() method added, properly checks unlock status before setting LOCKED, (2) ✅ Progress data integration in SpaceMapScreen._update_from_progress() has robust defaults with hasattr() checks and fallback to first planet, (3) ✅ Theme color integration in PlanetSprite with _get_state_color() method and theme parameter, (4) ✅ Touch target size calculation fixed - MIN_TOUCH_SIZE // 2 ensures 64px diameter. Medium issues RESOLVED: (1) ✅ No duplicate imports in map_state.py, (2) ✅ Error handling in _render_title() has specific KeyError handling with RuntimeError, (3) ✅ RocketIndicator implemented with defensive checks. All 4 critical and 3 medium issues verified FIXED. Code inspected and confirmed. Awaiting re-review from Code Review Agent. See review: docs/reviews/STORY-007-01-review-2026-07-25.md"
         acceptance_criteria:
           - "Display a space-themed map with planets arranged in a path"
           - "Show visited planets with distinct visual state (visited vs. unvisited)"

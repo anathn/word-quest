@@ -18,14 +18,6 @@ from src.ui.theme import ThemeManager
 class PlanetSprite:
     """Renders a planet with state-appropriate visual appearance."""
     
-    # State colors (color-blind safe palette)
-    COLORS = {
-        PlanetState.LOCKED: (80, 80, 100),      # Dark gray-blue
-        PlanetState.VISITED: (100, 149, 237),   # Cornflower blue (dimmed)
-        PlanetState.COMPLETED: (255, 215, 0),   # Gold (bright, celebratory)
-        PlanetState.CURRENT: (0, 191, 255)      # Deep sky blue (pulsing)
-    }
-    
     # Planet sizes by state
     SIZES = {
         PlanetState.LOCKED: 40,
@@ -34,18 +26,22 @@ class PlanetSprite:
         PlanetState.CURRENT: 55
     }
     
-    def __init__(self, planet_node: PlanetNode, size_override: Optional[int] = None):
+    def __init__(self, planet_node: PlanetNode, size_override: Optional[int] = None, theme: Optional[ThemeManager] = None):
         """
         Initialize planet sprite.
         
         Args:
             planet_node: Planet data from SpaceMapState
             size_override: Optional custom size in pixels
+            theme: ThemeManager for color lookup
         """
         self.planet = planet_node
         self.state = planet_node.state
         self.size = size_override or self.SIZES.get(planet_node.state, 50)
-        self.color = self.COLORS.get(planet_node.state, (200, 200, 200))
+        self.theme = theme or ThemeManager()
+        
+        # Get colors from theme based on planet state
+        self.color = self._get_state_color()
         
         # Animation state
         self.pulse_phase = 0.0
@@ -60,6 +56,32 @@ class PlanetSprite:
         # Lock icon for locked planets
         self._lock_surface: Optional[pygame.Surface] = None
         self._render_lock_icon()
+    
+    def _get_state_color(self) -> Tuple[int, int, int]:
+        """Get the color for the current planet state from theme."""
+        # Use theme colors for planet states (color-blind safe palette)
+        color_MAP = {
+            PlanetState.LOCKED: 'planet_locked',
+            PlanetState.VISITED: 'planet_visited',
+            PlanetState.COMPLETED: 'planet_completed',
+            PlanetState.CURRENT: 'planet_current'
+        }
+        
+        color_name = color_MAP.get(self.state)
+        if color_name:
+            return self.theme.get_color(color_name, self._get_default_state_color())
+        return self._get_default_state_color()
+    
+    def _get_default_state_color(self) -> Tuple[int, int, int]:
+        """Get default color for state if theme color not available."""
+        # State colors (color-blind safe palette) - fallback defaults
+        DEFAULT_COLORS = {
+            PlanetState.LOCKED: (80, 80, 100),      # Dark gray-blue
+            PlanetState.VISITED: (100, 149, 237),   # Cornflower blue (dimmed)
+            PlanetState.COMPLETED: (255, 215, 0),   # Gold (bright, celebratory)
+            PlanetState.CURRENT: (0, 191, 255)      # Deep sky blue (pulsing)
+        }
+        return DEFAULT_COLORS.get(self.state, (200, 200, 200))
     
     def _render_lock_icon(self):
         """Create lock icon surface for locked planets."""
@@ -94,6 +116,9 @@ class PlanetSprite:
     
     def _regenerate_surface(self):
         """Regenerate the planet surface."""
+        # Update color in case theme changed
+        self.color = self._get_state_color()
+        
         self._surface = pygame.Surface((self.size * 2, self.size * 2), pygame.SRCALPHA)
         center = (self.size, self.size)
         
@@ -212,7 +237,14 @@ class PlanetSprite:
         dx = point[0] - self.planet.position[0]
         dy = point[1] - self.planet.position[1]
         distance = (dx * dx + dy * dy) ** 0.5
-        return distance <= self.size
+        
+        # Account for pulse animation in hit detection for CURRENT planet
+        current_size = self.size
+        if self.state == PlanetState.CURRENT:
+            pulse_offset = int(self.pulse_amplitude * abs(__import__('math').sin(self.pulse_phase)))
+            current_size = self.size + pulse_offset
+        
+        return distance <= current_size
 
 
 class PathRenderer:
@@ -434,9 +466,9 @@ class RocketIndicator:
             screen.blit(self._surface, draw_pos)
 
 
-def create_planet_sprite(planet_node: PlanetNode, size_override: Optional[int] = None) -> PlanetSprite:
+def create_planet_sprite(planet_node: PlanetNode, size_override: Optional[int] = None, theme: Optional[ThemeManager] = None) -> PlanetSprite:
     """Create a PlanetSprite instance."""
-    return PlanetSprite(planet_node, size_override)
+    return PlanetSprite(planet_node, size_override, theme)
 
 
 def create_path_renderer(planets: List[PlanetNode], path_color: Optional[Tuple[int, int, int]] = None) -> PathRenderer:
