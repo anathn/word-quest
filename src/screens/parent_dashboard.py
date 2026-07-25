@@ -29,6 +29,7 @@ from src.ui.password_prompt import PasswordPrompt
 from src.ui.star_field import StarField
 from src.ui.theme import get_theme
 from src.audio.music_manager import get_music_manager, MusicState
+from src.components.accessibility_settings import get_accessibility_settings
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +103,10 @@ class ParentDashboardScreen:
         self.typography_panel: Optional[TypographySettingsPanel] = None
         self.show_typography_settings: bool = False
         
+        # Accessibility settings (STORY-006-06)
+        self.accessibility_settings = get_accessibility_settings()
+        self.show_accessibility_settings: bool = False
+        
         # UI elements
         self._buttons: List[DashboardButton] = []
         self._hovered_button: Optional[DashboardButton] = None
@@ -137,6 +142,18 @@ class ParentDashboardScreen:
         except Exception as e:
             # Music initialization failed - continue without music
             print(f"Warning: Could not initialize music in parent dashboard: {e}")
+        
+        # Register theme change callback to refresh UI when theme changes
+        self.theme.register_theme_change_callback(self._on_theme_changed)
+        
+        # Update high contrast button to reflect current state
+        is_enabled = self.accessibility_settings.is_high_contrast_enabled()
+        for button in self._buttons:
+            if button.text.startswith("High Contrast"):
+                button.color = (0, 255, 0) if is_enabled else (255, 215, 0)
+                button.text = "High Contrast ON" if is_enabled else "High Contrast"
+                break
+        
         self._insufficient_data: bool = False
         
         # Fonts
@@ -315,9 +332,22 @@ class ParentDashboardScreen:
         button_height = 40
         spacing = 20
         
+        # High Contrast Mode button (STORY-006-06)
+        highlight_button_rect = pygame.Rect(
+            self.screen_width // 2 - button_width * 3 // 2 - spacing,
+            button_y,
+            button_width, button_height
+        )
+        self._buttons.append(DashboardButton(
+            text="High Contrast",
+            rect=highlight_button_rect,
+            callback=self._toggle_high_contrast,
+            color=(255, 215, 0)  # Gold
+        ))
+        
         # TTS Settings button
         tts_button_rect = pygame.Rect(
-            self.screen_width // 2 - button_width * 3 // 2 - spacing,
+            self.screen_width // 2 - button_width // 2,
             button_y,
             button_width, button_height
         )
@@ -330,7 +360,7 @@ class ParentDashboardScreen:
         
         # Font Settings button (STORY-006-05)
         font_button_rect = pygame.Rect(
-            self.screen_width // 2 - button_width // 2,
+            self.screen_width // 2 + button_width // 2 + spacing,
             button_y,
             button_width, button_height
         )
@@ -339,19 +369,6 @@ class ParentDashboardScreen:
             rect=font_button_rect,
             callback=self._toggle_font_settings,
             color=(255, 152, 0)  # Orange
-        ))
-        
-        # Caption Settings button
-        caption_button_rect = pygame.Rect(
-            self.screen_width // 2 + button_width // 2 + spacing,
-            button_y,
-            button_width, button_height
-        )
-        self._buttons.append(DashboardButton(
-            text="Caption Settings",
-            rect=caption_button_rect,
-            callback=self._toggle_caption_settings,
-            color=(156, 39, 176)  # Purple
         ))
     
     def _create_export_button(self, graph_rect: pygame.Rect):
@@ -464,6 +481,14 @@ class ParentDashboardScreen:
         self.render(screen)
         
         # Draw buttons
+        # Update high contrast button state before drawing
+        is_high_contrast = self.accessibility_settings.is_high_contrast_enabled()
+        for button in self._buttons:
+            if button.text.startswith("High Contrast"):
+                button.text = "High Contrast ON" if is_high_contrast else "High Contrast"
+                button.color = (0, 255, 0) if is_high_contrast else (255, 215, 0)
+                break
+        
         for button in self._buttons:
             color = button.hover_color if button == self._hovered_button else button.color
             
@@ -558,6 +583,33 @@ class ParentDashboardScreen:
         self.show_caption_settings = not self.show_caption_settings
         if self.show_caption_settings:
             self.show_tts_settings = False  # Close other panel
+    
+    def _on_theme_changed(self, theme_name: str) -> None:
+        """Callback when theme changes - refresh UI elements."""
+        logger.info(f"Theme changed to: {theme_name}")
+        # Re-render the screen to apply new colors
+        # This will be called automatically when theme changes
+    
+    def _toggle_high_contrast(self) -> None:
+        """Toggle high contrast mode and update UI."""
+        # Toggle via accessibility settings manager
+        success = self.accessibility_settings.toggle_high_contrast()
+        if success:
+            logger.info("High contrast mode toggled")
+            # Update button color based on state
+            is_enabled = self.accessibility_settings.is_high_contrast_enabled()
+            for button in self._buttons:
+                if button.text == "High Contrast":
+                    button.color = (0, 255, 0) if is_enabled else (255, 215, 0)
+                    button.text = "High Contrast ON" if is_enabled else "High Contrast"
+                    break
+            # Refresh the entire screen to apply theme changes
+            # Theme manager will notify all registered screens
+            theme = get_theme()
+            # Register callback if not already registered
+            theme.register_theme_change_callback(self._on_theme_changed)
+        else:
+            logger.error("Failed to toggle high contrast mode")
     
     def _on_tts_settings_changed(self):
         """Callback when TTS settings change."""

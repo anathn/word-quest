@@ -27,6 +27,7 @@ from src.components.caption_manager import CaptionManager
 from src.components.caption_settings import CaptionSettingsManager, CaptionSettings
 from src.ui.caption_display import CaptionDisplay
 from src.screens.authenticated_parent_dashboard import AuthenticatedParentDashboard
+from src.components.accessibility_settings import get_accessibility_settings
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,14 @@ class Game:
         except Exception as e:
             logger.error(f"Failed to initialize caption system: {e}")
             self.caption_manager = None
+        
+        # Apply accessibility settings (including high contrast theme) on startup
+        try:
+            accessibility_settings = get_accessibility_settings()
+            accessibility_settings.apply_settings()
+            logger.info("Accessibility settings applied")
+        except Exception as e:
+            logger.error(f"Failed to apply accessibility settings: {e}")
         
         # Setup initial screen
         self._setup_initial_screen()

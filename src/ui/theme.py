@@ -5,16 +5,36 @@ Provides centralized color management, theme configuration, and utilities
 for applying the space theme across all game screens.
 Updated with color-blind safe palette for accessibility (STORY-006-01).
 Updated with OpenDyslexic font support for accessibility (STORY-006-05).
+Updated with high contrast mode for accessibility (STORY-006-06).
 """
 
 import json
 import os
 import logging
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, Callable
 import pygame
 
 from .color_validator import ColorValidator
 from .font_manager import FontManager, get_font_manager
+
+# Import high contrast theme
+try:
+    from .high_contrast_theme import HIGH_CONTRAST_THEME, hex_to_rgb, generate_theme_report
+except ImportError:
+    # Fallback if high contrast module not available
+    HIGH_CONTRAST_THEME = {}
+    
+    def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
+        """Convert hex to RGB (fallback implementation)."""
+        hex_color = hex_color.lstrip('#')
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    
+    def generate_theme_report() -> str:
+        """Generate theme report (fallback)."""
+        return "High contrast theme not available"
+
+
+logger = logging.getLogger(__name__)
 
 
 # Color constants for space theme - COLOR-BLIND SAFE PALETTE
@@ -57,16 +77,30 @@ class ThemeManager:
     
     STORY-006-01: Updated to ensure all colors are distinguishable
     for users with deuteranopia, protanopia, and tritanopia.
+    STORY-006-06: Added high contrast mode support with WCAG AAA compliance.
     """
+    
+    # Theme constants
+    THEME_DEFAULT = "default"
+    THEME_HIGH_CONTRAST = "high_contrast"
     
     def __init__(self, config_path: str = "data/theme_config.json"):
         """Initialize theme manager with configuration."""
+        # Make path absolute relative to this module if it's a relative path
+        if not os.path.isabs(config_path):
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            config_path = os.path.join(base_dir, '..', '..', config_path)
+        
         self.config_path = config_path
         self._colors: Dict[str, Tuple[int, int, int]] = {}
         self._color_validator = ColorValidator()
         self._font_manager: Optional[FontManager] = None
+        self._current_theme = self.THEME_DEFAULT
+        self._high_contrast_colors: Dict[str, Tuple[int, int, int]] = {}
+        self._theme_change_callbacks: List[Callable[[str], None]] = []
         self._load_default_colors()
         self._load_config()
+        self._load_high_contrast_colors()
         self._validate_colors()
         self._init_font_manager()
     
@@ -131,6 +165,23 @@ class ThemeManager:
             "ui_error": UI_ERROR,
             "ui_border": UI_BORDER,
         }
+    
+    def _load_high_contrast_colors(self) -> None:
+        """Load high contrast color palette from high_contrast_theme module."""
+        if not HIGH_CONTRAST_THEME:
+            logger.warning("HIGH_CONTRAST_THEME not available")
+            return
+            
+        for name, hex_color in HIGH_CONTRAST_THEME.items():
+            if isinstance(hex_color, str):
+                try:
+                    self._high_contrast_colors[name] = hex_to_rgb(hex_color)
+                except (ValueError, IndexError) as e:
+                    logger.warning(f"Invalid hex color for {name}: {hex_color} - {e}")
+                    # Fallback to white
+                    self._high_contrast_colors[name] = (255, 255, 255)
+            elif isinstance(hex_color, (list, tuple)) and len(hex_color) == 3:
+                self._high_contrast_colors[name] = tuple(hex_color)
     
     def _load_config(self) -> None:
         """Load theme configuration from JSON file."""
@@ -238,6 +289,145 @@ class ThemeManager:
     def get_font_small(self) -> pygame.font.Font:
         """Return small themed font."""
         return self.get_font(24)
+    
+    # Theme switching methods (STORY-006-06: High Contrast Mode)
+    
+    def get_current_theme(self) -> str:
+        """
+        Get the current theme name.
+        
+        Returns:
+            Current theme name ("default" or "high_contrast")
+        """
+        return self._current_theme
+    
+    def is_high_contrast(self) -> bool:
+        """
+        Check if high contrast mode is active.
+        
+        Returns:
+            True if high contrast mode is enabled
+        """
+        return self._current_theme == self.THEME_HIGH_CONTRAST
+    
+    def enable_high_contrast(self) -> bool:
+        """
+        Enable high contrast mode.
+        
+        Switches all colors to high contrast palette.
+        Theme switch should complete in <100ms.
+        
+        Returns:
+            True if successful, False if high contrast theme not available
+        """
+        if not self._high_contrast_colors:
+            logger.warning("High contrast theme not available")
+            return False
+            
+        self._current_theme = self.THEME_HIGH_CONTRAST
+        self._colors = self._high_contrast_colors.copy()
+        
+        # Notify all registered screens/components of theme change
+        self._apply_theme()
+        
+        logger.info("High contrast mode enabled")
+        return True
+    
+    def disable_high_contrast(self) -> bool:
+        """
+        Disable high contrast mode and return to default theme.
+        
+        Returns:
+            True if successful
+        """
+        self._current_theme = self.THEME_DEFAULT
+        # Reload default colors
+        self._load_default_colors()
+        self._load_config()  # Re-apply any config overrides
+        
+        # Notify all registered screens/components of theme change
+        self._apply_theme()
+        
+        logger.info("High contrast mode disabled")
+        return True
+    
+    def toggle_high_contrast(self) -> bool:
+        """
+        Toggle high contrast mode on/off.
+        
+        Returns:
+            True if successful
+        """
+        if self.is_high_contrast():
+            return self.disable_high_contrast()
+        else:
+            return self.enable_high_contrast()
+    
+    def set_theme(self, theme_name: str) -> bool:
+        """
+        Set theme by name.
+        
+        Args:
+            theme_name: Theme name ("default" or "high_contrast")
+            
+        Returns:
+            True if theme set successfully
+        """
+        if theme_name == self.THEME_HIGH_CONTRAST:
+            return self.enable_high_contrast()
+        elif theme_name == self.THEME_DEFAULT:
+            return self.disable_high_contrast()
+        else:
+            logger.warning(f"Unknown theme: {theme_name}")
+            return False
+    
+    # Theme change notification system (STORY-006-06)
+    
+    def register_theme_change_callback(self, callback: Callable[[str], None]) -> None:
+        """
+        Register a callback to be called when theme changes.
+        
+        Args:
+            callback: Function to call with new theme name as argument
+        """
+        if callback not in self._theme_change_callbacks:
+            self._theme_change_callbacks.append(callback)
+            logger.debug(f"Registered theme change callback: {callback.__name__}")
+    
+    def unregister_theme_change_callback(self, callback: Callable[[str], None]) -> None:
+        """
+        Unregister a theme change callback.
+        
+        Args:
+            callback: Function to remove from notification list
+        """
+        if callback in self._theme_change_callbacks:
+            self._theme_change_callbacks.remove(callback)
+            logger.debug(f"Unregistered theme change callback: {callback.__name__}")
+    
+    def _apply_theme(self) -> None:
+        """
+        Notify all registered screens/components of theme change.
+        
+        This method is called after theme switching to notify all
+        screens that they need to refresh their UI elements with
+        the new color scheme.
+        
+        Screens should register callbacks via register_theme_change_callback()
+        to receive theme change notifications and refresh their UI accordingly.
+        """
+        theme_name = self._current_theme
+        
+        # Notify all registered callbacks
+        for callback in self._theme_change_callbacks:
+            try:
+                callback(theme_name)
+            except Exception as e:
+                logger.warning(f"Theme change callback failed: {e}")
+        
+        # Also post a pygame event for screens that prefer event-driven updates
+        theme_event = pygame.USEREVENT + 50  # Arbitrary unique event ID
+        pygame.event.post(pygame.event.Event(theme_event, theme=theme_name))
     
     # Color-blind accessibility methods (STORY-006-01)
     

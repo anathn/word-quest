@@ -30,5 +30,14 @@
   "accessibility": {
     "color_blind_safe_palette": true,
     "notes": "Updated for STORY-006-01: Removed red-green combinations. PLANET_4 is brown, PLANET_5 is gold. These colors are distinguishable for all types of color blindness."
+  },
+  "high_contrast": {
+    "enabled": false,
+    "notes": "STORY-006-06: High contrast mode provides WCAG 2.1 AAA compliant colors. All text/background pairs meet 7:1 minimum contrast ratio. Primary background is pure black (#000000) for maximum (21:1) contrast with white text.",
+    "wcag_compliance": {
+      "text_contrast_minimum": "7:1 (AAA)",
+      "ui_contrast_minimum": "3:1 (AA)",
+      "color_blind_safe": true
+    }
   }
 }

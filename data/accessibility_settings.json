@@ -1,0 +1,9 @@
+{
+  "captions_enabled": true,
+  "caption_font_size": 28,
+  "tts_enabled": true,
+  "tts_speed": 1.0,
+  "high_contrast": false,
+  "opendyslexic_font": false,
+  "keyboard_navigation": true
+}

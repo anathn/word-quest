@@ -9,6 +9,7 @@ import pygame
 from src.ui.theme import ThemeManager, get_theme, reset_theme
 from src.ui.star_field import StarField
 from src.ui.planet_sprite import PlanetManager
+from src.components.accessibility_settings import get_accessibility_settings, reset_accessibility_settings
 
 
 class TestThemeIntegration:
@@ -172,6 +173,129 @@ class TestColorBlindAccessibility:
         
         # Should have至少 3:1 contrast ratio for large text
         assert ratio >= 3.0, f"Contrast ratio {ratio:.2f} is too low"
+
+
+class TestHighContrastMidGameSwitching:
+    """Test cases for high contrast theme switching during active gameplay."""
+    
+    def teardown_method(self):
+        """Clean up after tests."""
+        reset_theme()
+        reset_accessibility_settings()
+        pygame.quit()
+        pygame.init()
+    
+
+
+class TestHighContrastMidGameSwitching:
+    """Test cases for high contrast theme switching during active gameplay."""
+    
+    def teardown_method(self):
+        """Clean up after tests."""
+        reset_theme()
+        reset_accessibility_settings()
+    
+    def test_theme_switch_with_active_ui_elements(self):
+        """Test that theme switch works with active UI elements present."""
+        pygame.init()
+        screen = pygame.Surface((800, 600))
+        
+        # Get theme and accessibility settings
+        theme = get_theme()
+        settings = get_accessibility_settings()
+        
+        # Create some UI elements (text surfaces, etc.)
+        font = theme.get_font_medium()
+        title_surface = font.render("Test Title", True, theme.get_color("text_normal"))
+        
+        # Verify default theme is active
+        assert theme.is_high_contrast() == False
+        original_bg = theme.get_color("space_blue")
+        
+        # Enable high contrast
+        result = settings.toggle_high_contrast()
+        assert result == True, "Failed to toggle high contrast"
+        assert theme.is_high_contrast() == True
+        
+        # Verify colors have changed
+        new_bg = theme.get_color("space_blue")
+        assert new_bg != original_bg, "Background color should change with theme"
+        
+        # Should be able to render with new colors
+        screen.fill(new_bg)
+        screen.blit(title_surface, (100, 50))
+        
+        # Disable high contrast
+        result = settings.toggle_high_contrast()
+        assert result == True
+        assert theme.is_high_contrast() == False
+        
+        # Should return to original colors
+        final_bg = theme.get_color("space_blue")
+        assert final_bg == original_bg, "Background should return to original after disabling"
+    
+    def test_multiple_theme_toggles_stability(self):
+        """Test that multiple rapid theme toggles don't crash or cause issues."""
+        pygame.init()
+        screen = pygame.Surface((800, 600))
+        
+        theme = get_theme()
+        settings = get_accessibility_settings()
+        
+        # Perform multiple toggles
+        for i in range(5):
+            # Toggle to high contrast
+            settings.toggle_high_contrast()
+            assert theme.is_high_contrast() == True
+            
+            # Render a frame
+            screen.fill(theme.get_color("space_blue"))
+            
+            # Toggle back to default
+            settings.toggle_high_contrast()
+            assert theme.is_high_contrast() == False
+            
+            # Render a frame
+            screen.fill(theme.get_color("space_blue"))
+        
+        # Final state should be default theme
+        assert theme.is_high_contrast() == False
+    
+    def test_callback_notification_on_theme_change(self):
+        """Test that theme change callbacks are properly notified."""
+        pygame.init()
+        
+        theme = get_theme()
+        
+        # Track callback invocations
+        callback_calls = []
+        
+        def on_theme_change(theme_name):
+            callback_calls.append(theme_name)
+        
+        # Register callback
+        theme.register_theme_change_callback(on_theme_change)
+        
+        # Enable high contrast
+        theme.enable_high_contrast()
+        
+        # Callback should have been called
+        assert len(callback_calls) >= 1, "Callback should be notified on theme change"
+        assert callback_calls[-1] == "high_contrast", "Callback should receive theme name"
+        
+        # Disable high contrast
+        theme.disable_high_contrast()
+        
+        # Callback should have been called again
+        assert len(callback_calls) >= 2, "Callback should be notified on theme change"
+        assert callback_calls[-1] == "default", "Callback should receive theme name"
+        
+        # Unregister and verify no more calls
+        theme.unregister_theme_change_callback(on_theme_change)
+        theme.enable_high_contrast()
+        
+        # Length should not increase after unregister
+        assert len(callback_calls) < 3, "Callback should not be called after unregister"
 
 
 if __name__ == "__main__":
