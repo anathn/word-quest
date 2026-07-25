@@ -28,6 +28,9 @@ from .animated_word_display import AnimatedWordDisplay, create_animated_word_dis
 from .sparkle_effect import Particle, SparkleEffect, create_sparkle_effect
 from .planet_bloom import PlanetBloom, BloomState, create_planet_bloom
 from .celebration_renderer import CelebrationRenderer, create_celebration_renderer
+from .space_map import SpaceMapDisplay, create_space_map_display
+from .map_elements import PlanetSprite as MapPlanetSprite, PathRenderer, RocketIndicator, create_planet_sprite, create_path_renderer, create_rocket_indicator
+from .planet_details import PlanetDetailsPanel, create_planet_details_panel
 
 __all__ = [
     'Typography',
@@ -98,5 +101,15 @@ __all__ = [
     'BloomState',
     'create_planet_bloom',
     'CelebrationRenderer',
-    'create_celebration_renderer'
+    'create_celebration_renderer',
+    'SpaceMapDisplay',
+    'create_space_map_display',
+    'MapPlanetSprite',
+    'PathRenderer',
+    'RocketIndicator',
+    'create_planet_sprite',
+    'create_path_renderer',
+    'create_rocket_indicator',
+    'PlanetDetailsPanel',
+    'create_planet_details_panel'
 ]

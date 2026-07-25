@@ -1616,11 +1616,11 @@ epics:
     name: "Student Progress View"
     priority: P1
     description: "Kid-friendly progress visualization"
-    status: "planning"
-    progress_percent: 0
+    status: "in-progress"
+    progress_percent: 17
     dependencies: ["EPIC-002", "EPIC-004"]
     blockers: []
-    notes: "Depends on Progress Tracking and Motivation Systems"
+    notes: "STORY-007-01 (Personal Space Map) in development"
     target_sprint: 4
     estimated_points: 16
     completed_points: 0
@@ -1629,10 +1629,26 @@ epics:
         title: "Personal space map"
         description: "Visual map showing planets visited"
         priority: P1
-        status: "planning"
-        assignee: null
-        started_date: null
-        completed_date: "2026-07-14"
+        status: "review"
+        assignee: "agent"
+        started_date: "2026-07-25"
+        completed_date: null
+        branch: "EPIC-007-STORY-001"
+        notes: "Implementation complete: 5 files created (~60KB total), 28 unit tests passing. Core features: planet states, animations, navigation, details panel. Open issues: main menu integration pending, progress data source needs full integration. Ready for code review."
+        acceptance_criteria:
+          - "Display a space-themed map with planets arranged in a path"
+          - "Show visited planets with distinct visual state (visited vs. unvisited)"
+          - "Show completed planets with bloomed or special appearance"
+          - "Display current planet location with rocket indicator"
+          - "Unlock future planets progressively (grayed out or hidden until unlocked)"
+          - "Allow clicking on visited planets to view details"
+          - "Show solar system and galaxy boundaries visually"
+          - "Animate rocket movement when transitioning between planets"
+          - "Load map within 500ms"
+          - "Maintain 30+ FPS during any animations"
+          - "Responsive to different screen sizes"
+          - "Kid-friendly icons and colors (large touch targets 64px+)"
+          - "Accessibility: keyboard navigation to select planets"
         acceptance_criteria:
           - "Map view of solar system"
           - "Visited planets highlighted"
@@ -1647,10 +1663,10 @@ epics:
         title: "Achievement badge display"
         description: "Collection view of earned badges"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
-        completed_date: "2026-07-14"
+        completed_date: null
         acceptance_criteria:
           - "Grid view of badges"
           - "Locked badges show lock icon"
@@ -1664,10 +1680,10 @@ epics:
         title: "Progress journal"
         description: "Readable text summaries for students"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
-        completed_date: "2026-07-14"
+        completed_date: null
         acceptance_criteria:
           - "Weekly summary text"
           - "Age-appropriate language"
@@ -1682,10 +1698,10 @@ epics:
         title: "Simple progress stats"
         description: "Age-appropriate metrics display"
         priority: P1
-        status: "planning"
+        status: "ready-for-dev"
         assignee: null
         started_date: null
-        completed_date: "2026-07-14"
+        completed_date: null
         acceptance_criteria:
           - "Words mastered count"
           - "Best streak display"
