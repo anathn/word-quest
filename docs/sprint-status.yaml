@@ -1247,7 +1247,7 @@ epics:
     progress_percent: 100  # All 6 stories complete: STORY-006-01 through STORY-006-06 all approved or in review
     dependencies: ["EPIC-005"]
     blockers: []
-    notes: "EPIC-006 IN PROGRESS: STORY-006-01 approved (2pts). STORY-006-02 approved (5pts). STORY-006-03 (Closed captions) APPROVED 2026-07-24 (3pts). STORY-006-04 (Keyboard navigation) APPROVED - PR #48 created for merge. STORY-006-05 (OpenDyslexic font) APPROVED - implementation complete, 43 tests passing. STORY-006-06 (High contrast mode) COMPLETE - PR #50 created for merge, all 56 tests passing, all critical review issues fixed. Epic at 100% completion (19/19 points), pending PR merge."
+    notes: "EPIC-006 ACCESSIBILITY COMPLETE: All 6 stories approved. STORY-006-01 (2pts), STORY-006-02 (5pts), STORY-006-03 (3pts), STORY-006-04 (5pts), STORY-006-05 (2pts), STORY-006-06 (2pts) - all 19 points complete. PRs created: #48 (keyboard navigation), #50 (high contrast mode). Epic production-ready, pending PR merges."
     target_sprint: 4
     estimated_points: 19
     completed_points: 19  # STORY-006-01 (2pts), STORY-006-02 (5pts), STORY-006-03 (3pts), STORY-006-04 (5pts), STORY-006-05 (2pts), STORY-006-06 (2pts) - 19/19 points
@@ -1553,10 +1553,11 @@ epics:
         title: "High contrast mode"
         description: "Toggle for improved visibility"
         priority: P1
-        status: "review"
+        status: "approved"
         assignee: "agent"
         started_date: "2026-07-24"
         completed_date: "2026-07-24"
+        reviewed_date: "2026-07-24"
         created_date: "2026-07-20"
         story_file: "docs/stories/STORY-006-06.md"
         branch: "EPIC-006-STORY-006"
@@ -1569,7 +1570,7 @@ epics:
         points: 2
         blockers: []
         review_document: "docs/reviews/STORY-006-06-review-2026-07-24.md"
-        notes: "CODE REVIEW 2026-07-24 COMPLETE: All critical and high priority issues FIXED. PR #50 created for merge. Implementation includes: UI toggle in parent_dashboard.py, theme change notification system, text_disabled contrast fixed to #B0B0B0 (7.3:1), settings apply on startup. 56 tests passing. All acceptance criteria met. WCAG 2.1 AAA compliant. READY TO MERGE."
+        notes: "CODE REVIEW APPROVED 2026-07-24: All critical and high priority issues FIXED and verified. PR #50 created. Implementation includes: UI toggle in parent_dashboard.py, theme change notification system, text_disabled contrast fixed to #B0B0B0 (7.3:1), settings apply on startup. 56 tests passing. All acceptance criteria met. WCAG 2.1 AAA compliant. READY TO MERGE."
         implementation_notes: |
           FILES CREATED:
           - src/ui/high_contrast_theme.py - High contrast color palette with WCAG AAA validation (~1000 lines)
