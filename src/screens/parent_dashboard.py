@@ -120,7 +120,7 @@ class ParentDashboardScreen:
             tts_manager=self.tts_manager,
             width=600,
             height=350,
-            on_settings_changed=self._on_tts_settings_changed
+            on_settings_change=self._on_tts_settings_changed
         )
         
         # Initialize caption settings manager
