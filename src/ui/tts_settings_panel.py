@@ -193,6 +193,9 @@ class TTSSettingsPanel:
             x_start + content_width - test_button_width - 15, test_y,
             test_button_width, self.BUTTON_HEIGHT
         )
+        
+        # Reserve space for bottom indicator
+        self._bottom_indicator_y = self.height - 35
     
     def _update_from_manager(self) -> None:
         """Update local state from TTS manager settings"""
