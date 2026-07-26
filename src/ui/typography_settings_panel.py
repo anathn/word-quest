@@ -349,9 +349,10 @@ class TypographySettingsPanel:
         # Draw OpenDyslexic sample if available
         if self.font_manager.is_opendyslexic_available():
             odl_font = self.font_manager.get_font(family='opendyslexic', size=24)
-            odl_surf = odl_font.render(text, True, self.TEXT_PRIMARY)
-            odl_rect = odl_surf.get_rect(centerx=area_rect.centerx, top=y_offset)
-            screen.blit(odl_surf, odl_rect)
+            if odl_font is not None:
+                odl_surf = odl_font.render(text, True, self.TEXT_PRIMARY)
+                odl_rect = odl_surf.get_rect(centerx=area_rect.centerx, top=y_offset)
+                screen.blit(odl_surf, odl_rect)
             
             # Draw OpenDyslexic label
             odl_label = "OpenDyslexic:"
