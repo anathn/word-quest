@@ -289,18 +289,18 @@ class MainMenuScreen(Screen):
         current_time = pygame.time.get_ticks() / 1000
         if self._menu_start_time == 0:
             self._menu_start_time = current_time
-        
+
         elapsed = current_time - self._menu_start_time
         self._welcome_y_offset = math.sin(elapsed * 1.5) * 5
-        
+
         welcome_font = self.theme.get_font_small()
         welcome_text = "Welcome, Space Explorer!"
         welcome_color = self.theme.get_color("font_primary")
-        
+
         welcome_surface = welcome_font.render(welcome_text, True, welcome_color)
         welcome_rect = welcome_surface.get_rect(
             centerx=self.screen_width // 2,
-            top=self.screen_height // 2 - 120 + self._welcome_y_offset
+            top=self.screen_height // 2 - 180 + self._welcome_y_offset
         )
         self.screen.blit(welcome_surface, welcome_rect)
     
