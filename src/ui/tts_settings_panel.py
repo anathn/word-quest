@@ -154,8 +154,8 @@ class TTSSettingsPanel:
         # Speed controls - label and slider on same row
         speed_label_y = y_start + self.ROW_HEIGHT + self.SECTION_SPACING
         preset_width = 90
-        slider_x = x_start + 120
-        slider_width = content_width - 120
+        slider_x = x_start + 100  # Reduced from 120 to shift left
+        slider_width = content_width - 100
         
         self._speed_slider_rect = pygame.Rect(
             slider_x, speed_label_y + 10, slider_width, self.SLIDER_HEIGHT
@@ -188,6 +188,9 @@ class TTSSettingsPanel:
             x_start + content_width - self.BUTTON_WIDTH, test_y,
             self.BUTTON_WIDTH, self.BUTTON_HEIGHT
         )
+        
+        # Reserve 30px for bottom indicator
+        self._bottom_indicator_y = self.height - 35
     
     def _update_from_manager(self) -> None:
         """Update local state from TTS manager settings"""
@@ -525,7 +528,7 @@ class TTSSettingsPanel:
         font = pygame.font.Font(None, 22)
         indicator = f"{icon} {text}"
         indicator_surf = font.render(indicator, True, color)
-        surface.blit(indicator_surf, (self.PADDING + 20, self.height - 30))
+        surface.blit(indicator_surf, (self.PADDING + 25, self._bottom_indicator_y))
     
     def get_settings(self) -> Dict[str, Any]:
         """

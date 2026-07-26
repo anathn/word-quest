@@ -457,14 +457,34 @@ class ParentDashboardScreen:
         
         # Pass events to settings panels if visible
         if self.show_tts_settings:
+            # Check for close button click first
+            panel_x = (self.screen_width - self.tts_settings_panel.width) // 2
+            panel_y = (self.screen_height - self.tts_settings_panel.height) // 2
+            close_rect = pygame.Rect(panel_x + self.tts_settings_panel.width - 40, panel_y + 20, 25, 25)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if close_rect.collidepoint(event.pos):
+                    self.show_tts_settings = False
+                    return
+            
             self.tts_settings_panel.handle_event(event)
         
         if self.show_typography_settings and self.typography_panel:
+            # Check for close button click first
+            panel_x = (self.screen_width - self.typography_panel.rect.width) // 2
+            panel_y = (self.screen_height - self.typography_panel.rect.height) // 2
+            close_rect = pygame.Rect(panel_x + self.typography_panel.rect.width - 40, panel_y + 20, 25, 25)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if close_rect.collidepoint(event.pos):
+                    self.show_typography_settings = False
+                    return
+            
             self.typography_panel.handle_event(event)
         
         if self.show_caption_settings and self.caption_panel:
             # Check for close button click first
-            close_rect = pygame.Rect(self.caption_panel.width - 40, 20, 25, 25)
+            panel_x = (self.screen_width - self.caption_panel.width) // 2
+            panel_y = (self.screen_height - self.caption_panel.height) // 2
+            close_rect = pygame.Rect(panel_x + self.caption_panel.width - 40, panel_y + 20, 25, 25)
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if close_rect.collidepoint(event.pos):
                     self.show_caption_settings = False
