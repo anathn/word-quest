@@ -132,14 +132,15 @@ class MainMenuScreen(Screen):
         # Create rocket sprite with configured color
         self.rocket_sprite = RocketSprite(color=rocket_color, size=64)
         
-        # Create animator and start hover animation in center of screen
+        # Create animator and start hover animation above the buttons
+        rocket_center_y = self.screen_height // 2 - 60
         self.rocket_animator = create_rocket_animator(
             self.rocket_sprite,
-            initial_position=(self.screen_width // 2, self.screen_height // 2)
+            initial_position=(self.screen_width // 2, rocket_center_y)
         )
-        # Start hover animation around center position
+        # Start hover animation around position above buttons
         self.rocket_animator.animate_hover(
-            (self.screen_width // 2, self.screen_height // 2)
+            (self.screen_width // 2, rocket_center_y)
         )
     
     def _setup_decorative_planets(self):
@@ -435,10 +436,11 @@ class MainMenuScreen(Screen):
         
         # Reposition rocket
         if self.rocket_animator:
-            # Reset rocket position and animation
-            self.rocket_animator.position = (self.screen_width // 2, self.screen_height // 2)
+            # Reset rocket position and animation above buttons
+            rocket_center_y = self.screen_height // 2 - 60
+            self.rocket_animator.position = (self.screen_width // 2, rocket_center_y)
             self.rocket_animator.animate_hover(
-                (self.screen_width // 2, self.screen_height // 2)
+                (self.screen_width // 2, rocket_center_y)
             )
 
 
