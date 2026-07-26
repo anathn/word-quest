@@ -133,6 +133,21 @@ class ParentDashboardScreen:
             x=0, y=0,  # Will be centered when rendered
             on_font_changed=self._on_font_changed
         )
+        
+        # Fonts - initialize before any rendering can occur
+        self._title_font: Optional[pygame.font.Font] = None
+        self._body_font: Optional[pygame.font.Font] = None
+        self._small_font: Optional[pygame.font.Font] = None
+        
+        # Data - initialize before any rendering can occur
+        self._weekly_data: List[DataPoint] = []
+        self._insufficient_data: bool = False
+        
+        # Load data after all attributes are initialized
+        self._load_data()
+        
+        # Create dashboard buttons after data is loaded
+        self._create_dashboard_buttons()
     
     def on_enter(self):
         """Called when screen becomes active - play dashboard music."""
@@ -153,20 +168,6 @@ class ParentDashboardScreen:
                 button.color = (0, 255, 0) if is_enabled else (255, 215, 0)
                 button.text = "High Contrast ON" if is_enabled else "High Contrast"
                 break
-        
-        self._insufficient_data: bool = False
-        
-        # Fonts
-        self._title_font: Optional[pygame.font.Font] = None
-        self._body_font: Optional[pygame.font.Font] = None
-        self._small_font: Optional[pygame.font.Font] = None
-        
-        # Data
-        self._weekly_data: List[DataPoint] = []
-        self._load_data()
-        
-        # Create dashboard buttons
-        self._create_dashboard_buttons()
     
     def init_caption_panel(self, caption_manager: Any) -> None:
         """Initialize caption settings panel with caption manager.
