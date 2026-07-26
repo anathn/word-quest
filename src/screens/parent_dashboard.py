@@ -180,7 +180,7 @@ class ParentDashboardScreen:
             settings_manager=self.caption_settings_mgr,
             width=600,
             height=500,
-            on_settings_changed=self._on_caption_settings_changed
+            on_settings_change=self._on_caption_settings_changed
         )
     
     def _init_fonts(self):
