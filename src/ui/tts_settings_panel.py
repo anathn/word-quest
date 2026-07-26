@@ -139,28 +139,31 @@ class TTSSettingsPanel:
     def _calculate_layout(self) -> None:
         """Calculate positions for all UI components"""
         x_start = self.PADDING
-        y_start = self.PADDING
+        # Title height is ~32px, plus margins
+        title_start_y = self.PADDING + 10
+        title_end_y = title_start_y + 40  # Title + margin
+        y_start = title_end_y + 10  # Start content below title with margin
         content_width = self.width - 2 * self.PADDING
         
         # Toggle row
-        toggle_width = 80
+        toggle_width = 100
         self._toggle_rect = pygame.Rect(
             x_start, y_start, toggle_width, self.BUTTON_HEIGHT
         )
         
-        # Speed controls
-        speed_y = y_start + self.ROW_HEIGHT + self.SECTION_SPACING
-        preset_width = 100
-        slider_x = x_start + 140
-        slider_width = content_width - 140
+        # Speed controls - label and slider on same row
+        speed_label_y = y_start + self.ROW_HEIGHT + self.SECTION_SPACING
+        preset_width = 90
+        slider_x = x_start + 120
+        slider_width = content_width - 120
         
         self._speed_slider_rect = pygame.Rect(
-            slider_x, speed_y, slider_width, self.SLIDER_HEIGHT
+            slider_x, speed_label_y + 10, slider_width, self.SLIDER_HEIGHT
         )
         
         # Preset buttons row
-        preset_y = speed_y + self.SLIDER_HEIGHT + 10
-        button_spacing = 10
+        preset_y = speed_label_y + self.SLIDER_HEIGHT + 15
+        button_spacing = 8
         total_button_width = (
             len(self.SPEED_PRESETS) * (preset_width + button_spacing) - button_spacing
         )
@@ -169,14 +172,14 @@ class TTSSettingsPanel:
         offset = 0
         for label in self.SPEED_PRESETS:
             self._preset_buttons[label] = pygame.Rect(
-                preset_start_x + offset, preset_y, preset_width, self.BUTTON_HEIGHT - 10
+                preset_start_x + offset, preset_y, preset_width, self.BUTTON_HEIGHT - 5
             )
             offset += preset_width + button_spacing
         
         # Volume controls
         volume_y = preset_y + self.BUTTON_HEIGHT + self.SECTION_SPACING
         self._volume_slider_rect = pygame.Rect(
-            slider_x, volume_y, slider_width, self.SLIDER_HEIGHT
+            slider_x, volume_y + 10, slider_width, self.SLIDER_HEIGHT
         )
         
         # Test button
@@ -342,10 +345,10 @@ class TTSSettingsPanel:
             surface, self.COLOR_BORDER, card_rect, 2, border_radius=10
         )
         
-        # Draw title
+        # Draw title at the top with proper margins
         font = pygame.font.Font(None, 32)
         title_surf = font.render("Text-to-Speech Settings", True, self.COLOR_TEXT)
-        surface.blit(title_surf, (self.PADDING + 20, self.PADDING + 5))
+        surface.blit(title_surf, (self.PADDING + 25, self.PADDING + 10))
         
         # Draw enable/disable toggle
         self._render_toggle(surface)
@@ -365,7 +368,7 @@ class TTSSettingsPanel:
     def _render_toggle(self, surface: pygame.Surface) -> None:
         """Render the enable/disable toggle"""
         y_pos = self._toggle_rect.y
-        x_label = self.PADDING + 120
+        x_label = self._toggle_rect.x + self._toggle_rect.width + 15
         
         # Label
         font = pygame.font.Font(None, 28)
@@ -397,10 +400,10 @@ class TTSSettingsPanel:
     def _render_speed_controls(self, surface: pygame.Surface) -> None:
         """Render speed controls"""
         # Label
-        font = pygame.font.Font(None, 28)
+        font = pygame.font.Font(None, 26)
         label = f"Speech Speed: {self._speed:.1f}x"
         label_surf = font.render(label, True, self.COLOR_TEXT)
-        surface.blit(label_surf, (self.PADDING + 20, self._speed_slider_rect.y - 5))
+        surface.blit(label_surf, (self.PADDING + 25, self._speed_slider_rect.y - 25))
         
         # Slider background
         slider_bg = pygame.Rect(
@@ -445,11 +448,11 @@ class TTSSettingsPanel:
     def _render_volume_controls(self, surface: pygame.Surface) -> None:
         """Render volume controls"""
         # Label
-        font = pygame.font.Font(None, 28)
+        font = pygame.font.Font(None, 26)
         volume_percent = int(self._volume * 100)
         label = f"Volume: {volume_percent}%"
         label_surf = font.render(label, True, self.COLOR_TEXT)
-        surface.blit(label_surf, (self.PADDING + 20, self._volume_slider_rect.y - 5))
+        surface.blit(label_surf, (self.PADDING + 25, self._volume_slider_rect.y - 25))
         
         # Slider background
         slider_bg = pygame.Rect(
