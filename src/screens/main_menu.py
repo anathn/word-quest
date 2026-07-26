@@ -304,7 +304,7 @@ class MainMenuScreen(Screen):
         welcome_surface = welcome_font.render(welcome_text, True, welcome_color)
         welcome_rect = welcome_surface.get_rect(
             centerx=self.screen_width // 2,
-            top=self.screen_height // 2 - 240 + self._welcome_y_offset
+            top=self.screen_height // 2 - 230 + self._welcome_y_offset
         )
         self.screen.blit(welcome_surface, welcome_rect)
     

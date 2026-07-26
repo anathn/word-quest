@@ -229,8 +229,8 @@ class Game:
             from src.ui.screen_manager import Screen
             
             class ParentDashboardWrapper(Screen):
-                def __init__(self, dashboard):
-                    super().__init__()
+                def __init__(self, dashboard, screen):
+                    super().__init__(screen)
                     self.dashboard = dashboard
                     
                 def handle_event(self, event):
@@ -242,7 +242,7 @@ class Game:
                 def update(self):
                     pass
             
-            wrapper = ParentDashboardWrapper(parent_dashboard)
+            wrapper = ParentDashboardWrapper(parent_dashboard, self.screen)
             parent_dashboard.activate()
             self.screen_manager.push_screen(wrapper)
             
