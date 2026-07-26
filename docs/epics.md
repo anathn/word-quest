@@ -531,10 +531,10 @@ Give students a sense of accomplishment and visible evidence of their improvemen
 
 | ID | Title | Status | Points |
 |----|-------|--------|--------|
-| STORY-007-01 | Personal space map | planning | 5 |
-| STORY-007-02 | Achievement badge display | planning | 3 |
-| STORY-007-03 | Progress journal | planning | 5 |
-| STORY-007-04 | Simple progress stats | planning | 3 |
+| STORY-007-01 | Personal space map | ready-for-dev | 5 |
+| STORY-007-02 | Achievement badge display | ready-for-dev | 3 |
+| STORY-007-03 | Progress journal | ready-for-dev | 5 |
+| STORY-007-04 | Simple progress stats | ready-for-dev | 3 |
 
 ### Dependencies
 - **EPIC-002 (Progress Tracking)** - Needs data to display

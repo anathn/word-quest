@@ -68,6 +68,12 @@ FONT_PRIMARY = (255, 255, 255)
 FONT_SECONDARY = (189, 189, 189)
 FONT_ACCENT = (255, 200, 100)
 
+# Planet state colors (for space map) - color-blind safe palette
+PLANET_LOCKED = (80, 80, 100)        # Dark gray-blue
+PLANET_VISITED = (100, 149, 237)      # Cornflower blue
+PLANET_COMPLETED = (255, 215, 0)      # Gold
+PLANET_CURRENT = (0, 191, 255)        # Deep sky blue
+
 
 class ThemeManager:
     """
@@ -151,9 +157,17 @@ class ThemeManager:
             "planet_4": PLANET_4,
             "planet_5": PLANET_5,  # Gold - distinguishable from all others (not red/green)
             
+            # Planet state colors (for space map)
+            "planet_locked": PLANET_LOCKED,
+            "planet_visited": PLANET_VISITED,
+            "planet_completed": PLANET_COMPLETED,
+            "planet_current": PLANET_CURRENT,
+            
             # Text colors
             "text_normal": UI_TEXT_NORMAL,
             "text_muted": UI_TEXT_MUTED,
+            "text_primary": FONT_PRIMARY,  # Alias for compatibility
+            "text_secondary": FONT_SECONDARY,  # Alias for compatibility
             "font_primary": FONT_PRIMARY,
             "font_secondary": FONT_SECONDARY,
             "font_accent": FONT_ACCENT,
