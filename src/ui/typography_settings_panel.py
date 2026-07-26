@@ -353,15 +353,15 @@ class TypographySettingsPanel:
                 odl_surf = odl_font.render(text, True, self.TEXT_PRIMARY)
                 odl_rect = odl_surf.get_rect(centerx=area_rect.centerx, top=y_offset)
                 screen.blit(odl_surf, odl_rect)
-            
-            # Draw OpenDyslexic label
-            odl_label = "OpenDyslexic:"
-            label_surf = self.small_font.render(odl_label, True, self.TEXT_SECONDARY)
-            label_rect = label_surf.get_rect(
-                left=area_rect.left,
-                bottom=odl_rect.top - 2
-            )
-            screen.blit(label_surf, label_rect)
+                
+                # Draw OpenDyslexic label
+                odl_label = "OpenDyslexic:"
+                label_surf = self.small_font.render(odl_label, True, self.TEXT_SECONDARY)
+                label_rect = label_surf.get_rect(
+                    left=area_rect.left,
+                    bottom=odl_rect.top - 2
+                )
+                screen.blit(label_surf, label_rect)
     
     def get_current_font_family(self) -> str:
         """
