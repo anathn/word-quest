@@ -232,12 +232,12 @@ class Game:
                 def __init__(self, dashboard, screen):
                     super().__init__(screen)
                     self.dashboard = dashboard
-                    
+                
                 def handle_event(self, event):
                     return self.dashboard.handle_event(event)
                 
-                def draw(self, screen):
-                    self.dashboard.render(screen)
+                def draw(self) -> None:
+                    self.dashboard.render(self.screen)
                 
                 def update(self):
                     pass
