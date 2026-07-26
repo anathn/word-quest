@@ -119,7 +119,7 @@ class ParentDashboardScreen:
         self.tts_settings_panel = TTSSettingsPanel(
             tts_manager=self.tts_manager,
             width=600,
-            height=350,
+            height=450,
             on_settings_change=self._on_tts_settings_changed
         )
         

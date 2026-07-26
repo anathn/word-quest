@@ -100,7 +100,8 @@ class TTSManager:
                 return
             
             self._running = False
-            self.speech_queue.clear()
+            # Clear queue (compatible with all Python versions - Queue.clear() was removed in Python 3.9+)
+            self.speech_queue = queue.Queue()
             
             if self.engine.is_speaking():
                 self.engine.stop()
