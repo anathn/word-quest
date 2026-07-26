@@ -211,14 +211,17 @@ class Game:
         
     def _show_parent_dashboard(self) -> None:
         """Show the parent dashboard after authentication."""
+        logger.info("Parent dashboard button clicked - attempting to show dashboard")
         try:
             # Create authenticated parent dashboard with caption manager
+            logger.info(f"Creating AuthenticatedParentDashboard with caption_manager={self.caption_manager}")
             parent_dashboard = AuthenticatedParentDashboard(
                 sessions=[],  # Empty sessions - analytics would be loaded here
                 screen_width=self.screen.get_width(),
                 screen_height=self.screen.get_height(),
                 caption_manager=self.caption_manager
             )
+            logger.info("AuthenticatedParentDashboard created successfully")
             
             # Create a wrapper screen for the authenticated dashboard
             # For now, we'll push it directly as a custom screen wrapper
@@ -245,7 +248,7 @@ class Game:
             
             logger.info("Parent dashboard activated")
         except Exception as e:
-            logger.error(f"Failed to show parent dashboard: {e}")
+            logger.error(f"Failed to show parent dashboard: {e}", exc_info=True)
     
     def _start_game(self) -> None:
         """Start the spelling game (placeholder for game screen)."""

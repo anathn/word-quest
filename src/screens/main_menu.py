@@ -220,8 +220,12 @@ class MainMenuScreen(Screen):
     
     def _parent_dashboard(self):
         """Handle parent dashboard button click."""
+        logger.info("Parent dashboard button clicked")
         if self.on_parent_dashboard:
+            logger.info("Calling on_parent_dashboard callback")
             self.on_parent_dashboard()
+        else:
+            logger.warning("on_parent_dashboard callback is not set!")
     
     def _settings(self):
         """Handle settings button click."""
