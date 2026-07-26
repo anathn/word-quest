@@ -145,25 +145,29 @@ class TTSSettingsPanel:
         y_start = title_end_y + 10  # Start content below title with margin
         content_width = self.width - 2 * self.PADDING
         
-        # Toggle row
+        # Toggle row - add margin from left edge
         toggle_width = 100
+        toggle_margin = 15  # Space between left edge and toggle
         self._toggle_rect = pygame.Rect(
-            x_start, y_start, toggle_width, self.BUTTON_HEIGHT
+            x_start + toggle_margin, y_start, toggle_width, self.BUTTON_HEIGHT
         )
         
-        # Speed controls - label and slider on same row
+        # Speed controls - add margin on both sides
         speed_label_y = y_start + self.ROW_HEIGHT + self.SECTION_SPACING
-        preset_width = 90
-        slider_x = x_start + 100  # Reduced from 120 to shift left
-        slider_width = content_width - 100
+        preset_width = 85
+        # Ensure sliders don't hit the right edge - use content_width - left_margin - right_margin
+        slider_left_margin = 100
+        slider_right_margin = 20
+        slider_width = content_width - slider_left_margin - slider_right_margin
+        slider_x = x_start + slider_left_margin
         
         self._speed_slider_rect = pygame.Rect(
             slider_x, speed_label_y + 10, slider_width, self.SLIDER_HEIGHT
         )
         
-        # Preset buttons row
+        # Preset buttons row - make narrower to fit within margins
         preset_y = speed_label_y + self.SLIDER_HEIGHT + 15
-        button_spacing = 8
+        button_spacing = 6
         total_button_width = (
             len(self.SPEED_PRESETS) * (preset_width + button_spacing) - button_spacing
         )
@@ -182,15 +186,13 @@ class TTSSettingsPanel:
             slider_x, volume_y + 10, slider_width, self.SLIDER_HEIGHT
         )
         
-        # Test button
+        # Test button - reduce width to prevent text overflow
         test_y = volume_y + self.SLIDER_HEIGHT + self.SECTION_SPACING
+        test_button_width = 160  # Fixed width
         self._test_button_rect = pygame.Rect(
-            x_start + content_width - self.BUTTON_WIDTH, test_y,
-            self.BUTTON_WIDTH, self.BUTTON_HEIGHT
+            x_start + content_width - test_button_width - 15, test_y,
+            test_button_width, self.BUTTON_HEIGHT
         )
-        
-        # Reserve 30px for bottom indicator
-        self._bottom_indicator_y = self.height - 35
     
     def _update_from_manager(self) -> None:
         """Update local state from TTS manager settings"""
@@ -374,7 +376,7 @@ class TTSSettingsPanel:
         x_label = self._toggle_rect.x + self._toggle_rect.width + 15
         
         # Label
-        font = pygame.font.Font(None, 28)
+        font = pygame.font.Font(None, 26)
         label = "Enable TTS" if self._enabled else "Disable TTS"
         label_surf = font.render(label, True, self.COLOR_TEXT)
         surface.blit(label_surf, (x_label, y_pos + 8))
@@ -496,8 +498,8 @@ class TTSSettingsPanel:
         else:
             pygame.draw.rect(surface, color, self._test_button_rect, 2, border_radius=8)
         
-        # Button text
-        font = pygame.font.Font(None, 26)
+        # Button text - use smaller font to prevent overflow
+        font = pygame.font.Font(None, 24)
         if self._test_button_active:
             text = "Playing..."
         else:
@@ -509,7 +511,7 @@ class TTSSettingsPanel:
         # Speaker icon
         icon_font = pygame.font.Font(None, 24)
         icon_surf = icon_font.render("🔊", True, self.COLOR_TEXT)
-        surface.blit(icon_surf, (self._test_button_rect.x + 10, self._test_button_rect.y + 8))
+        surface.blit(icon_surf, (self._test_button_rect.x + 12, self._test_button_rect.y + 8))
     
     def _render_availability_indicator(self, surface: pygame.Surface) -> None:
         """Render TTS availability status"""
