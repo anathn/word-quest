@@ -338,40 +338,42 @@ class TTSSettingsPanel:
         Args:
             surface: Pygame surface to render to
         """
-        # Draw background
-        bg_surface = pygame.Surface((self.width, self.height))
-        bg_surface.fill(self.COLOR_BG)
-        surface.blit(bg_surface, self.rect.topleft)
+        # Create offscreen surface for the entire panel
+        panel_surface = pygame.Surface((self.width, self.height))
+        panel_surface.fill(self.COLOR_BG)
         
         # Draw card background
         card_rect = pygame.Rect(
             self.PADDING, self.PADDING,
             self.width - 2 * self.PADDING, self.height - 2 * self.PADDING
         )
-        pygame.draw.rect(surface, self.COLOR_CARD, card_rect, border_radius=10)
+        pygame.draw.rect(panel_surface, self.COLOR_CARD, card_rect, border_radius=10)
         pygame.draw.rect(
-            surface, self.COLOR_BORDER, card_rect, 2, border_radius=10
+            panel_surface, self.COLOR_BORDER, card_rect, 2, border_radius=10
         )
         
         # Draw title at the top with proper margins
         font = pygame.font.Font(None, 32)
         title_surf = font.render("Text-to-Speech Settings", True, self.COLOR_TEXT)
-        surface.blit(title_surf, (self.PADDING + 25, self.PADDING + 10))
+        panel_surface.blit(title_surf, (self.PADDING + 25, self.PADDING + 10))
         
         # Draw enable/disable toggle
-        self._render_toggle(surface)
+        self._render_toggle(panel_surface)
         
         # Draw speed controls
-        self._render_speed_controls(surface)
+        self._render_speed_controls(panel_surface)
         
         # Draw volume controls
-        self._render_volume_controls(surface)
+        self._render_volume_controls(panel_surface)
         
         # Draw test button
-        self._render_test_button(surface)
+        self._render_test_button(panel_surface)
         
         # Draw TTS availability indicator
-        self._render_availability_indicator(surface)
+        self._render_availability_indicator(panel_surface)
+        
+        # Blit the complete panel to the main surface at the correct position
+        surface.blit(panel_surface, self.rect.topleft)
     
     def _render_toggle(self, surface: pygame.Surface) -> None:
         """Render the enable/disable toggle"""
