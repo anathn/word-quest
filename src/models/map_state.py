@@ -168,7 +168,7 @@ class SpaceMapState:
         
         A planet is unlocked if:
         - It's the first planet (planet_number == 1), or
-        - Any planet with a lower planet_number is in completed_planets
+        - The immediately previous planet (planet_number - 1) is in completed_planets
         
         Args:
             planet_id: The ID of the planet to check
@@ -185,10 +185,12 @@ class SpaceMapState:
         if planet.planet_number == 1:
             return True
         
-        # Check if any previous planet is completed
-        for prev_planet in self.planets:
-            if prev_planet.planet_number < planet.planet_number and prev_planet.planet_id in completed_planets:
-                return True
+        # Check if the immediately previous planet is completed
+        previous_planet_number = planet.planet_number - 1
+        previous_planet = self.get_planet_by_number(previous_planet_number)
+        
+        if previous_planet and previous_planet.planet_id in completed_planets:
+            return True
         
         return False
 
