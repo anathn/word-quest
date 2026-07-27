@@ -44,6 +44,14 @@ class TypographySettingsPanel:
     LABEL_HEIGHT = 30
     SAMPLE_HEIGHT = 60
     
+    # Vertical positions for centered layout
+    # Panel height is 350px, center is at 175px
+    # Layout distributed to center buttons: header(15) + desc(65) + spacing + buttons(155) + spacing + comparison(210)
+    HEADER_TOP_OFFSET = 15
+    DESCRIPTION_TOP_OFFSET = 65
+    BUTTONS_TOP_OFFSET = 155  # Centered vertically in panel
+    COMPARISON_TOP_OFFSET = 210
+    
     # Colors
     PANEL_BG = (42, 42, 80)  # UI_BG_LIGHT
     PANEL_BORDER = (100, 100, 150)  # UI_BORDER
@@ -86,10 +94,7 @@ class TypographySettingsPanel:
         
         # UI state
         self._hovered_button: Optional[str] = None
-        self._button_rects: dict = {}
-        
-        # Define button positions
-        self._setup_buttons()
+        # Note: button positions are calculated in _get_button_rects() to handle panel repositioning
         
         logger.info(f"TypographySettingsPanel initialized at ({x}, {y})")
     
@@ -100,25 +105,24 @@ class TypographySettingsPanel:
         self.small_font = self.font_manager.get_font(size=16)
         self.description_font = self.font_manager.get_font(size=14)
     
-    def _setup_buttons(self) -> None:
-        """Set up button rectangles for interaction."""
-        button_start_y = self.rect.y + self.HEADER_HEIGHT + self.SPACING * 2
+    def _get_button_rects(self) -> dict:
+        """Calculate button rectangles based on current panel position."""
+        button_start_y = self.rect.y + self.BUTTONS_TOP_OFFSET
         
-        # Default font button
-        self._button_rects['default'] = pygame.Rect(
-            self.rect.x + self.MARGIN,
-            button_start_y,
-            (self.PANEL_WIDTH - self.MARGIN * 2) // 2 - self.SPACING // 2,
-            40
-        )
-        
-        # OpenDyslexic font button
-        self._button_rects['opendyslexic'] = pygame.Rect(
-            self.rect.x + self.MARGIN + (self.PANEL_WIDTH - self.MARGIN * 2) // 2 + self.SPACING // 2,
-            button_start_y,
-            (self.PANEL_WIDTH - self.MARGIN * 2) // 2 - self.SPACING // 2,
-            40
-        )
+        return {
+            'default': pygame.Rect(
+                self.rect.x + self.MARGIN,
+                button_start_y,
+                (self.PANEL_WIDTH - self.MARGIN * 2) // 2 - self.SPACING // 2,
+                40
+            ),
+            'opendyslexic': pygame.Rect(
+                self.rect.x + self.MARGIN + (self.PANEL_WIDTH - self.MARGIN * 2) // 2 + self.SPACING // 2,
+                button_start_y,
+                (self.PANEL_WIDTH - self.MARGIN * 2) // 2 - self.SPACING // 2,
+                40
+            )
+        }
     
     def handle_event(self, event) -> bool:
         """
@@ -133,7 +137,8 @@ class TypographySettingsPanel:
         if event.type == pygame.MOUSEMOTION:
             # Track hover state
             mouse_pos = event.pos
-            for name, rect in self._button_rects.items():
+            button_rects = self._get_button_rects()
+            for name, rect in button_rects.items():
                 if rect.collidepoint(mouse_pos):
                     self._hovered_button = name
                     break
@@ -144,7 +149,8 @@ class TypographySettingsPanel:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left click
                 mouse_pos = event.pos
-                for name, rect in self._button_rects.items():
+                button_rects = self._get_button_rects()
+                for name, rect in button_rects.items():
                     if rect.collidepoint(mouse_pos):
                         self._select_font(name)
                         return True
@@ -205,21 +211,26 @@ class TypographySettingsPanel:
         header_surf = self.header_font.render(header_text, True, self.TEXT_PRIMARY)
         header_rect = header_surf.get_rect(
             centerx=self.rect.centerx,
-            top=self.rect.top + self.MARGIN
+            top=self.rect.top + self.HEADER_TOP_OFFSET
         )
         screen.blit(header_surf, header_rect)
         
         # Draw description
-        description = (
-            "OpenDyslexic font can help students with dyslexia read more easily. "
-            "It features weighted bottoms, unique letter shapes, and increased spacing."
-        )
-        desc_surf = self.description_font.render(description, True, self.TEXT_SECONDARY)
-        desc_rect = desc_surf.get_rect(
+        description_line1 = "OpenDyslexic font can help students with dyslexia"
+        description_line2 = "read more easily. It features weighted bottoms,"
+        desc_surf1 = self.description_font.render(description_line1, True, self.TEXT_SECONDARY)
+        desc_rect1 = desc_surf1.get_rect(
             centerx=self.rect.centerx,
-            top=self.rect.top + self.HEADER_HEIGHT
+            top=self.rect.top + self.DESCRIPTION_TOP_OFFSET
         )
-        screen.blit(desc_surf, desc_rect)
+        screen.blit(desc_surf1, desc_rect1)
+        
+        desc_surf2 = self.description_font.render(description_line2, True, self.TEXT_SECONDARY)
+        desc_rect2 = desc_surf2.get_rect(
+            centerx=self.rect.centerx,
+            top=desc_rect1.bottom + 5
+        )
+        screen.blit(desc_surf2, desc_rect2)
         
         # Draw font selection buttons
         self._render_buttons(screen)
@@ -244,6 +255,8 @@ class TypographySettingsPanel:
         Args:
             screen: Pygame surface to render to
         """
+        button_rects = self._get_button_rects()
+        
         # Font options
         buttons = [
             ('default', 'Default Font', "Standard clear font"),
@@ -251,7 +264,7 @@ class TypographySettingsPanel:
         ]
         
         for name, label, subtitle in buttons:
-            rect = self._button_rects[name]
+            rect = button_rects[name]
             
             # Determine button state
             is_selected = (name == 'opendyslexic' and self.font_manager.is_opendyslexic_available()) or \
@@ -309,7 +322,7 @@ class TypographySettingsPanel:
         title_surf = self.body_font.render(section_title, True, self.TEXT_PRIMARY)
         title_rect = title_surf.get_rect(
             left=self.rect.left + self.MARGIN,
-            top=self.rect.top + self.PANEL_HEIGHT - 160
+            top=self.rect.top + self.COMPARISON_TOP_OFFSET
         )
         screen.blit(title_surf, title_rect)
         
@@ -350,18 +363,22 @@ class TypographySettingsPanel:
         if self.font_manager.is_opendyslexic_available():
             odl_font = self.font_manager.get_font(family='opendyslexic', size=24)
             if odl_font is not None:
-                odl_surf = odl_font.render(text, True, self.TEXT_PRIMARY)
-                odl_rect = odl_surf.get_rect(centerx=area_rect.centerx, top=y_offset)
-                screen.blit(odl_surf, odl_rect)
-                
-                # Draw OpenDyslexic label
-                odl_label = "OpenDyslexic:"
-                label_surf = self.small_font.render(odl_label, True, self.TEXT_SECONDARY)
-                label_rect = label_surf.get_rect(
-                    left=area_rect.left,
-                    bottom=odl_rect.top - 2
-                )
-                screen.blit(label_surf, label_rect)
+                try:
+                    odl_surf = odl_font.render(text, True, self.TEXT_PRIMARY)
+                    odl_rect = odl_surf.get_rect(centerx=area_rect.centerx, top=y_offset)
+                    screen.blit(odl_surf, odl_rect)
+                    
+                    # Draw OpenDyslexic label
+                    odl_label = "OpenDyslexic:"
+                    label_surf = self.small_font.render(odl_label, True, self.TEXT_SECONDARY)
+                    label_rect = label_surf.get_rect(
+                        left=area_rect.left,
+                        bottom=odl_rect.top - 2
+                    )
+                    screen.blit(label_surf, label_rect)
+                except pygame.error as e:
+                    logger.warning(f"Failed to render OpenDyslexic font sample: {e}")
+                    # Skip rendering this sample if font is not usable
     
     def get_current_font_family(self) -> str:
         """
