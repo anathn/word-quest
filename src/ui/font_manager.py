@@ -103,19 +103,28 @@ class FontManager:
                 return False
             
             # Load regular fonts at common sizes
+            all_loaded_successfully = True
             for size in self.COMMON_SIZES:
                 try:
-                    self.font_families[self.FONT_ODL][size] = pygame.font.Font(
-                        self.ODL_REGULAR_PATH, size
-                    )
+                    test_font = pygame.font.Font(self.ODL_REGULAR_PATH, size)
+                    # Test if the font can actually render (some fonts load but fail on render)
+                    test_font.render("Test", True, (255, 255, 255))
+                    self.font_families[self.FONT_ODL][size] = test_font
                 except Exception as e:
-                    logger.warning(f"Could not load OpenDyslexic at size {size}: {e}")
-                    # Fallback to default font size
+                    logger.warning(f"Could not load or render OpenDyslexic at size {size}: {e}")
+                    # Don't mark as available if we can't render
+                    all_loaded_successfully = False
+                    # Don't add to cache - will use fallback later
                     self.font_families[self.FONT_ODL][size] = pygame.font.Font(None, size)
             
-            self.opendyslexic_available = True
-            logger.info("OpenDyslexic font initialized successfully")
-            return True
+            if all_loaded_successfully:
+                self.opendyslexic_available = True
+                logger.info("OpenDyslexic font initialized successfully")
+                return True
+            else:
+                logger.warning("OpenDyslexic font files exist but cannot be rendered. Disabling feature.")
+                self.opendyslexic_available = False
+                return False
             
         except Exception as e:
             logger.error(f"Failed to initialize OpenDyslexic font: {e}")
@@ -209,12 +218,18 @@ class FontManager:
         Returns:
             True if family exists and was set, False otherwise
         """
+        # Special check for OpenDyslexic - must be available
+        if family == self.FONT_ODL and not self.opendyslexic_available:
+            logger.warning(f"Cannot set font family '{family}': OpenDyslexic not available")
+            return False
+            
         if family in self.font_families and len(self.font_families[family]) > 0:
             self.current_family = family
             logger.info(f"Font family changed to: {family}")
             return True
         
         logger.warning(f"Cannot set font family '{family}': not available")
+        return False
         return False
     
     def get_current_family(self) -> str:

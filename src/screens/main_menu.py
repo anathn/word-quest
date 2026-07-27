@@ -132,14 +132,15 @@ class MainMenuScreen(Screen):
         # Create rocket sprite with configured color
         self.rocket_sprite = RocketSprite(color=rocket_color, size=64)
         
-        # Create animator and start hover animation in center of screen
+        # Create animator and start hover animation above the buttons
+        rocket_center_y = self.screen_height // 2 - 120
         self.rocket_animator = create_rocket_animator(
             self.rocket_sprite,
-            initial_position=(self.screen_width // 2, self.screen_height // 2)
+            initial_position=(self.screen_width // 2, rocket_center_y)
         )
-        # Start hover animation around center position
+        # Start hover animation around position above buttons
         self.rocket_animator.animate_hover(
-            (self.screen_width // 2, self.screen_height // 2)
+            (self.screen_width // 2, rocket_center_y)
         )
     
     def _setup_decorative_planets(self):
@@ -219,8 +220,12 @@ class MainMenuScreen(Screen):
     
     def _parent_dashboard(self):
         """Handle parent dashboard button click."""
+        logger.info("Parent dashboard button clicked")
         if self.on_parent_dashboard:
+            logger.info("Calling on_parent_dashboard callback")
             self.on_parent_dashboard()
+        else:
+            logger.warning("on_parent_dashboard callback is not set!")
     
     def _settings(self):
         """Handle settings button click."""
@@ -288,18 +293,18 @@ class MainMenuScreen(Screen):
         current_time = pygame.time.get_ticks() / 1000
         if self._menu_start_time == 0:
             self._menu_start_time = current_time
-        
+
         elapsed = current_time - self._menu_start_time
         self._welcome_y_offset = math.sin(elapsed * 1.5) * 5
-        
+
         welcome_font = self.theme.get_font_small()
         welcome_text = "Welcome, Space Explorer!"
         welcome_color = self.theme.get_color("font_primary")
-        
+
         welcome_surface = welcome_font.render(welcome_text, True, welcome_color)
         welcome_rect = welcome_surface.get_rect(
             centerx=self.screen_width // 2,
-            top=self.screen_height // 2 - 120 + self._welcome_y_offset
+            top=self.screen_height // 2 - 230 + self._welcome_y_offset
         )
         self.screen.blit(welcome_surface, welcome_rect)
     
@@ -435,10 +440,11 @@ class MainMenuScreen(Screen):
         
         # Reposition rocket
         if self.rocket_animator:
-            # Reset rocket position and animation
-            self.rocket_animator.position = (self.screen_width // 2, self.screen_height // 2)
+            # Reset rocket position and animation above buttons
+            rocket_center_y = self.screen_height // 2 - 120
+            self.rocket_animator.position = (self.screen_width // 2, rocket_center_y)
             self.rocket_animator.animate_hover(
-                (self.screen_width // 2, self.screen_height // 2)
+                (self.screen_width // 2, rocket_center_y)
             )
 
 

@@ -211,14 +211,17 @@ class Game:
         
     def _show_parent_dashboard(self) -> None:
         """Show the parent dashboard after authentication."""
+        logger.info("Parent dashboard button clicked - attempting to show dashboard")
         try:
             # Create authenticated parent dashboard with caption manager
+            logger.info(f"Creating AuthenticatedParentDashboard with caption_manager={self.caption_manager}")
             parent_dashboard = AuthenticatedParentDashboard(
                 sessions=[],  # Empty sessions - analytics would be loaded here
                 screen_width=self.screen.get_width(),
                 screen_height=self.screen.get_height(),
                 caption_manager=self.caption_manager
             )
+            logger.info("AuthenticatedParentDashboard created successfully")
             
             # Create a wrapper screen for the authenticated dashboard
             # For now, we'll push it directly as a custom screen wrapper
@@ -226,26 +229,26 @@ class Game:
             from src.ui.screen_manager import Screen
             
             class ParentDashboardWrapper(Screen):
-                def __init__(self, dashboard):
-                    super().__init__()
+                def __init__(self, dashboard, screen):
+                    super().__init__(screen)
                     self.dashboard = dashboard
-                    
+                
                 def handle_event(self, event):
                     return self.dashboard.handle_event(event)
                 
-                def draw(self, screen):
-                    self.dashboard.render(screen)
+                def draw(self) -> None:
+                    self.dashboard.render(self.screen)
                 
                 def update(self):
                     pass
             
-            wrapper = ParentDashboardWrapper(parent_dashboard)
+            wrapper = ParentDashboardWrapper(parent_dashboard, self.screen)
             parent_dashboard.activate()
             self.screen_manager.push_screen(wrapper)
             
             logger.info("Parent dashboard activated")
         except Exception as e:
-            logger.error(f"Failed to show parent dashboard: {e}")
+            logger.error(f"Failed to show parent dashboard: {e}", exc_info=True)
     
     def _start_game(self) -> None:
         """Start the spelling game (placeholder for game screen)."""

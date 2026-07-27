@@ -1,0 +1,9 @@
+{
+  "font_family": "default",
+  "font_size_base": 24,
+  "font_size_large": 48,
+  "font_size_small": 18,
+  "letter_spacing": 2,
+  "word_spacing": 4,
+  "line_height": 1.5
+}

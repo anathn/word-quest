@@ -139,28 +139,35 @@ class TTSSettingsPanel:
     def _calculate_layout(self) -> None:
         """Calculate positions for all UI components"""
         x_start = self.PADDING
-        y_start = self.PADDING
+        # Title height is ~32px, plus margins
+        title_start_y = self.PADDING + 10
+        title_end_y = title_start_y + 40  # Title + margin
+        y_start = title_end_y + 10  # Start content below title with margin
         content_width = self.width - 2 * self.PADDING
         
-        # Toggle row
-        toggle_width = 80
+        # Toggle row - add margin from left edge
+        toggle_width = 100
+        toggle_margin = 15  # Space between left edge and toggle
         self._toggle_rect = pygame.Rect(
-            x_start, y_start, toggle_width, self.BUTTON_HEIGHT
+            x_start + toggle_margin, y_start, toggle_width, self.BUTTON_HEIGHT
         )
         
-        # Speed controls
-        speed_y = y_start + self.ROW_HEIGHT + self.SECTION_SPACING
-        preset_width = 100
-        slider_x = x_start + 140
-        slider_width = content_width - 140
+        # Speed controls - add margin on both sides
+        speed_label_y = y_start + self.ROW_HEIGHT + self.SECTION_SPACING
+        preset_width = 85
+        # Ensure sliders don't hit the right edge - use content_width - left_margin - right_margin
+        slider_left_margin = 100
+        slider_right_margin = 20
+        slider_width = content_width - slider_left_margin - slider_right_margin
+        slider_x = x_start + slider_left_margin
         
         self._speed_slider_rect = pygame.Rect(
-            slider_x, speed_y, slider_width, self.SLIDER_HEIGHT
+            slider_x, speed_label_y + 10, slider_width, self.SLIDER_HEIGHT
         )
         
-        # Preset buttons row
-        preset_y = speed_y + self.SLIDER_HEIGHT + 10
-        button_spacing = 10
+        # Preset buttons row - make narrower to fit within margins
+        preset_y = speed_label_y + self.SLIDER_HEIGHT + 15
+        button_spacing = 6
         total_button_width = (
             len(self.SPEED_PRESETS) * (preset_width + button_spacing) - button_spacing
         )
@@ -169,22 +176,26 @@ class TTSSettingsPanel:
         offset = 0
         for label in self.SPEED_PRESETS:
             self._preset_buttons[label] = pygame.Rect(
-                preset_start_x + offset, preset_y, preset_width, self.BUTTON_HEIGHT - 10
+                preset_start_x + offset, preset_y, preset_width, self.BUTTON_HEIGHT - 5
             )
             offset += preset_width + button_spacing
         
         # Volume controls
         volume_y = preset_y + self.BUTTON_HEIGHT + self.SECTION_SPACING
         self._volume_slider_rect = pygame.Rect(
-            slider_x, volume_y, slider_width, self.SLIDER_HEIGHT
+            slider_x, volume_y + 10, slider_width, self.SLIDER_HEIGHT
         )
         
-        # Test button
+        # Test button - reduce width to prevent text overflow
         test_y = volume_y + self.SLIDER_HEIGHT + self.SECTION_SPACING
+        test_button_width = 160  # Fixed width
         self._test_button_rect = pygame.Rect(
-            x_start + content_width - self.BUTTON_WIDTH, test_y,
-            self.BUTTON_WIDTH, self.BUTTON_HEIGHT
+            x_start + content_width - test_button_width - 15, test_y,
+            test_button_width, self.BUTTON_HEIGHT
         )
+        
+        # Reserve space for bottom indicator
+        self._bottom_indicator_y = self.height - 35
     
     def _update_from_manager(self) -> None:
         """Update local state from TTS manager settings"""
@@ -327,48 +338,50 @@ class TTSSettingsPanel:
         Args:
             surface: Pygame surface to render to
         """
-        # Draw background
-        bg_surface = pygame.Surface((self.width, self.height))
-        bg_surface.fill(self.COLOR_BG)
-        surface.blit(bg_surface, self.rect.topleft)
+        # Create offscreen surface for the entire panel
+        panel_surface = pygame.Surface((self.width, self.height))
+        panel_surface.fill(self.COLOR_BG)
         
         # Draw card background
         card_rect = pygame.Rect(
             self.PADDING, self.PADDING,
             self.width - 2 * self.PADDING, self.height - 2 * self.PADDING
         )
-        pygame.draw.rect(surface, self.COLOR_CARD, card_rect, border_radius=10)
+        pygame.draw.rect(panel_surface, self.COLOR_CARD, card_rect, border_radius=10)
         pygame.draw.rect(
-            surface, self.COLOR_BORDER, card_rect, 2, border_radius=10
+            panel_surface, self.COLOR_BORDER, card_rect, 2, border_radius=10
         )
         
-        # Draw title
+        # Draw title at the top with proper margins
         font = pygame.font.Font(None, 32)
         title_surf = font.render("Text-to-Speech Settings", True, self.COLOR_TEXT)
-        surface.blit(title_surf, (self.PADDING + 20, self.PADDING + 5))
+        panel_surface.blit(title_surf, (self.PADDING + 25, self.PADDING + 10))
         
         # Draw enable/disable toggle
-        self._render_toggle(surface)
+        self._render_toggle(panel_surface)
         
         # Draw speed controls
-        self._render_speed_controls(surface)
+        self._render_speed_controls(panel_surface)
         
         # Draw volume controls
-        self._render_volume_controls(surface)
+        self._render_volume_controls(panel_surface)
         
         # Draw test button
-        self._render_test_button(surface)
+        self._render_test_button(panel_surface)
         
         # Draw TTS availability indicator
-        self._render_availability_indicator(surface)
+        self._render_availability_indicator(panel_surface)
+        
+        # Blit the complete panel to the main surface at the correct position
+        surface.blit(panel_surface, self.rect.topleft)
     
     def _render_toggle(self, surface: pygame.Surface) -> None:
         """Render the enable/disable toggle"""
         y_pos = self._toggle_rect.y
-        x_label = self.PADDING + 120
+        x_label = self._toggle_rect.x + self._toggle_rect.width + 15
         
         # Label
-        font = pygame.font.Font(None, 28)
+        font = pygame.font.Font(None, 26)
         label = "Enable TTS" if self._enabled else "Disable TTS"
         label_surf = font.render(label, True, self.COLOR_TEXT)
         surface.blit(label_surf, (x_label, y_pos + 8))
@@ -397,10 +410,10 @@ class TTSSettingsPanel:
     def _render_speed_controls(self, surface: pygame.Surface) -> None:
         """Render speed controls"""
         # Label
-        font = pygame.font.Font(None, 28)
+        font = pygame.font.Font(None, 26)
         label = f"Speech Speed: {self._speed:.1f}x"
         label_surf = font.render(label, True, self.COLOR_TEXT)
-        surface.blit(label_surf, (self.PADDING + 20, self._speed_slider_rect.y - 5))
+        surface.blit(label_surf, (self.PADDING + 25, self._speed_slider_rect.y - 25))
         
         # Slider background
         slider_bg = pygame.Rect(
@@ -445,11 +458,11 @@ class TTSSettingsPanel:
     def _render_volume_controls(self, surface: pygame.Surface) -> None:
         """Render volume controls"""
         # Label
-        font = pygame.font.Font(None, 28)
+        font = pygame.font.Font(None, 26)
         volume_percent = int(self._volume * 100)
         label = f"Volume: {volume_percent}%"
         label_surf = font.render(label, True, self.COLOR_TEXT)
-        surface.blit(label_surf, (self.PADDING + 20, self._volume_slider_rect.y - 5))
+        surface.blit(label_surf, (self.PADDING + 25, self._volume_slider_rect.y - 25))
         
         # Slider background
         slider_bg = pygame.Rect(
@@ -490,8 +503,8 @@ class TTSSettingsPanel:
         else:
             pygame.draw.rect(surface, color, self._test_button_rect, 2, border_radius=8)
         
-        # Button text
-        font = pygame.font.Font(None, 26)
+        # Button text - use smaller font to prevent overflow
+        font = pygame.font.Font(None, 24)
         if self._test_button_active:
             text = "Playing..."
         else:
@@ -503,7 +516,7 @@ class TTSSettingsPanel:
         # Speaker icon
         icon_font = pygame.font.Font(None, 24)
         icon_surf = icon_font.render("🔊", True, self.COLOR_TEXT)
-        surface.blit(icon_surf, (self._test_button_rect.x + 10, self._test_button_rect.y + 8))
+        surface.blit(icon_surf, (self._test_button_rect.x + 12, self._test_button_rect.y + 8))
     
     def _render_availability_indicator(self, surface: pygame.Surface) -> None:
         """Render TTS availability status"""
@@ -522,7 +535,7 @@ class TTSSettingsPanel:
         font = pygame.font.Font(None, 22)
         indicator = f"{icon} {text}"
         indicator_surf = font.render(indicator, True, color)
-        surface.blit(indicator_surf, (self.PADDING + 20, self.height - 30))
+        surface.blit(indicator_surf, (self.PADDING + 25, self._bottom_indicator_y))
     
     def get_settings(self) -> Dict[str, Any]:
         """

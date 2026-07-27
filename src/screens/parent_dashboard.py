@@ -119,8 +119,8 @@ class ParentDashboardScreen:
         self.tts_settings_panel = TTSSettingsPanel(
             tts_manager=self.tts_manager,
             width=600,
-            height=350,
-            on_settings_changed=self._on_tts_settings_changed
+            height=450,
+            on_settings_change=self._on_tts_settings_changed
         )
         
         # Initialize caption settings manager
@@ -133,6 +133,21 @@ class ParentDashboardScreen:
             x=0, y=0,  # Will be centered when rendered
             on_font_changed=self._on_font_changed
         )
+        
+        # Fonts - initialize before any rendering can occur
+        self._title_font: Optional[pygame.font.Font] = None
+        self._body_font: Optional[pygame.font.Font] = None
+        self._small_font: Optional[pygame.font.Font] = None
+        
+        # Data - initialize before any rendering can occur
+        self._weekly_data: List[DataPoint] = []
+        self._insufficient_data: bool = False
+        
+        # Load data after all attributes are initialized
+        self._load_data()
+        
+        # Create dashboard buttons after data is loaded
+        self._create_dashboard_buttons()
     
     def on_enter(self):
         """Called when screen becomes active - play dashboard music."""
@@ -153,20 +168,6 @@ class ParentDashboardScreen:
                 button.color = (0, 255, 0) if is_enabled else (255, 215, 0)
                 button.text = "High Contrast ON" if is_enabled else "High Contrast"
                 break
-        
-        self._insufficient_data: bool = False
-        
-        # Fonts
-        self._title_font: Optional[pygame.font.Font] = None
-        self._body_font: Optional[pygame.font.Font] = None
-        self._small_font: Optional[pygame.font.Font] = None
-        
-        # Data
-        self._weekly_data: List[DataPoint] = []
-        self._load_data()
-        
-        # Create dashboard buttons
-        self._create_dashboard_buttons()
     
     def init_caption_panel(self, caption_manager: Any) -> None:
         """Initialize caption settings panel with caption manager.
@@ -180,7 +181,7 @@ class ParentDashboardScreen:
             settings_manager=self.caption_settings_mgr,
             width=600,
             height=500,
-            on_settings_changed=self._on_caption_settings_changed
+            on_settings_change=self._on_caption_settings_changed
         )
     
     def _init_fonts(self):
@@ -456,14 +457,34 @@ class ParentDashboardScreen:
         
         # Pass events to settings panels if visible
         if self.show_tts_settings:
+            # Check for close button click first
+            panel_x = (self.screen_width - self.tts_settings_panel.width) // 2
+            panel_y = (self.screen_height - self.tts_settings_panel.height) // 2
+            close_rect = pygame.Rect(panel_x + self.tts_settings_panel.width - 40, panel_y + 20, 25, 25)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if close_rect.collidepoint(event.pos):
+                    self.show_tts_settings = False
+                    return
+            
             self.tts_settings_panel.handle_event(event)
         
         if self.show_typography_settings and self.typography_panel:
+            # Check for close button click first
+            panel_x = (self.screen_width - self.typography_panel.rect.width) // 2
+            panel_y = (self.screen_height - self.typography_panel.rect.height) // 2
+            close_rect = pygame.Rect(panel_x + self.typography_panel.rect.width - 40, panel_y + 20, 25, 25)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if close_rect.collidepoint(event.pos):
+                    self.show_typography_settings = False
+                    return
+            
             self.typography_panel.handle_event(event)
         
         if self.show_caption_settings and self.caption_panel:
             # Check for close button click first
-            close_rect = pygame.Rect(self.caption_panel.width - 40, 20, 25, 25)
+            panel_x = (self.screen_width - self.caption_panel.width) // 2
+            panel_y = (self.screen_height - self.caption_panel.height) // 2
+            close_rect = pygame.Rect(panel_x + self.caption_panel.width - 40, panel_y + 20, 25, 25)
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if close_rect.collidepoint(event.pos):
                     self.show_caption_settings = False
