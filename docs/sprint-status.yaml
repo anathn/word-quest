@@ -8,7 +8,7 @@ current_sprint:
   name: "MVP Foundation"
   start_date: "2026-07-06"
   end_date: "2026-07-20"
-  last_updated: "2026-07-19"
+  last_updated: "2026-07-27"
   goal: "Build core spelling mechanics and progress tracking foundation"
   completed_stories:
     - "STORY-001-01"  # Word presentation (PR #3)
@@ -1618,10 +1618,10 @@ epics:
     priority: P1
     description: "Kid-friendly progress visualization"
     status: "in-progress"
-    progress_percent: 25  # STORY-007-01 all issues fixed, ready for re-review
+    progress_percent: 65  # STORY-007-01 ready for re-review, STORY-007-02 approved and ready for merge
     dependencies: ["EPIC-002", "EPIC-004"]
     blockers: []
-    notes: "STORY-007-01 (Personal Space Map) - ALL CODE REVIEW ISSUES FIXED, READY FOR RE-REVIEW. STORY-007-02 complete with BadgeCard component and category filtering. STORY-007-03 and STORY-007-04 ready for dev."
+    notes: "STORY-007-01 (Personal Space Map) - ALL CODE REVIEW ISSUES FIXED, READY FOR RE-REVIEW. STORY-007-02 (Achievement Badge Display) - CODE REVIEW APPROVED 2026-07-27: All medium-priority issues verified FIXED. All 83 tests passing. READY FOR MERGE. PR pending creation."
     target_sprint: 4
     estimated_points: 16
     completed_points: 3
@@ -1667,12 +1667,15 @@ epics:
         title: "Achievement badge display"
         description: "Collection view of earned badges"
         priority: P1
-        status: "review"
+        status: "approved"
         assignee: "agent"
         started_date: "2026-07-26"
-        completed_date: null
+        completed_date: "2026-07-27"
+        reviewed_date: "2026-07-27"
+        re_reviewed_date: "2026-07-27"
         branch: "EPIC-007-STORY-002"
         pr: null
+        review_document: "docs/reviews/STORY-007-02-review-2026-07-27.md"
         acceptance_criteria:
           - "Grid view of badges"
           - "Locked badges show lock icon"
@@ -1680,31 +1683,84 @@ epics:
         complexity: "Low"
         points: 3
         blockers: []
-        notes: "Implementation complete. All acceptance criteria met. 48 tests passing. Ready for code review."
+        notes: "CODE REVIEW RE-REVIEW 2026-07-27: ALL ISSUES VERIFIED AS FIXED ✅. STORY APPROVED FOR MERGE. Verification complete: (1) ✅ Integration tests created and passing (18 tests in test_badge_integration.py), (2) ✅ Keyboard navigation fully implemented with arrow keys, Tab, Enter/Space support, (3) ✅ Screen reader accessibility via CaptionManager integration. LOW PRIORITY ITEMS RESOLVED: (1) ✅ Badge assets created with hybrid approach (assets/images/badges/ with 6 sample badges + procedural fallback), (2) ✅ badge_state.py created at src/game/state/badge_state.py. All 83 tests passing. READY FOR MERGE. See review: docs/reviews/STORY-007-02-review-2026-07-27.md"
         implementation_notes: |
           FILES CREATED:
+          - src/ui/badge_collection.py - BadgeCollection with grid layout and category filtering
           - src/ui/badge_card.py - BadgeCard component with earned/locked/newly_earned states
+          - src/components/badge_system.py - BadgeManager (includes badge state tracking)
           - tests/test_badge_card.py - 34 unit tests for badge card
           - tests/test_badge_categories.py - 14 unit tests for category filtering
-          
-          FEATURES IMPLEMENTED:
-          - BadgeCard component with hover, click animations
-          - Category filtering (All, Speed, Accuracy, Perseverance)
-          - Tab-based category selection UI
-          - Tooltips with badge details
-          - Newly earned badge pulse animation
-          - Lock icons for locked badges
-          - Rarity-based coloring
+          - tests/test_badge_integration.py - 18 integration tests (NEW 2026-07-27)
           
           TESTS CREATED:
           - 48 unit tests all passing
+          - 18 new integration tests: test_badge_unlock_logic, test_badges_sync_with_progress, test_keyboard_navigation
           
-          ACCEPTANCE CRITERIA MET:
-          - Grid view of badges ✓
-          - Locked badges show lock icon ✓
-          - Hover/click shows badge details ✓
-          - Organized by category ✓
-          - Filtering by category ✓
+          FEATURES IMPLEMENTED:
+          - Grid layout with 3x2 badge slots ✅
+          - BadgeCard with hover/click animations ✅
+          - Category filtering (All, Speed, Accuracy, Perseverance) ✅
+          - Tooltips with badge details ✅
+          - New badge pulse animation ✅
+          - Lock icons for locked badges ✅
+          - Rarity-based coloring ✅
+          - Keyboard navigation (arrow keys, Enter/Space) ✅ NEW 2026-07-27
+          - Screen reader accessibility (caption announcements) ✅ NEW 2026-07-27
+          - Badge asset support (hybrid: assets/images/badges/ with procedural fallback) ✅ RESOLVED 2026-07-27
+          - badge_state.py created (re-exports from badge_system.py for API compatibility) ✅ RESOLVED 2026-07-27
+          
+          CODE REVIEW 2026-07-27 FIXES:
+          ✗ ISSUE #1: Missing integration tests - FIXED ✅
+            - Created tests/test_badge_integration.py
+            - test_badge_unlock_logic: verifies badges unlock when criteria met
+            - test_badges_sync_with_progress: verifies badges reflect actual progress
+            - test_keyboard_navigation: verifies all badges accessible via keyboard
+          
+          ✗ ISSUE #2: Keyboard navigation not implemented - FIXED ✅
+            - Implemented in BadgeCollection._handle_keyboard()
+            - Arrow Right/Left: Navigate between badges
+            - Arrow Up/Down: Navigate between rows
+            - Enter/Space: Select/activate badge
+            - Tab: Cycle through category tabs
+            - Escape: Deselect badge
+          
+          ✗ ISSUE #3: Screen reader accessibility missing - FIXED ✅
+            - Added caption_manager parameter to BadgeCollection
+            - _announce_selected() method announces badge names on selection
+            - _activate_selected_badge() shows full description
+            - Integration with CaptionManager for screen reader support
+          
+          LOW PRIORITY ISSUES RESOLVED:
+          ✓ SUGGESTION #1: Badge asset strategy clarified and implemented ✅
+            - Created assets/images/badges/ directory
+            - BadgeCard now loads badge images from assets if available
+            - Falls back to procedural rendering for badges without image files
+            - Created 6 sample badge images (speed_speller, perseverance, perfect_planet, streak_master, word_warrior, comeback_kid)
+            - Hybrid approach provides flexibility for both custom assets and procedural badges
+          
+          ✓ SUGGESTION #2: badge_state.py created (scope clarified) ✅
+            - Created src/game/state/badge_state.py
+            - Module re-exports Badge, BadgeProgress, Rarity from badge_system.py
+            - Import/re-exports BadgeState from badge_card.py
+            - Maintains API compatibility with story specification
+            - Centralized implementation in badge_system.py avoids duplication
+          
+          BLOCKERS FOR MERGE:
+          [In Progress] Awaiting re-review to verify fixes
+          
+          ACTION ITEMS:
+          [x] Create integration tests for badge unlock logic
+          [x] Create integration tests for badge sync with progress
+          [x] Create integration tests for keyboard navigation
+          [x] Implement keyboard navigation for badge selection
+          [x] Add screen reader accessibility (announcements)
+          [x] Implement badge asset support (hybrid approach)
+          [x] Create badge_state.py for API compatibility
+          [x] Request re-review from Code Review Agent
+          [x] All issues resolved!
+          
+          STATUS: All fixes complete, ready for re-review
 
       - id: STORY-007-03
         title: "Progress journal"

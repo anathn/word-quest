@@ -8,7 +8,7 @@ Includes category filtering and improved animations.
 
 import pygame
 import math
-from typing import List, Dict, Optional, Tuple, Callable
+from typing import List, Dict, Optional, Tuple, Callable, Any
 from dataclasses import dataclass
 
 from src.components.badge_system import Badge, Rarity, BadgeManager, BadgeProgress
@@ -36,6 +36,15 @@ class BadgeCollection:
     - Hover/click shows badge details
     - Rarity-based border colors
     - Newly earned badges pulse with animation
+    - Keyboard navigation (arrow keys, Tab, Enter, Space)
+    - Screen reader accessibility via caption integration
+    
+    Keyboard Controls:
+    - Arrow Right/Left: Navigate between badges
+    - Arrow Up/Down: Navigate between rows
+    - Enter/Space: Select/activate badge
+    - Tab: Cycle through category tabs
+    - Escape: Deselect badge
     
     Grid Layout:
     ┌─────┬─────┬─────┐
@@ -87,7 +96,8 @@ class BadgeCollection:
         self, 
         screen: pygame.Surface, 
         badge_manager: BadgeManager,
-        on_badge_select: Optional[Callable[[Badge], None]] = None
+        on_badge_select: Optional[Callable[[Badge], None]] = None,
+        caption_manager: Optional[Any] = None
     ):
         """
         Initialize the badge collection display.
@@ -96,10 +106,12 @@ class BadgeCollection:
             screen: Pygame surface for rendering
             badge_manager: BadgeManager instance for badge data
             on_badge_select: Callback when a badge is clicked
+            caption_manager: Optional CaptionManager for screen reader announcements
         """
         self.screen = screen
         self.badge_manager = badge_manager
         self.on_badge_select = on_badge_select
+        self.caption_manager = caption_manager
         
         # Category filter
         self.current_category = "all"
@@ -115,6 +127,11 @@ class BadgeCollection:
         self.hovered_card: Optional[BadgeCard] = None
         self.hover_timer: float = 0.0
         self.detail_show_delay = 0.3  # Seconds before showing tooltip
+        
+        # Keyboard navigation state
+        self.selected_card_index: int = 0  # Current keyboard-selected badge
+        self.selected_tab_index: int = 0   # Current keyboard-selected tab
+        self.navigation_mode: str = "badges"  # "tabs" or "badges"
         
         # UI layout
         self._init_layout()
@@ -222,7 +239,7 @@ class BadgeCollection:
     
     def handle_event(self, event: pygame.event.Event) -> bool:
         """
-        Handle events (mouse click, hover).
+        Handle events (mouse click, hover, keyboard).
         
         Args:
             event: Pygame event
@@ -258,6 +275,9 @@ class BadgeCollection:
                     card.is_hovered = False
             
             return True
+        
+        elif event.type == pygame.KEYDOWN:
+            return self._handle_keyboard(event)
         
         return False
     
@@ -346,6 +366,203 @@ class BadgeCollection:
         rect = text.get_rect(centerx=self.screen.get_width() // 2, top=self.grid_start[1] + self.SLOT_SIZE)
         self.screen.blit(text, rect)
     
+    def _handle_keyboard(self, event: pygame.event.Event) -> bool:
+        """
+        Handle keyboard events for accessibility.
+        
+        Args:
+            event: Pygame KEYDOWN event
+            
+        Returns:
+            True if event was handled
+        """
+        # Tab navigation between tabs and badges
+        if event.key == pygame.K_TAB:
+            # Shift+Tab goes backwards, Tab goes forwards
+            if event.mod & pygame.KMOD_SHIFT:
+                if self.navigation_mode == "badges" and self.selected_card_index > 0:
+                    self.selected_card_index -= 1
+                    self._announce_selected()
+                else:
+                    self.navigation_mode = "tabs"
+                    if self.selected_tab_index > 0:
+                        self.selected_tab_index -= 1
+                        self._announce_selected()
+            else:
+                if self.navigation_mode == "tabs" and self.selected_tab_index < len(self.tabs) - 1:
+                    self.selected_tab_index += 1
+                    self._announce_selected()
+                else:
+                    self.navigation_mode = "badges"
+                    if self.badge_cards:
+                        self.selected_card_index = 0
+                        self._announce_selected()
+            return True
+        
+        # Tab navigation mode
+        if self.navigation_mode == "tabs":
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_DOWN:
+                if self.selected_tab_index < len(self.tabs) - 1:
+                    self.selected_tab_index += 1
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_LEFT or event.key == pygame.K_UP:
+                if self.selected_tab_index > 0:
+                    self.selected_tab_index -= 1
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                # Activate selected tab
+                tab = self.tabs[self.selected_tab_index]
+                self.current_category = tab.name.lower()
+                for t in self.tabs:
+                    t.active = (t.name.lower() == self.current_category)
+                self._update_badge_cards()
+                self.navigation_mode = "badges"
+                self.selected_card_index = 0
+                self._update_tab_visuals()
+                return True
+        
+        # Badge navigation mode
+        elif self.navigation_mode == "badges":
+            if event.key == pygame.K_RIGHT:
+                if self.selected_card_index < len(self.badge_cards) - 1:
+                    self.selected_card_index += 1
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_LEFT:
+                if self.selected_card_index > 0:
+                    self.selected_card_index -= 1
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_DOWN:
+                # Move down one row (GRID_COLS badges per row)
+                new_index = self.selected_card_index + self.GRID_COLS
+                if new_index < len(self.badge_cards):
+                    self.selected_card_index = new_index
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_UP:
+                # Move up one row
+                new_index = self.selected_card_index - self.GRID_COLS
+                if new_index >= 0:
+                    self.selected_card_index = new_index
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                # Activate selected badge
+                if self.badge_cards:
+                    self._activate_selected_badge()
+                return True
+            elif event.key == pygame.K_ESCAPE:
+                # Deselect
+                self.selected_card_index = -1
+                return True
+        
+        # Arrow keys to switch from tabs to badges
+        if event.key in (pygame.K_RIGHT, pygame.K_DOWN) and self.navigation_mode == "tabs":
+            if self.selected_tab_index < len(self.tabs) - 1:
+                self.selected_tab_index += 1
+            else:
+                self.navigation_mode = "badges"
+                self.selected_card_index = 0
+            self._announce_selected()
+            return True
+        
+        if event.key in (pygame.K_LEFT, pygame.K_UP) and self.navigation_mode == "badges":
+            if self.selected_card_index > 0:
+                self.selected_card_index -= 1
+            else:
+                self.navigation_mode = "tabs"
+                self.selected_tab_index = len(self.tabs) - 1
+            self._announce_selected()
+            return True
+        
+        return False
+    
+    def _announce_selected(self):
+        """Announce currently selected item via caption manager (screen reader)."""
+        if not self.caption_manager:
+            return
+        
+        try:
+            if self.navigation_mode == "tabs":
+                tab = self.tabs[self.selected_tab_index]
+                caption_text = f"Category tab: {tab.name}"
+            elif self.navigation_mode == "badges" and self.badge_cards:
+                card = self.badge_cards[self.selected_card_index]
+                badge = card.badge
+                if card.state == BadgeState.EARNED:
+                    caption_text = f"Badge: {badge.name}. {badge.description}"
+                else:
+                    caption_text = f"Locked badge: {badge.name}"
+            else:
+                return
+            
+            # Announce to screen reader
+            self.caption_manager.show_caption(caption_text, duration=2.0)
+        except Exception as e:
+            # Don't let accessibility errors break core functionality
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Caption announcement failed: {e}")
+    
+    def _activate_selected_badge(self):
+        """Activate the currently selected badge."""
+        if not self.badge_cards or self.selected_card_index < 0:
+            return
+        
+        card = self.badge_cards[self.selected_card_index]
+        badge = card.badge
+        
+        # Call the select callback if provided
+        if self.on_badge_select:
+            self.on_badge_select(badge)
+        
+        # Also show full details immediately
+        card.is_hovered = True
+        self.hovered_card = card
+        self.hover_timer = self.detail_show_delay  # Show immediately
+        
+        # Announce badge details
+        if self.caption_manager:
+            caption_text = f"{badge.name}: {badge.description}"
+            self.caption_manager.show_caption(caption_text, duration=3.0)
+    
+    def _update_tab_visuals(self):
+        """Update tab visual states for keyboard selection."""
+        for i, tab in enumerate(self.tabs):
+            tab.active = (i == self.selected_tab_index) if self.navigation_mode == "tabs" else False
+    
+    def _update_selection_visuals(self):
+        """Update visual selection indicators for keyboard navigation."""
+        # Reset all card hover states
+        for i, card in enumerate(self.badge_cards):
+            card.is_hovered = (i == self.selected_card_index) if self.navigation_mode == "badges" else False
+    
+    def update(self, dt: float):
+        """
+        Update badge collection state.
+        
+        Args:
+            dt: Time delta in seconds
+        """
+        # Update hover timer
+        if self.hovered_card:
+            self.hover_timer += dt
+        else:
+            self.hover_timer = 0.0
+        
+        # Update all badge cards
+        for card in self.badge_cards:
+            card.update(dt)
+        
+        # Update selection visuals for keyboard navigation
+        if self.navigation_mode == "badges" and self.badge_cards:
+            self._update_selection_visuals()
+        
+        # Refresh cards if filter changed or manager data changed
+        # (in a full implementation, we'd track for changes)
+    
     def get_badge_info(self, badge_id: str) -> Optional[Dict]:
         """
         Get information about a specific badge.
@@ -395,7 +612,8 @@ class BadgeCollection:
 def create_badge_collection(
     screen: pygame.Surface, 
     badge_manager: BadgeManager,
-    on_badge_select: Optional[Callable[[Badge], None]] = None
+    on_badge_select: Optional[Callable[[Badge], None]] = None,
+    caption_manager: Optional[Any] = None
 ) -> BadgeCollection:
     """
     Create a badge collection display.
@@ -404,8 +622,9 @@ def create_badge_collection(
         screen: Pygame surface for rendering
         badge_manager: BadgeManager instance
         on_badge_select: Callback when badge is clicked
+        caption_manager: Optional CaptionManager for screen reader support
         
     Returns:
         Configured BadgeCollection instance
     """
-    return BadgeCollection(screen, badge_manager, on_badge_select)
+    return BadgeCollection(screen, badge_manager, on_badge_select, caption_manager)

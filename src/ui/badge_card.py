@@ -3,10 +3,14 @@ Badge Card Component (STORY-007-02)
 
 Individual badge display card with states for earned/locked badges.
 Supports hover animations, click animations, and progress display.
+
+Badge assets are loaded from assets/images/badges/{badge_id}.png if available.
+Falls back to procedural rendering for badges without image files.
 """
 
 import pygame
 import math
+import os
 from typing import Optional, Tuple, Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -117,7 +121,31 @@ class BadgeCard:
         
         # Lock icon
         self.lock_icon: Optional[pygame.Surface] = None
+        self._badge_icon: Optional[pygame.Surface] = None
         self._create_lock_icon()
+    
+    def _get_badge_icon_path(self) -> str:
+        """Get path to badge icon image file."""
+        # Resolve relative to project root
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.join(script_dir, '..', '..')
+        return os.path.join(project_root, 'assets', 'images', 'badges', f"{self.badge.id}.png")
+    
+    def _load_badge_icon(self) -> Optional[pygame.Surface]:
+        """Load badge icon from image file if it exists."""
+        icon_path = self._get_badge_icon_path()
+        if os.path.exists(icon_path):
+            try:
+                icon = pygame.image.load(icon_path).convert_alpha()
+                # Scale to card size
+                scale = self.config.CARD_SIZE / max(icon.get_width(), icon.get_height())
+                new_size = (int(icon.get_width() * scale), int(icon.get_height() * scale))
+                return pygame.transform.smoothscale(icon, new_size)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to load badge icon {icon_path}: {e}")
+        return None
     
     def _create_lock_icon(self):
         """Create lock icon surface."""
@@ -141,7 +169,22 @@ class BadgeCard:
                        shackle_rect, math.pi, 0, 2)
     
     def _create_badge_icon(self, size: int = 40) -> pygame.Surface:
-        """Create badge icon surface based on rarity."""
+        """Create badge icon surface - loads from assets or uses procedural rendering."""
+        # Try to load from assets first
+        icon_path = self._get_badge_icon_path()
+        if os.path.exists(icon_path):
+            try:
+                icon = pygame.image.load(icon_path).convert_alpha()
+                # Scale to requested size
+                icon = pygame.transform.smoothscale(icon, (size, size))
+                return icon
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to load badge icon {icon_path}: {e}")
+                # Fall through to procedural rendering)
+        
+        # Procedural rendering as fallback
         surface = pygame.Surface((size, size), pygame.SRCALPHA)
         center = size // 2
         radius = size // 2 - 4
