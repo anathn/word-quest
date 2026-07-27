@@ -275,28 +275,32 @@ class TestBadgesSyncWithProgress:
 class TestKeyboardNavigation:
     """Integration tests for keyboard navigation in badge collection."""
     
-    def test_keyboard_navigation_basic(self, monkeypatch):
+    @pytest.fixture(autouse=True)
+    def setup_pygame(self):
+        """Setup pygame with headless video driver for tests."""
+        # Set video driver to dummy for headless testing
+        import os
+        os.environ['SDL_VIDEODRIVER'] = 'dummy'
+        os.environ['SDL_AUDIODRIVER'] = 'dummy'
+        pygame.init()
+        yield
+        pygame.quit()
+    
+    def test_keyboard_navigation_basic(self, setup_pygame, monkeypatch):
         """
         Integration test: Verify keyboard events are handled.
         
-        Note: Full keyboard navigation testing requires actual pygame display.
-        This test verifies the keyboard event handling paths exist.
+        Tests that BadgeCollection properly handles keyboard events
+        for accessibility (arrow keys, Enter, Space, Tab, Escape).
         """
-        # Skip if pygame display not available
-        try:
-            pygame.init()
-            screen = pygame.display.set_mode((1024, 768), pygame.NOFRAME)
-        except:
-            pytest.skip("Pygame display not available")
-        
         from ui.badge_collection import BadgeCollection
         
-        # Mock data store
         mock_store = Mock(spec=DataStore)
         mock_store.load = Mock(return_value=LoadResult(success=True, data={}, used_recovery=False))
         mock_store.save = Mock()
         
         badge_manager = BadgeManager(student_id="nav_test", data_store=mock_store)
+        screen = pygame.display.set_mode((800, 600))
         collection = BadgeCollection(screen=screen, badge_manager=badge_manager)
         
         # Verify handle_event method exists
@@ -336,17 +340,9 @@ class TestKeyboardNavigation:
             mod=0
         )
         collection.handle_event(space_event)
-        
-        pygame.quit()
     
-    def test_keyboard_navigation_tabs(self, monkeypatch):
+    def test_keyboard_navigation_tabs(self, setup_pygame, monkeypatch):
         """Test Tab key cycling through category tabs."""
-        try:
-            pygame.init()
-            screen = pygame.display.set_mode((1024, 768), pygame.NOFRAME)
-        except:
-            pytest.skip("Pygame display not available")
-        
         from ui.badge_collection import BadgeCollection
         
         mock_store = Mock(spec=DataStore)
@@ -354,6 +350,7 @@ class TestKeyboardNavigation:
         mock_store.save = Mock()
         
         badge_manager = BadgeManager(student_id="tab_test", data_store=mock_store)
+        screen = pygame.display.set_mode((800, 600))
         collection = BadgeCollection(screen=screen, badge_manager=badge_manager)
         
         # Test Tab key
@@ -366,8 +363,6 @@ class TestKeyboardNavigation:
         # Should handle without exception
         result = collection.handle_event(tab_event)
         assert result == True, "Should handle Tab events"
-        
-        pygame.quit()
 
 
 # Run tests with timeout
