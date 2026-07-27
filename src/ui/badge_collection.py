@@ -8,6 +8,7 @@ Includes category filtering and improved animations.
 
 import pygame
 import math
+import logging
 from typing import List, Dict, Optional, Tuple, Callable, Any
 from dataclasses import dataclass
 
