@@ -1621,7 +1621,7 @@ epics:
     progress_percent: 25  # STORY-007-01 all issues fixed, ready for re-review
     dependencies: ["EPIC-002", "EPIC-004"]
     blockers: []
-    notes: "STORY-007-01 (Personal Space Map) - ALL CODE REVIEW ISSUES FIXED, READY FOR RE-REVIEW. STORY-007-02 through STORY-007-04 ready for dev."
+    notes: "STORY-007-01 (Personal Space Map) - ALL CODE REVIEW ISSUES FIXED, READY FOR RE-REVIEW. STORY-007-02 in progress. STORY-007-03 and STORY-007-04 ready for dev."
     target_sprint: 4
     estimated_points: 16
     completed_points: 0
@@ -1667,10 +1667,11 @@ epics:
         title: "Achievement badge display"
         description: "Collection view of earned badges"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-26"
         completed_date: null
+        branch: "EPIC-007-STORY-002"
         acceptance_criteria:
           - "Grid view of badges"
           - "Locked badges show lock icon"
@@ -1678,7 +1679,7 @@ epics:
         complexity: "Low"
         points: 3
         blockers: []
-        notes: ""
+        notes: "Development started 2026-07-26."
 
       - id: STORY-007-03
         title: "Progress journal"

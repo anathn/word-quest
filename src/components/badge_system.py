@@ -55,6 +55,7 @@ class Badge:
     rarity: Rarity
     unlock_condition: str
     color_scheme: str
+    category: str = "uncategorized"  # Badge category for filtering
     unlocked_at: Optional[datetime] = None
     
     @classmethod
@@ -68,6 +69,7 @@ class Badge:
             rarity=Rarity(data['rarity']),
             unlock_condition=data['unlock_condition'],
             color_scheme=data.get('color_scheme', 'silver'),
+            category=data.get('category', 'uncategorized'),
             unlocked_at=datetime.fromisoformat(data['unlocked_at']) if data.get('unlocked_at') else None
         )
     
@@ -81,6 +83,7 @@ class Badge:
             'rarity': self.rarity.value,
             'unlock_condition': self.unlock_condition,
             'color_scheme': self.color_scheme,
+            'category': self.category,
             'unlocked_at': self.unlocked_at.isoformat() if self.unlocked_at else None
         }
 
@@ -530,6 +533,40 @@ class BadgeManager:
             Total badge count
         """
         return len(self.badges)
+    
+    def get_badges_by_category(self, category: str) -> List[Badge]:
+        """
+        Get badges filtered by category.
+        
+        Args:
+            category: Category name (e.g., 'speed', 'accuracy', 'perseverance')
+            
+        Returns:
+            List of Badge objects in the specified category
+        """
+        return [b for b in self.badges.values() if b.category == category]
+    
+    def get_unlocked_badges_by_category(self, category: str) -> List[Badge]:
+        """
+        Get unlocked badges filtered by category.
+        
+        Args:
+            category: Category name
+            
+        Returns:
+            List of unlocked Badge objects in the specified category
+        """
+        return [b for b in self.unlocked_badges.values() if b.category == category]
+    
+    def get_all_categories(self) -> List[str]:
+        """
+        Get list of all badge categories.
+        
+        Returns:
+            List of unique category names
+        """
+        categories = set(b.category for b in self.badges.values())
+        return sorted(list(categories))
     
     def get_progress_summary(self) -> Dict:
         """
