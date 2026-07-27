@@ -1674,7 +1674,7 @@ epics:
         reviewed_date: "2026-07-27"
         re_reviewed_date: "2026-07-27"
         branch: "EPIC-007-STORY-002"
-        pr: null
+        pr: 53
         review_document: "docs/reviews/STORY-007-02-review-2026-07-27.md"
         acceptance_criteria:
           - "Grid view of badges"
