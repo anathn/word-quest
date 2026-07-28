@@ -1,38 +1,51 @@
 """
-Badge Collection Display (STORY-004-03)
+Badge Collection Display (STORY-007-02)
 
 Renders the badge collection view for students.
 Shows unlocked badges with progress toward locked ones.
+Includes category filtering and improved animations.
 """
 
 import pygame
-from typing import List, Dict, Optional, Tuple
+import math
+import logging
+from typing import List, Dict, Optional, Tuple, Callable, Any
 from dataclasses import dataclass
 
 from src.components.badge_system import Badge, Rarity, BadgeManager, BadgeProgress
+from src.ui.badge_card import BadgeCard, BadgeCardConfig, BadgeState
 
 
 @dataclass
-class BadgeSlot:
-    """Represents a slot in the badge collection display."""
-    badge: Optional[Badge]
-    progress: Optional[BadgeProgress]
-    unlocked: bool
+class CategoryTab:
+    """Represents a category filter tab."""
+    name: str
     rect: pygame.Rect
-    position: int  # Grid position (0-5 for 3x2)
+    active: bool
 
 
 class BadgeCollection:
     """
-    Displays the badge collection.
+    Displays the badge collection with category filtering.
     
     Features:
     - Grid layout (3x2 badges per page)
+    - Category filtering (All, Speed, Accuracy, Perseverance)
     - Unlocked badges: Full color with animations
     - Locked badges: Grayed out with lock icon
     - Progress bars for incomplete badges
     - Hover/click shows badge details
     - Rarity-based border colors
+    - Newly earned badges pulse with animation
+    - Keyboard navigation (arrow keys, Tab, Enter, Space)
+    - Screen reader accessibility via caption integration
+    
+    Keyboard Controls:
+    - Arrow Right/Left: Navigate between badges
+    - Arrow Up/Down: Navigate between rows
+    - Enter/Space: Select/activate badge
+    - Tab: Cycle through category tabs
+    - Escape: Deselect badge
     
     Grid Layout:
     ┌─────┬─────┬─────┐
@@ -46,8 +59,16 @@ class BadgeCollection:
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     GRAY = (128, 128, 128)
+    LIGHT_GRAY = (200, 200, 200)
     DARK_GRAY = (64, 64, 64)
     BACKGROUND = (26, 26, 62)  # Deep space blue
+    
+    # Tab colors
+    TAB_INACTIVE = (50, 50, 80)
+    TAB_ACTIVE = (30, 30, 60)
+    TAB_HOVER = (70, 70, 100)
+    TAB_TEXT_INACTIVE = (150, 150, 180)
+    TAB_TEXT_ACTIVE = (255, 255, 215)
     
     # Rarity colors
     RARITY_COLORS = {
@@ -62,277 +83,202 @@ class BadgeCollection:
     GRID_ROWS = 2
     SLOT_SIZE = 100
     SLOT_MARGIN = 20
-    SLOT_PADDING = 10
     
     # Badge icon size
     BADGE_SIZE = 64
     
     # Fonts
-    TITLE_FONT_SIZE = 36
-    BADGE_NAME_FONT_SIZE = 20
-    PROGRESS_FONT_SIZE = 16
+    TITLE_FONT_SIZE = 32
+    TAB_FONT_SIZE = 18
+    BADGE_NAME_FONT_SIZE = 18
+    PROGRESS_FONT_SIZE = 14
     
-    def __init__(self, screen: pygame.Surface, badge_manager: BadgeManager):
+    def __init__(
+        self, 
+        screen: pygame.Surface, 
+        badge_manager: BadgeManager,
+        on_badge_select: Optional[Callable[[Badge], None]] = None,
+        caption_manager: Optional[Any] = None
+    ):
         """
         Initialize the badge collection display.
         
         Args:
             screen: Pygame surface for rendering
             badge_manager: BadgeManager instance for badge data
+            on_badge_select: Callback when a badge is clicked
+            caption_manager: Optional CaptionManager for screen reader announcements
         """
         self.screen = screen
         self.badge_manager = badge_manager
+        self.on_badge_select = on_badge_select
+        self.caption_manager = caption_manager
         
-        # Calculate grid dimensions
-        self.slot_width = self.SLOT_SIZE + self.SLOT_MARGIN
-        self.slot_height = self.SLOT_SIZE + self.SLOT_MARGIN
+        # Category filter
+        self.current_category = "all"
+        self.filtered_badges: List[Badge] = []
         
-        # Grid start position (centered)
-        grid_width = self.GRID_COLS * self.slot_width - self.SLOT_MARGIN
-        grid_height = self.GRID_ROWS * self.slot_height - self.SLOT_MARGIN
-        self.grid_start = (
-            (screen.get_width() - grid_width) // 2,
-            80  # Offset from top
-        )
+        # Badge cards
+        self.badge_cards: List[BadgeCard] = []
         
-        # Badge slots
-        self.slots: List[BadgeSlot] = []
+        # Category tabs
+        self.tabs: List[CategoryTab] = []
         
         # Hover state
-        self.hovered_slot: Optional[BadgeSlot] = None
+        self.hovered_card: Optional[BadgeCard] = None
         self.hover_timer: float = 0.0
-        self.detail_show_delay = 0.3  # Seconds before showing details
+        self.detail_show_delay = 0.3  # Seconds before showing tooltip
         
-        # Hover text surface
-        self.detail_surface: Optional[pygame.Surface] = None
+        # Keyboard navigation state
+        self.selected_card_index: int = 0  # Current keyboard-selected badge
+        self.selected_tab_index: int = 0   # Current keyboard-selected tab
+        self.navigation_mode: str = "badges"  # "tabs" or "badges"
         
-        # Initialize slots
-        self._create_slots()
+        # UI layout
+        self._init_layout()
     
-    def _create_slots(self):
-        """Create badge slots from badge manager data."""
-        self.slots.clear()
-        all_badges = self.badge_manager.get_all_badges()
+    def _init_layout(self):
+        """Initialize UI layout elements."""
+        # Calculate grid position
+        slot_width = self.SLOT_SIZE + self.SLOT_MARGIN
+        slot_height = self.SLOT_SIZE + self.SLOT_MARGIN
         
-        for i, badge in enumerate(all_badges[:6]):  # Limit to 6 badges
+        grid_width = self.GRID_COLS * slot_width - self.SLOT_MARGIN
+        grid_height = self.GRID_ROWS * slot_height - self.SLOT_MARGIN
+        
+        self.grid_start = (
+            (self.screen.get_width() - grid_width) // 2,
+            120  # Offset from top (below tabs)
+        )
+        
+        # Create category tabs
+        self._create_category_tabs()
+        
+        # Initialize badge cards
+        self._update_badge_cards()
+    
+    def _create_category_tabs(self):
+        """Create category filter tabs."""
+        categories = self.badge_manager.get_all_categories()
+        
+        # Tab configuration
+        tab_width = 100
+        tab_height = 30
+        tab_margin = 10
+        start_x = (self.screen.get_width() - (len(categories) + 1) * (tab_width + tab_margin)) // 2
+        
+        # "All" tab
+        all_rect = pygame.Rect(start_x, 80, tab_width, tab_height)
+        self.tabs.append(CategoryTab("All", all_rect, True))
+        
+        # Category tabs
+        x = start_x + tab_width + tab_margin
+        for category in categories:
+            rect = pygame.Rect(x, 80, tab_width, tab_height)
+            self.tabs.append(CategoryTab(category.capitalize(), rect, False))
+            x += tab_width + tab_margin
+        
+        self.filtered_badges = self.badge_manager.get_all_badges()
+    
+    def _create_badge_card(self, badge: Badge) -> BadgeCard:
+        """Create a badge card for a badge."""
+        unlocked = self.badge_manager.is_badge_unlocked(badge.id)
+        progress = self.badge_manager.get_progress(badge.id)
+        
+        # Calculate position
+        all_badges = self.badge_manager.get_all_badges()
+        idx = all_badges.index(badge) if badge in all_badges else 0
+        
+        col = idx % self.GRID_COLS
+        row = idx // self.GRID_COLS
+        
+        x = self.grid_start[0] + col * (self.SLOT_SIZE + self.SLOT_MARGIN)
+        y = self.grid_start[1] + row * (self.SLOT_SIZE + self.SLOT_MARGIN)
+        
+        # Determine state
+        if unlocked:
+            # Check if newly unlocked (just this session)
+            state = BadgeState.EARNED
+        else:
+            state = BadgeState.LOCKED
+        
+        def on_click():
+            if self.on_badge_select:
+                self.on_badge_select(badge)
+        
+        return BadgeCard(badge, state, (x, y), progress, on_click)
+    
+    def _update_badge_cards(self):
+        """Update the badge cards based on current filter."""
+        self.badge_cards.clear()
+        
+        # Get badges based on category filter
+        if self.current_category == "all":
+            self.filtered_badges = self.badge_manager.get_all_badges()
+        else:
+            self.filtered_badges = self.badge_manager.get_badges_by_category(self.current_category)
+        
+        # Recreate cards at correct positions
+        for idx, badge in enumerate(self.filtered_badges):
+            col = idx % self.GRID_COLS
+            row = idx // self.GRID_COLS
+            
+            x = self.grid_start[0] + col * (self.SLOT_SIZE + self.SLOT_MARGIN)
+            y = self.grid_start[1] + row * (self.SLOT_SIZE + self.SLOT_MARGIN)
+            
             unlocked = self.badge_manager.is_badge_unlocked(badge.id)
             progress = self.badge_manager.get_progress(badge.id)
             
-            # Calculate position
-            col = i % self.GRID_COLS
-            row = i // self.GRID_COLS
-            x = self.grid_start[0] + col * self.slot_width + self.SLOT_PADDING
-            y = self.grid_start[1] + row * self.slot_height + self.SLOT_PADDING
+            state = BadgeState.EARNED if unlocked else BadgeState.LOCKED
             
-            slot_rect = pygame.Rect(
-                x, y,
-                self.SLOT_SIZE,
-                self.SLOT_SIZE
-            )
+            def on_click(b=badge):
+                if self.on_badge_select:
+                    self.on_badge_select(b)
             
-            slot = BadgeSlot(
-                badge=badge,
-                progress=progress,
-                unlocked=unlocked,
-                rect=slot_rect,
-                position=i
-            )
-            self.slots.append(slot)
-    
-    def _create_badge_icon(self, badge: Badge, size: int = 64) -> pygame.Surface:
-        """Create a badge icon surface."""
-        surface = pygame.Surface((size, size), pygame.SRCALPHA)
-        center = size // 2
-        radius = size // 2 - 5
-        
-        # Base circle
-        color = self.RARITY_COLORS.get(badge.rarity, (192, 192, 192))
-        pygame.draw.circle(surface, color, (center, center), radius)
-        
-        # Border
-        pygame.draw.circle(surface, color, (center, center), radius, 3)
-        
-        # Inner detail
-        if badge.rarity == Rarity.LEGENDARY:
-            # Stars for legendary
-            for _ in range(4):
-                angle = _ * math.pi / 2
-                px = center + int(15 * math.cos(angle))
-                py = center + int(15 * math.sin(angle))
-                pygame.draw.circle(surface, self.WHITE, (px, py), 3)
-        else:
-            # Simple icon
-            pygame.draw.circle(surface, self.WHITE, (center, center), 15, 2)
-        
-        return surface
-    
-    def _draw_slot(self, slot: BadgeSlot):
-        """Draw a single badge slot."""
-        x, y = slot.rect.x, slot.rect.y
-        
-        # Draw slot background
-        if slot.unlocked:
-            # Unlocked badge
-            pygame.draw.rect(self.screen, (30, 30, 50), slot.rect, border_radius=8)
-            pygame.draw.rect(self.screen, self.RARITY_COLORS.get(slot.badge.rarity, (192, 192, 192)), 
-                           slot.rect, 3, border_radius=8)
-            
-            # Draw badge icon
-            if slot.badge:
-                badge_icon = self._create_badge_icon(slot.badge, size=50)
-                icon_x = x + (self.SLOT_SIZE - badge_icon.get_width()) // 2
-                icon_y = y + (self.SLOT_SIZE - badge_icon.get_height()) // 2 - 10
-                self.screen.blit(badge_icon, (icon_x, icon_y))
-                
-                # Draw badge name
-                name_font = pygame.font.Font(None, self.BADGE_NAME_FONT_SIZE)
-                name_text = name_font.render(slot.badge.name.split()[0], True, self.WHITE)  # First word
-                name_x = x + (self.SLOT_SIZE - name_text.get_width()) // 2
-                name_y = icon_y + badge_icon.get_height() + 10
-                self.screen.blit(name_text, (name_x, name_y))
-                
-                # Draw progress bar if not complete
-                if slot.progress and not slot.progress.is_complete:
-                    self._draw_progress_bar(x, y + self.SLOT_SIZE - 20, slot.progress)
-        
-        else:
-            # Locked badge
-            pygame.draw.rect(self.screen, (20, 20, 35), slot.rect, border_radius=8)
-            pygame.draw.rect(self.screen, self.GRAY, slot.rect, 2, border_radius=8)
-            
-            # Draw lock icon
-            lock_size = 32
-            lock_x = x + (self.SLOT_SIZE - lock_size) // 2
-            lock_y = y + (self.SLOT_SIZE - lock_size) // 2
-            
-            # Lock body
-            pygame.draw.rect(self.screen, self.DARK_GRAY, 
-                           (lock_x + 4, lock_y + 8, lock_size - 8, lock_size - 12), 
-                           border_radius=4)
-            # Lock shackle
-            pygame.draw.arc(self.screen, self.DARK_GRAY,
-                          (lock_x + 6, lock_y + 4, lock_size - 12, 12),
-                          math.pi, 0, 3)
-    
-    def _draw_progress_bar(self, x: int, y: int, progress: BadgeProgress):
-        """Draw progress bar for a badge."""
-        bar_width = self.SLOT_SIZE - 20
-        bar_height = 6
-        
-        bg_rect = pygame.Rect(x + 10, y, bar_width, bar_height)
-        fill_width = int(bar_width * progress.progress_percent())
-        fill_rect = pygame.Rect(x + 10, y, fill_width, bar_height)
-        
-        # Background
-        pygame.draw.rect(self.screen, self.DARK_GRAY, bg_rect, border_radius=3)
-        
-        # Fill
-        pygame.draw.rect(self.screen, self.RARITY_COLORS.get(Rarity.COMMON, (192, 192, 192)), 
-                       fill_rect, border_radius=3)
-        
-        # Progress text
-        text = pygame.font.Font(None, self.PROGRESS_FONT_SIZE)
-        text_surface = text.render(progress.get_progress_text(), True, self.WHITE)
-        text_x = x + (self.SLOT_SIZE - text_surface.get_width()) // 2
-        text_y = y - 18
-        self.screen.blit(text_surface, (text_x, text_y))
-    
-    def _draw_detail_panel(self, slot: BadgeSlot):
-        """Draw detail panel for hovered badge."""
-        if not slot.badge:
-            return
-        
-        margin = 20
-        panel_width = 250
-        panel_height = 120
-        
-        # Position below badge
-        panel_x = slot.rect.centerx - panel_width // 2
-        panel_y = slot.rect.bottom + 10
-        
-        # Clamp to screen
-        panel_x = max(margin, min(panel_x, self.screen.get_width() - panel_width - margin))
-        panel_y = min(panel_y, self.screen.get_height() - margin - panel_height)
-        
-        # Draw panel background
-        panel_rect = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
-        
-        # Semi-transparent background
-        bg_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
-        bg_surface.fill((0, 0, 0, 200))
-        self.screen.blit(bg_surface, panel_rect.topleft)
-        
-        # Border
-        color = self.RARITY_COLORS.get(slot.badge.rarity, (192, 192, 192))
-        pygame.draw.rect(self.screen, color, panel_rect, 2, border_radius=8)
-        
-        # Badge name
-        name_font = pygame.font.Font(None, self.TITLE_FONT_SIZE)
-        name_text = name_font.render(slot.badge.name, True, color)
-        self.screen.blit(name_text, (panel_rect.x + 10, panel_rect.y + 10))
-        
-        # Description
-        desc_font = pygame.font.Font(None, 24)
-        desc_lines = self._wrap_text(desc_font, slot.badge.description, panel_width - 20)
-        for i, line in enumerate(desc_lines):
-            line_surf = desc_font.render(line, True, self.WHITE)
-            self.screen.blit(line_surf, (panel_rect.x + 10, panel_rect.y + 50 + i * 20))
-        
-        # Status
-        if slot.unlocked:
-            status_text = name_font.render("UNLOCKED", True, (0, 255, 0))
-        else:
-            progress = slot.progress.get_progress_text() if slot.progress else "?"
-            status_text = name_font.render(f"In Progress: {progress}", True, self.GRAY)
-        
-        self.screen.blit(status_text, (panel_rect.x + 10, panel_rect.y + 90))
-    
-    def _wrap_text(self, font: pygame.font.Font, text: str, max_width: int) -> List[str]:
-        """Wrap text to fit within max_width."""
-        words = text.split()
-        lines = []
-        current_line = ""
-        
-        for word in words:
-            test_line = current_line + " " + word if current_line else word
-            if font.render(test_line, True, self.WHITE).get_width() <= max_width:
-                current_line = test_line
-            else:
-                if current_line:
-                    lines.append(current_line)
-                current_line = word
-        
-        if current_line:
-            lines.append(current_line)
-        
-        return lines
+            card = BadgeCard(badge, state, (x, y), progress, on_click)
+            self.badge_cards.append(card)
     
     def handle_event(self, event: pygame.event.Event) -> bool:
         """
-        Handle mouse events.
+        Handle events (mouse click, hover, keyboard).
         
         Args:
             event: Pygame event
             
         Returns:
-            True if event handled, False otherwise
+            True if event was handled
         """
-        if event.type == pygame.MOUSEMOTION:
-            # Update hover state
-            mouse_pos = event.pos
-            self.hovered_slot = None
-            
-            for slot in self.slots:
-                if slot.rect.collidepoint(mouse_pos):
-                    self.hovered_slot = slot
-                    break
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Left click
+                # Check tab clicks
+                for tab in self.tabs:
+                    if tab.rect.collidepoint(event.pos):
+                        self.current_category = tab.name.lower()
+                        # Update tab states
+                        for t in self.tabs:
+                            t.active = (t.name.lower() == self.current_category)
+                        self._update_badge_cards()
+                        return True
+                
+                # Check badge card clicks
+                for card in self.badge_cards:
+                    if card.handle_event(event):
+                        return True
+        
+        elif event.type == pygame.MOUSEMOTION:
+            # Update hover state for cards
+            self.hovered_card = None
+            for card in self.badge_cards:
+                if card.rect.collidepoint(event.pos):
+                    self.hovered_card = card
+                    card.is_hovered = True
+                else:
+                    card.is_hovered = False
             
             return True
         
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1 and self.hovered_slot:
-                # Clicked on a badge - could show full details or animation
-                return True
+        elif event.type == pygame.KEYDOWN:
+            return self._handle_keyboard(event)
         
         return False
     
@@ -344,43 +290,279 @@ class BadgeCollection:
             dt: Time delta in seconds
         """
         # Update hover timer
-        if self.hovered_slot:
+        if self.hovered_card:
             self.hover_timer += dt
         else:
             self.hover_timer = 0.0
         
-        # Refresh slots if badge manager data changed
-        self._create_slots()
+        # Update all badge cards
+        for card in self.badge_cards:
+            card.update(dt)
+        
+        # Refresh cards if filter changed or manager data changed
+        # (in a full implementation, we'd track for changes)
     
     def render(self):
         """Render the badge collection."""
         # Draw title
+        self._draw_title()
+        
+        # Draw tabs
+        self._draw_tabs()
+        
+        # Draw badge cards
+        for card in self.badge_cards:
+            card.draw(self.screen)
+        
+        # Draw tooltip if hovering long enough
+        if self.hovered_card and self.hover_timer >= self.detail_show_delay:
+            self.hovered_card.draw_tooltip(self.screen)
+        
+        # Draw empty state if no badges in category
+        if not self.badge_cards:
+            self._draw_empty_state()
+    
+    def _draw_title(self):
+        """Draw the collection title and count."""
+        # Title
         title_font = pygame.font.Font(None, self.TITLE_FONT_SIZE)
         title_text = title_font.render("BADGE COLLECTION", True, self.WHITE)
-        title_rect = title_text.get_rect(centerx=self.screen.get_width() // 2, top=30)
+        title_rect = title_text.get_rect(centerx=self.screen.get_width() // 2, top=20)
         self.screen.blit(title_text, title_rect)
         
-        # Draw unlocked count
-        count_font = pygame.font.Font(None, 24)
+        # Unlocked count
+        count_font = pygame.font.Font(None, 22)
         unlocked = self.badge_manager.get_unlocked_count()
         total = self.badge_manager.get_total_count()
-        count_text = count_font.render(f"{unlocked}/{total} Badges Unlocked", True, self.GRAY)
-        count_rect = count_text.get_rect(centerx=self.screen.get_width() // 2, top=60)
+        count_text = count_font.render(f"{unlocked}/{total} Badges Unlocked", True, self.LIGHT_GRAY)
+        count_rect = count_text.get_rect(centerx=self.screen.get_width() // 2, top=50)
         self.screen.blit(count_text, count_rect)
+    
+    def _draw_tabs(self):
+        """Draw category filter tabs."""
+        for tab in self.tabs:
+            # Background
+            if tab.active:
+                color = self.TAB_ACTIVE
+                text_color = self.TAB_TEXT_ACTIVE
+            elif tab.rect.collidepoint(pygame.mouse.get_pos()):
+                color = self.TAB_HOVER
+                text_color = self.TAB_TEXT_ACTIVE
+            else:
+                color = self.TAB_INACTIVE
+                text_color = self.TAB_TEXT_INACTIVE
+            
+            pygame.draw.rect(self.screen, color, tab.rect, border_radius=5)
+            
+            # Text
+            font = pygame.font.Font(None, self.TAB_FONT_SIZE)
+            text_surf = font.render(tab.name, True, text_color)
+            text_rect = text_surf.get_rect(center=tab.rect.center)
+            self.screen.blit(text_surf, text_rect)
+    
+    def _draw_empty_state(self):
+        """Draw empty state when no badges in category."""
+        font = pygame.font.Font(None, 24)
+        text = font.render("No badges in this category yet!", True, self.GRAY)
+        rect = text.get_rect(centerx=self.screen.get_width() // 2, top=self.grid_start[1] + self.SLOT_SIZE)
+        self.screen.blit(text, rect)
+    
+    def _handle_keyboard(self, event: pygame.event.Event) -> bool:
+        """
+        Handle keyboard events for accessibility.
         
-        # Draw slots
-        for slot in self.slots:
-            self._draw_slot(slot)
+        Args:
+            event: Pygame KEYDOWN event
+            
+        Returns:
+            True if event was handled
+        """
+        # Tab navigation between tabs and badges
+        if event.key == pygame.K_TAB:
+            # Shift+Tab goes backwards, Tab goes forwards
+            if event.mod & pygame.KMOD_SHIFT:
+                if self.navigation_mode == "badges" and self.selected_card_index > 0:
+                    self.selected_card_index -= 1
+                    self._announce_selected()
+                else:
+                    self.navigation_mode = "tabs"
+                    if self.selected_tab_index > 0:
+                        self.selected_tab_index -= 1
+                        self._announce_selected()
+            else:
+                if self.navigation_mode == "tabs" and self.selected_tab_index < len(self.tabs) - 1:
+                    self.selected_tab_index += 1
+                    self._announce_selected()
+                else:
+                    self.navigation_mode = "badges"
+                    if self.badge_cards:
+                        self.selected_card_index = 0
+                        self._announce_selected()
+            return True
         
-        # Draw hover detail if hover duration reached
-        if self.hovered_slot and self.hover_timer >= self.detail_show_delay:
-            self._draw_detail_panel(self.hovered_slot)
+        # Tab navigation mode
+        if self.navigation_mode == "tabs":
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_DOWN:
+                if self.selected_tab_index < len(self.tabs) - 1:
+                    self.selected_tab_index += 1
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_LEFT or event.key == pygame.K_UP:
+                if self.selected_tab_index > 0:
+                    self.selected_tab_index -= 1
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                # Activate selected tab
+                tab = self.tabs[self.selected_tab_index]
+                self.current_category = tab.name.lower()
+                for t in self.tabs:
+                    t.active = (t.name.lower() == self.current_category)
+                self._update_badge_cards()
+                self.navigation_mode = "badges"
+                self.selected_card_index = 0
+                self._update_tab_visuals()
+                return True
         
-        # Draw hover highlight
-        if self.hovered_slot:
-            highlight = self.hovered_slot.rect.copy()
-            highlight.inflate_ip(4, 4)
-            pygame.draw.rect(self.screen, (255, 255, 255), highlight, 2, border_radius=10)
+        # Badge navigation mode
+        elif self.navigation_mode == "badges":
+            if event.key == pygame.K_RIGHT:
+                if self.selected_card_index < len(self.badge_cards) - 1:
+                    self.selected_card_index += 1
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_LEFT:
+                if self.selected_card_index > 0:
+                    self.selected_card_index -= 1
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_DOWN:
+                # Move down one row (GRID_COLS badges per row)
+                new_index = self.selected_card_index + self.GRID_COLS
+                if new_index < len(self.badge_cards):
+                    self.selected_card_index = new_index
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_UP:
+                # Move up one row
+                new_index = self.selected_card_index - self.GRID_COLS
+                if new_index >= 0:
+                    self.selected_card_index = new_index
+                    self._announce_selected()
+                return True
+            elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                # Activate selected badge
+                if self.badge_cards:
+                    self._activate_selected_badge()
+                return True
+            elif event.key == pygame.K_ESCAPE:
+                # Deselect
+                self.selected_card_index = -1
+                return True
+        
+        # Arrow keys to switch from tabs to badges
+        if event.key in (pygame.K_RIGHT, pygame.K_DOWN) and self.navigation_mode == "tabs":
+            if self.selected_tab_index < len(self.tabs) - 1:
+                self.selected_tab_index += 1
+            else:
+                self.navigation_mode = "badges"
+                self.selected_card_index = 0
+            self._announce_selected()
+            return True
+        
+        if event.key in (pygame.K_LEFT, pygame.K_UP) and self.navigation_mode == "badges":
+            if self.selected_card_index > 0:
+                self.selected_card_index -= 1
+            else:
+                self.navigation_mode = "tabs"
+                self.selected_tab_index = len(self.tabs) - 1
+            self._announce_selected()
+            return True
+        
+        return False
+    
+    def _announce_selected(self):
+        """Announce currently selected item via caption manager (screen reader)."""
+        if not self.caption_manager:
+            return
+        
+        try:
+            if self.navigation_mode == "tabs":
+                tab = self.tabs[self.selected_tab_index]
+                caption_text = f"Category tab: {tab.name}"
+            elif self.navigation_mode == "badges" and self.badge_cards:
+                card = self.badge_cards[self.selected_card_index]
+                badge = card.badge
+                if card.state == BadgeState.EARNED:
+                    caption_text = f"Badge: {badge.name}. {badge.description}"
+                else:
+                    caption_text = f"Locked badge: {badge.name}"
+            else:
+                return
+            
+            # Announce to screen reader
+            self.caption_manager.show_caption(caption_text, duration=2.0)
+        except Exception as e:
+            # Don't let accessibility errors break core functionality
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Caption announcement failed: {e}")
+    
+    def _activate_selected_badge(self):
+        """Activate the currently selected badge."""
+        if not self.badge_cards or self.selected_card_index < 0:
+            return
+        
+        card = self.badge_cards[self.selected_card_index]
+        badge = card.badge
+        
+        # Call the select callback if provided
+        if self.on_badge_select:
+            self.on_badge_select(badge)
+        
+        # Also show full details immediately
+        card.is_hovered = True
+        self.hovered_card = card
+        self.hover_timer = self.detail_show_delay  # Show immediately
+        
+        # Announce badge details
+        if self.caption_manager:
+            caption_text = f"{badge.name}: {badge.description}"
+            self.caption_manager.show_caption(caption_text, duration=3.0)
+    
+    def _update_tab_visuals(self):
+        """Update tab visual states for keyboard selection."""
+        for i, tab in enumerate(self.tabs):
+            tab.active = (i == self.selected_tab_index) if self.navigation_mode == "tabs" else False
+    
+    def _update_selection_visuals(self):
+        """Update visual selection indicators for keyboard navigation."""
+        # Reset all card hover states
+        for i, card in enumerate(self.badge_cards):
+            card.is_hovered = (i == self.selected_card_index) if self.navigation_mode == "badges" else False
+    
+    def update(self, dt: float):
+        """
+        Update badge collection state.
+        
+        Args:
+            dt: Time delta in seconds
+        """
+        # Update hover timer
+        if self.hovered_card:
+            self.hover_timer += dt
+        else:
+            self.hover_timer = 0.0
+        
+        # Update all badge cards
+        for card in self.badge_cards:
+            card.update(dt)
+        
+        # Update selection visuals for keyboard navigation
+        if self.navigation_mode == "badges" and self.badge_cards:
+            self._update_selection_visuals()
+        
+        # Refresh cards if filter changed or manager data changed
+        # (in a full implementation, we'd track for changes)
     
     def get_badge_info(self, badge_id: str) -> Optional[Dict]:
         """
@@ -400,39 +582,50 @@ class BadgeCollection:
             'id': badge.id,
             'name': badge.name,
             'description': badge.description,
+            'category': badge.category,
             'rarity': badge.rarity.value,
             'unlocked': self.badge_manager.is_badge_unlocked(badge_id),
             'progress': self.badge_manager.get_progress(badge_id)
         }
+    
+    def set_category(self, category: str):
+        """
+        Set the category filter.
+        
+        Args:
+            category: Category name or "all"
+        """
+        category_lower = category.lower()
+        if category_lower == "all":
+            self.current_category = "all"
+            for tab in self.tabs:
+                tab.active = (tab.name.lower() == "all")
+        else:
+            # Check if category exists
+            categories = self.badge_manager.get_all_categories()
+            if category_lower in [c.lower() for c in categories]:
+                self.current_category = category_lower
+                for tab in self.tabs:
+                    tab.active = (tab.name.lower() == category_lower)
+        self._update_badge_cards()
 
 
-# Factory function
-def create_badge_collection(screen: pygame.Surface, badge_manager: BadgeManager) -> BadgeCollection:
+def create_badge_collection(
+    screen: pygame.Surface, 
+    badge_manager: BadgeManager,
+    on_badge_select: Optional[Callable[[Badge], None]] = None,
+    caption_manager: Optional[Any] = None
+) -> BadgeCollection:
     """
     Create a badge collection display.
     
     Args:
         screen: Pygame surface for rendering
         badge_manager: BadgeManager instance
+        on_badge_select: Callback when badge is clicked
+        caption_manager: Optional CaptionManager for screen reader support
         
     Returns:
         Configured BadgeCollection instance
-    
-    Example:
-        >>> # Create badge collection display
-        >>> screen = pygame.display.set_mode((800, 600))
-        >>> badge_manager = create_badge_manager()
-        >>> collection = create_badge_collection(screen, badge_manager)
-        >>> 
-        >>> # In your game loop:
-        >>> for event in pygame.event.get():
-        ...     collection.handle_event(event)
-        >>> 
-        >>> collection.update(dt)
-        >>> collection.render()
-        >>> 
-        >>> # Get badge info
-        >>> info = collection.get_badge_info('speed_speller')
-        >>> print(f"{info['name']}: {'unlocked' if info['unlocked'] else 'locked'}")
     """
-    return BadgeCollection(screen, badge_manager)
+    return BadgeCollection(screen, badge_manager, on_badge_select, caption_manager)

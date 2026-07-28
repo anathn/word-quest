@@ -182,18 +182,6 @@ class TestHighContrastMidGameSwitching:
         """Clean up after tests."""
         reset_theme()
         reset_accessibility_settings()
-        pygame.quit()
-        pygame.init()
-    
-
-
-class TestHighContrastMidGameSwitching:
-    """Test cases for high contrast theme switching during active gameplay."""
-    
-    def teardown_method(self):
-        """Clean up after tests."""
-        reset_theme()
-        reset_accessibility_settings()
     
     def test_theme_switch_with_active_ui_elements(self):
         """Test that theme switch works with active UI elements present."""
