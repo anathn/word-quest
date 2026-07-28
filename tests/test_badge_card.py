@@ -170,7 +170,7 @@ class TestBadgeCardInteractions:
         assert card.is_point_inside((50, 50)) is False
         assert card.is_point_inside((181, 181)) is False  # Outside rect
     
-    def test_handle_mouse_click(self, sample_badge, pygame_initialized):
+    def test_handle_mouse_click(self, sample_badge):
         """Test handling mouse click event."""
         callback = MagicMock()
         card = BadgeCard(sample_badge, BadgeState.EARNED, (100, 100), on_click=callback)
