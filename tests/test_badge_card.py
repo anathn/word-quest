@@ -48,16 +48,12 @@ def sample_badge_rare():
     )
 
 
-@pytest.fixture
-def pygame_initialized():
-    """Initialize pygame for testing."""
-    pygame.init()
-    yield
-    pygame.quit()
+# Note: pygame is initialized globally by conftest.py
+# Do not create fixtures that call pygame.quit() - it kills the xdist worker
 
 
 @pytest.fixture
-def test_screen(pygame_initialized):
+def test_screen():
     """Create a test pygame surface."""
     return pygame.display.set_mode((800, 600))
 
