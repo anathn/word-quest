@@ -280,11 +280,10 @@ class TestKeyboardNavigation:
         """Setup pygame with headless video driver for tests."""
         # Set video driver to dummy for headless testing
         import os
-        os.environ['SDL_VIDEODRIVER'] = 'dummy'
-        os.environ['SDL_AUDIODRIVER'] = 'dummy'
-        pygame.init()
-        yield
-        pygame.quit()
+        os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
+        os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
+        # Note: pygame is already initialized by conftest.py
+        # Do NOT call pygame.quit() here - it kills the xdist worker
     
     def test_keyboard_navigation_basic(self, setup_pygame, monkeypatch):
         """
