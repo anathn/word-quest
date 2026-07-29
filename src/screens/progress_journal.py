@@ -30,7 +30,8 @@ class ProgressJournalScreen:
     def __init__(
         self,
         progress_tracker: ProgressTracker,
-        theme: Optional[ThemeManager] = None
+        theme: Optional[ThemeManager] = None,
+        caption_manager=None  # Optional CaptionManager for accessibility
     ):
         """
         Initialize the progress journal screen.
@@ -38,9 +39,11 @@ class ProgressJournalScreen:
         Args:
             progress_tracker: ProgressTracker with session data
             theme: Optional ThemeManager instance
+            caption_manager: Optional CaptionManager for screen reader accessibility
         """
         self.progress_tracker = progress_tracker
         self.theme = theme or ThemeManager()
+        self.caption_manager = caption_manager
         
         # Summarizer for generating journal entries
         self.summarizer = ProgressSummarizer(progress_tracker)
@@ -92,8 +95,12 @@ class ProgressJournalScreen:
             True if event was handled
         """
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
-                self._navigate_weeks(event.key == pygame.K_RIGHT)
+            # Support both horizontal and vertical arrow keys for navigation
+            if event.key in (pygame.K_RIGHT, pygame.K_DOWN):
+                self._navigate_weeks(direction=True)
+                return True
+            elif event.key in (pygame.K_LEFT, pygame.K_UP):
+                self._navigate_weeks(direction=False)
                 return True
             elif event.key == pygame.K_ESCAPE:
                 # Return to previous screen
@@ -137,6 +144,15 @@ class ProgressJournalScreen:
             # Previous week (higher index in list)
             if self.current_entry_index > 0:
                 self.current_entry_index -= 1
+        
+        # Announce new week to screen readers via CaptionManager
+        if self.caption_manager and self.entries:
+            entry = self.entries[self.current_entry_index]
+            self.caption_manager.show_caption(
+                text=f"Week {self.current_entry_index + 1}: {entry.period}",
+                duration=4.0,
+                speaker="SYSTEM"
+            )
     
     def render(self, screen: pygame.Surface):
         """
@@ -182,7 +198,7 @@ class ProgressJournalScreen:
     
     def _render_period_header(self, screen: pygame.Surface, period: str):
         """Render the period header."""
-        font = pygame.font.Font(None, self.title_font_size)
+        font = self.theme.get_font(size=self.title_font_size, bold=True)
         
         # Center the title
         text_surface = font.render(period, True, self.title_color)
@@ -191,7 +207,7 @@ class ProgressJournalScreen:
     
     def _render_summary_lines(self, screen: pygame.Surface, lines: List[str]):
         """Render the summary text lines."""
-        font = pygame.font.Font(None, self.body_font_size)
+        font = self.theme.get_font(size=self.body_font_size)
         
         y = 120
         line_height = 35
@@ -204,8 +220,8 @@ class ProgressJournalScreen:
     
     def _render_practice_section(self, screen: pygame.Surface, practice_data: dict):
         """Render the practice recommendation section."""
-        font_bold = pygame.font.Font(None, self.body_font_size)
-        font_regular = pygame.font.Font(None, self.body_font_size - 2)
+        font_bold = self.theme.get_font(size=self.body_font_size, bold=True)
+        font_regular = self.theme.get_font(size=self.body_font_size - 2)
         
         y = 120
         
@@ -229,7 +245,7 @@ class ProgressJournalScreen:
         """Draw navigation arrows."""
         # Draw left arrow button
         pygame.draw.rect(screen, (100, 100, 150), self.left_arrow_rect, border_radius=10)
-        arrow_font = pygame.font.Font(None, 48)
+        arrow_font = self.theme.get_font(size=48)
         left_text = arrow_font.render("◀", True, (255, 255, 255))
         left_rect = left_text.get_rect(center=self.left_arrow_rect.center)
         screen.blit(left_text, left_rect)
@@ -242,7 +258,7 @@ class ProgressJournalScreen:
     
     def _render_week_indicator(self, screen: pygame.Surface, week_number: int):
         """Draw week indicator badge."""
-        font = pygame.font.Font(None, 20)
+        font = self.theme.get_font(size=20)
         
         text = f"Week {week_number} of Your Journey"
         text_surface = font.render(text, True, (255, 255, 255), (0, 0, 100))  # White on dark blue
@@ -254,7 +270,7 @@ class ProgressJournalScreen:
     
     def _render_empty_state(self, screen: pygame.Surface):
         """Render empty state for new students."""
-        font = pygame.font.Font(None, self.body_font_size)
+        font = self.theme.get_font(size=self.body_font_size)
         
         welcome_messages = self.summarizer.generate_welcome_message()
         y = 200
@@ -277,14 +293,18 @@ class ProgressJournalScreen:
         self.current_entry_index = 0
 
 
-def create_progress_journal_screen(progress_tracker: ProgressTracker):
+def create_progress_journal_screen(
+    progress_tracker: ProgressTracker,
+    caption_manager=None
+):
     """
     Factory function to create a ProgressJournalScreen.
     
     Args:
         progress_tracker: ProgressTracker instance
+        caption_manager: Optional CaptionManager for accessibility
         
     Returns:
         ProgressJournalScreen instance
     """
-    return ProgressJournalScreen(progress_tracker)
+    return ProgressJournalScreen(progress_tracker, caption_manager=caption_manager)

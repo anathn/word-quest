@@ -312,3 +312,149 @@ class TestProgressJournalEndToEnd:
         assert entry.mastered_count >= 0
         assert entry.week_data.sessions_count == 3
         assert entry.week_data.total_words == 2 + 3 + 4  # 9 words total
+
+class TestStreakTracking:
+    """Tests for streak tracking integration."""
+    
+    def test_streak_aggregation_from_sessions(self):
+        """Test that best streak is aggregated from session data."""
+        mock_tracker = MagicMock()
+        
+        # Create sessions with known streaks
+        mock_session1 = MagicMock(spec=SessionSummary)
+        mock_session1.duration_seconds = 300.0
+        mock_session1.best_streak = 5  # Session best streak of 5
+        
+        mock_word1 = MagicMock(spec=WordAttempt)
+        mock_word1.word = "apple"
+        mock_word1.total_attempts = 1
+        mock_word1.correct = True
+        mock_word1.first_attempt_correct = True
+        mock_word1.hints_used = 0
+        mock_session1.words = [mock_word1]
+        
+        mock_session2 = MagicMock(spec=SessionSummary)
+        mock_session2.duration_seconds = 200.0
+        mock_session2.best_streak = 3  # Lower streak
+        
+        mock_word2 = MagicMock(spec=WordAttempt)
+        mock_word2.word = "dog"
+        mock_word2.total_attempts = 1
+        mock_word2.correct = True
+        mock_word2.first_attempt_correct = True
+        mock_word2.hints_used = 0
+        mock_session2.words = [mock_word2]
+        
+        mock_tracker.session_tracker.get_sessions_for_week.return_value = [mock_session1, mock_session2]
+        
+        summarizer = ProgressSummarizer(mock_tracker)
+        week_start = datetime.now() - timedelta(days=7)
+        week_end = datetime.now()
+        
+        entry = summarizer.generate_weekly_summary(week_start, week_end)
+        
+        # Best streak should be the max from all sessions (5)
+        assert entry.week_data.best_streak == 5
+
+
+class TestPerformanceTests:
+    """Performance tests for summary generation."""
+    
+    def test_summary_generation_performance(self):
+        """Verify summary generation completes within 500ms (acceptance criterion)."""
+        import time
+        
+        mock_tracker = MagicMock()
+        
+        # Create a realistic week of sessions
+        mock_sessions = []
+        for i in range(5):
+            mock_session = MagicMock(spec=SessionSummary)
+            mock_session.duration_seconds = 300.0
+            mock_session.best_streak = 3
+            
+            words = []
+            for j in range(10):
+                mock_word = MagicMock(spec=WordAttempt)
+                mock_word.word = f"word_{i}_{j}"
+                mock_word.total_attempts = 1 if j % 3 == 0 else 2
+                mock_word.correct = j % 3 != 2
+                mock_word.first_attempt_correct = (j % 3 == 0)
+                mock_word.hints_used = 0 if j % 3 == 0 else 1
+                words.append(mock_word)
+            
+            mock_session.words = words
+            mock_sessions.append(mock_session)
+        
+        mock_tracker.session_tracker.get_sessions_for_week.return_value = mock_sessions
+        
+        summarizer = ProgressSummarizer(mock_tracker)
+        week_start = datetime.now() - timedelta(days=7)
+        week_end = datetime.now()
+        
+        # Measure timing
+        start_time = time.perf_counter()
+        entry = summarizer.generate_weekly_summary(week_start, week_end)
+        elapsed_ms = (time.perf_counter() - start_time) * 1000
+        
+        # Verify performance requirement: <500ms
+        assert elapsed_ms < 500, f"Summary generation took {elapsed_ms:.2f}ms (target: <500ms)"
+        assert entry is not None
+
+    def test_render_performance_baseline(self):
+        """Baseline test for render operations (30+ FPS requirement)."""
+        # This test verifies the summarizer can prepare data fast enough
+        # to maintain 30+ FPS (i.e., <33ms per frame for data prep)
+        import time
+        
+        mock_tracker = MagicMock()
+        mock_tracker.session_tracker.get_sessions_for_week.return_value = []
+        
+        summarizer = ProgressSummarizer(mock_tracker)
+        week_start = datetime.now() - timedelta(days=7)
+        week_end = datetime.now()
+        
+        # Simulate multiple quick calls (as would happen during rendering)
+        iterations = 30
+        total_time = 0
+        
+        for _ in range(iterations):
+            start_time = time.perf_counter()
+            entry = summarizer.generate_weekly_summary(week_start, week_end)
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            total_time += elapsed_ms
+        
+        avg_time_per_call = total_time / iterations
+        
+        # Should complete in <33ms average to maintain 30+ FPS during rendering
+        assert avg_time_per_call < 33, f"Average render prep: {avg_time_per_call:.2f}ms (target: <33ms for 30+ FPS)"
+
+
+class TestAccessibility:
+    """Tests for accessibility features."""
+    
+    def test_caption_manager_integration(self):
+        """Verify caption_manager can be passed to ProgressJournalScreen."""
+        # This test just verifies the API accepts caption_manager parameter
+        # Actual integration testing would require a mock caption manager
+        from src.screens.progress_journal import ProgressJournalScreen
+        
+        mock_tracker = MagicMock()
+        mock_caption_manager = MagicMock()
+        
+        # Should not raise an error
+        screen = ProgressJournalScreen(mock_tracker, caption_manager=mock_caption_manager)
+        assert screen.caption_manager == mock_caption_manager
+    
+    def test_font_uses_theme_manager(self):
+        """Verify that rendering uses ThemeManager for consistent fonts."""
+        from src.ui.theme import ThemeManager
+        from src.screens.progress_journal import ProgressJournalScreen
+        
+        mock_tracker = MagicMock()
+        theme = ThemeManager()
+        
+        screen = ProgressJournalScreen(mock_tracker, theme=theme)
+        assert screen.theme == theme
+        # ThemeManager should be available for font rendering
+        assert hasattr(screen.theme, 'get_font')

@@ -143,7 +143,16 @@ class ProgressSummarizer:
                 if word_attempt.correct:
                     week_data.correct_attempts += 1
                 
-                # Track streaks - not available from WordAttempt, skip for now
+                # Track streaks from session data - aggregate best streak from all sessions
+                # Get the session's best_streak property if available (real sessions have this)
+                session_streak = getattr(session, 'best_streak', 0)
+                # Safely convert to int (handles MagicMock in tests)
+                if hasattr(session_streak, '__int__'):
+                    try:
+                        session_streak = int(session_streak)
+                    except (TypeError, ValueError):
+                        session_streak = 0
+                week_data.best_streak = max(week_data.best_streak, session_streak)
                 
                 # Track mastered words (first-attempt correct, zero hints)
                 if word_attempt.first_attempt_correct and word_attempt.hints_used == 0:
