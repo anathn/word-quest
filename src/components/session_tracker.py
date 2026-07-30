@@ -607,6 +607,24 @@ class SessionTracker:
         self._word_first_attempt_correct = None
         self._word_final_correct = False
         self._last_activity = None
+    
+    def get_sessions_for_week(self, week_start: datetime, week_end: datetime) -> List[SessionSummary]:
+        """Get all completed sessions within a specific week.
+        
+        Args:
+            week_start: Start of the week (datetime)
+            week_end: End of the week (datetime)
+            
+        Returns:
+            List of SessionSummary objects for the week, empty list if none
+        """
+        sessions = []
+        for session in self.completed_sessions:
+            # session.start_time is already a datetime object
+            if week_start <= session.start_time <= week_end:
+                sessions.append(session)
+        
+        return sessions
 
 
 # Factory function
