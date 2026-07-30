@@ -1824,10 +1824,11 @@ epics:
         title: "Simple progress stats"
         description: "Age-appropriate metrics display"
         priority: P1
-        status: "ready-for-dev"
-        assignee: null
-        started_date: null
+        status: "in-progress"
+        assignee: "agent"
+        started_date: "2026-07-28"
         completed_date: null
+        branch: "EPIC-007-STORY-004"
         acceptance_criteria:
           - "Words mastered count"
           - "Best streak display"
