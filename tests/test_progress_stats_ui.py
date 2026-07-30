@@ -49,13 +49,17 @@ def mock_progress_tracker():
 
 @pytest.fixture
 def mock_theme():
-    """Create a mock ThemeManager."""
+    """Create a mock ThemeManager.
+    
+    Note: Do NOT call pygame.quit() in teardown - it kills the xdist worker.
+    See test_badge_card.py for guidelines.
+    """
     pygame.init()
     theme = MagicMock()
     theme.get_color.return_value = (255, 255, 255)
     theme.get_font = MagicMock(return_value=pygame.font.Font(None, 24))
     yield theme
-    pygame.quit()
+    # Do NOT call pygame.quit() - it kills the xdist worker
 
 
 class TestStatCard:
@@ -87,7 +91,6 @@ class TestStatCard:
             assert rect.y == 100
             assert rect.width == 280
             assert rect.height == 120
-            pygame.quit()
     
     def test_text_wrapping(self, mock_theme):
         """Verify long text is wrapped correctly."""
@@ -103,7 +106,6 @@ class TestStatCard:
             screen = pygame.display.set_mode((800, 600))
             # Should not raise exceptions
             card.draw(screen, 50, 100, data)
-            pygame.quit()
 
 
 class TestTrendIndicator:
@@ -141,7 +143,6 @@ class TestTrendIndicator:
             screen = pygame.display.set_mode((800, 600))
             # Should not raise exceptions
             indicator.render(screen, "up", 100, 100)
-            pygame.quit()
 
 
 class TestProgressStatsDisplay:
@@ -156,7 +157,6 @@ class TestProgressStatsDisplay:
         
         assert display.progress == mock_progress_tracker
         assert len(display.stat_cards) > 0
-        pygame.quit()
     
     def test_display_updates_after_progress(self, mock_progress_tracker, mock_theme):
         """Verify stats update after progress changes."""
@@ -172,7 +172,6 @@ class TestProgressStatsDisplay:
         
         # Should have rebuild stat cards
         assert display.stat_cards is not None
-        pygame.quit()
     
     def test_draw_background(self, mock_progress_tracker, mock_theme):
         """Verify background is drawn correctly."""
@@ -184,7 +183,6 @@ class TestProgressStatsDisplay:
         
         # Should not raise exceptions
         display.draw()
-        pygame.quit()
     
     def test_draw_stat_cards(self, mock_progress_tracker, mock_theme):
         """Verify all stat cards are drawn."""
@@ -196,7 +194,6 @@ class TestProgressStatsDisplay:
         
         # Should not raise exceptions
         display.draw()
-        pygame.quit()
     
     def test_card_at_position(self, mock_progress_tracker, mock_theme):
         """Verify card detection at position works."""
@@ -209,7 +206,6 @@ class TestProgressStatsDisplay:
         
         # Could return None if no card at that position, but shouldn't raise
         assert result is None or isinstance(result, tuple)
-        pygame.quit()
     
     def test_create_factory_function(self, mock_progress_tracker, mock_theme):
         """Verify factory function works correctly."""
@@ -219,7 +215,6 @@ class TestProgressStatsDisplay:
         
         assert display is not None
         assert isinstance(display, ProgressStatsDisplay)
-        pygame.quit()
 
 
 class TestEmptyState:
@@ -245,7 +240,6 @@ class TestEmptyState:
             
             # Should handle empty state
             assert display is not None
-            pygame.quit()
 
 
 class TestVisibility:
@@ -273,7 +267,6 @@ class TestVisibility:
             # Should not include today's card if no data
             today_cards = [card for _, _, _, data in display.stat_cards if data.title == "Today's Progress"]
             # This depends on implementation - either 0 cards or card with encouraging message
-            pygame.quit()
 
 
 class TestLayout:
@@ -291,7 +284,6 @@ class TestLayout:
         # Verify no overlapping cards (allowing for some tolerance)
         # This is a basic check - cards should have unique positions
         assert len(positions) == len(set(positions))
-        pygame.quit()
 
 
 class TestAccessibility:
@@ -305,7 +297,6 @@ class TestAccessibility:
         
         # Theme should be configured
         assert display.theme == mock_theme
-        pygame.quit()
     
     def test_encouraging_messages(self, mock_progress_tracker, mock_theme):
         """Verify messages are encouraging."""
@@ -317,7 +308,6 @@ class TestAccessibility:
         for _, _, _, data in display.stat_cards:
             assert data.text is not None
             assert len(data.text) > 0
-        pygame.quit()
 
 
 if __name__ == "__main__":
