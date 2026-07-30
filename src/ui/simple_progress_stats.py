@@ -155,7 +155,7 @@ class StatCard:
         screen.blit(title_surf, (x + 70, y + 15))
         
         # Value/Text (center, large)
-        value_font = self.theme.get_font(24)
+        value_font = self.theme.get_font(48)
         value_surf = value_font.render(data.text, True, self.theme.get_color("UI_TEXT_NORMAL"))
         
         # Wrap text if too long
@@ -164,7 +164,7 @@ class StatCard:
             wrapped_lines = self._wrap_text(data.text, value_font, self.CARD_WIDTH - 50)
             for i, line in enumerate(wrapped_lines[:2]):  # Max 2 lines
                 line_surf = value_font.render(line, True, self.theme.get_color("UI_TEXT_NORMAL"))
-                screen.blit(line_surf, (x + 20, y + 55 + i * 24))
+                screen.blit(line_surf, (x + 20, y + 45 + i * 48))
         else:
             screen.blit(value_surf, (x + 20, y + 55))
         
