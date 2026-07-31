@@ -28,12 +28,12 @@ jobs:
         id: test_run
         continue-on-error: true
         run: |
-          SDL_VIDEODRIVER=dummy TESTING=1 pytest tests/ -v --cov=src --cov-report=term-missing -n auto
+          pytest
           
       - name: Re-run failed tests (attempt 2)
         if: steps.test_run.outcome == 'failure'
         run: |
-          SDL_VIDEODRIVER=dummy TESTING=1 pytest tests/ -v --cov=src --cov-report=term-missing -n auto
+          pytest
 
       - name: Upload test results
         if: always()
