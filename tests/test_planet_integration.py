@@ -8,6 +8,7 @@ These tests verify the interaction between:
 """
 
 import unittest
+import pygame
 from unittest.mock import Mock, MagicMock
 from src.components.planet_manager import PlanetManager, PlanetStatus, create_planet_manager
 from src.components.progress_tracker import ProgressTracker, create_progress_tracker
@@ -61,6 +62,7 @@ class TestPlanetIntegration(unittest.TestCase):
         self.typography = MockTypography()
         
         self.challenge_screen = SpellingChallengeScreen(
+            screen=pygame.Surface((1024, 768)),
             word_manager=self.word_manager,
             audio_system=self.audio_system,
             typography=self.typography

@@ -201,18 +201,27 @@ class FeedbackController:
         Args:
             current_time: Current time in seconds
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         if not self.animation_active:
+            logger.info(f"Feedback update: animation_active=False, state={self.state}")
             return
         
         # Calculate animation progress
         elapsed = current_time - self.feedback_start_time
+        logger.info(f"Feedback update: state={self.state}, elapsed={elapsed:.2f}s, duration={self.config.success_display_duration}s, auto_advance_triggered={self._auto_advance_triggered}")
         
         if self.state == FeedbackState.SHOWING_SUCCESS:
             # Check for auto-advance BEFORE fade out
             if elapsed >= self.config.success_display_duration and not self._auto_advance_triggered:
+                logger.info(f"Feedback auto-advance triggered! elapsed={elapsed:.2f}s")
                 self._auto_advance_triggered = True
                 if self.on_auto_advance:
+                    logger.info("Calling on_auto_advance callback")
                     self.on_auto_advance()
+                else:
+                    logger.warning("on_auto_advance callback is None!")
             
             # Fade in quickly, then hold
             if elapsed < self.config.feedback_transition_time:
@@ -234,12 +243,15 @@ class FeedbackController:
     
     def _complete_feedback(self):
         """Complete the feedback display."""
+        # Save the current feedback type before resetting
+        completed_feedback = self.current_feedback
+        
         self.animation_active = False
         self.state = FeedbackState.IDLE
         self.current_feedback = FeedbackType.NONE
         
         if self.on_feedback_complete:
-            self.on_feedback_complete(self.current_feedback)
+            self.on_feedback_complete(completed_feedback)
         
         # Note: Auto-advance is triggered separately in update()
         # This method only handles feedback completion

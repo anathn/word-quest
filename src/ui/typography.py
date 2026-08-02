@@ -303,10 +303,7 @@ class Typography:
         return TextStyle(
             font_size=self.FONT_HUGE,
             color=self.WHITE,
-            bold=True,
-            shadow=True,
-            shadow_color=(0, 0, 0),
-            shadow_offset=(3, 3)
+            bold=True
         )
     
     @property

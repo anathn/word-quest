@@ -12,6 +12,7 @@ Tests cover:
 import unittest
 import sys
 import os
+import pygame
 from unittest.mock import Mock, MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -105,6 +106,7 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         self.typography = MockTypography()
         
         self.screen = SpellingChallengeScreen(
+            screen=pygame.Surface((1024, 768)),
             word_manager=self.word_manager,
             audio_system=self.audio_system,
             typography=self.typography
@@ -245,11 +247,17 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         word = self.word_manager.get_word_by_id("w001")  # because
         self.screen.present_word(word)
         
-        # Type remaining letters
+        # Track submit callback results
+        submit_results = []
+        self.screen.on_submit = lambda is_correct, answer: submit_results.append((is_correct, answer))
+        
+        # Type remaining letters - auto-submit will be triggered when complete
         for char in "ause":
             self.screen.handle_key_input(f'K_{char}', char)
         
-        is_correct, answer = self.screen.submit_answer()
+        # Verify auto-submit was called
+        self.assertTrue(len(submit_results) > 0, "Auto-submit should have been called when word was complete")
+        is_correct, answer = submit_results[0]
         
         self.assertTrue(is_correct)
         self.assertEqual(answer, "because")
@@ -259,11 +267,20 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         word = self.word_manager.get_word_by_id("w001")  # because
         self.screen.present_word(word)
         
+        # Track submit callback results
+        submit_results = []
+        self.screen.on_submit = lambda is_correct, answer: submit_results.append((is_correct, answer))
+        
         # Type wrong letters
         for char in "xyz":
             self.screen.handle_key_input(f'K_{char}', char)
         
-        is_correct, answer = self.screen.submit_answer()
+        # If max length is reached, auto-submit will be triggered
+        # Otherwise, manually submit
+        if len(submit_results) == 0:
+            is_correct, answer = self.screen.submit_answer()
+        else:
+            is_correct, answer = submit_results[0]
         
         self.assertFalse(is_correct)
         self.assertEqual(answer, "becxyz")
@@ -388,8 +405,10 @@ class TestCreateSpellingChallengeScreen(unittest.TestCase):
         word_manager = MockWordManager()
         audio_system = MockAudioSystem()
         typography = MockTypography()
+        mock_screen = pygame.Surface((1024, 768))
         
         screen = create_spelling_challenge_screen(
+            screen=mock_screen,
             word_manager=word_manager,
             audio_system=audio_system,
             typography=typography
@@ -411,6 +430,7 @@ class TestPerformanceTracking(unittest.TestCase):
         self.typography = MockTypography()
         
         self.screen = SpellingChallengeScreen(
+            screen=pygame.Surface((1024, 768)),
             word_manager=self.word_manager,
             audio_system=self.audio_system,
             typography=self.typography

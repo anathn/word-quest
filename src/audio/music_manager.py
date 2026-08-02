@@ -458,7 +458,7 @@ class MusicManager:
             pygame.mixer.music.play()
             
             if track.should_loop:
-                pygame.mixer.music.set_endevent(pygame.USER_EVENT + 1)
+                pygame.mixer.music.set_endevent(pygame.USEREVENT + 1)
             
             self._active_music = True
             return True

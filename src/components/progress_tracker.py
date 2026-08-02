@@ -35,6 +35,7 @@ class LegacyWordAttempt:
     hints_used: int = 0
     first_attempt_correct: bool = True
     completion_time: float = 0.0  # Seconds
+    completed_correctly: bool = False  # Whether the word was eventually spelled correctly
     timestamp: float = 0.0
 
 
@@ -321,6 +322,10 @@ class ProgressTracker:
         # Record the final attempt in legacy tracking only if record_attempt wasn't called
         if not self._word_attempt_recorded:
             self.record_attempt(is_correct)
+        
+        # Mark the word as completed correctly if the final answer is correct
+        if is_correct and self.current_word_id and self.current_word_id in self.word_history:
+            self.word_history[self.current_word_id].completed_correctly = True
         
         # Capture session tracker state BEFORE complete_word resets it
         # Word is mastered if spelled correctly on first attempt with no hints (STORY-002-03)
@@ -684,14 +689,26 @@ class ProgressTracker:
         if word_id not in self.mastered_words:
             self.mastered_words.add(word_id)
             
+            # Mark word as completed correctly since mastery implies successful completion
+            # Create history entry if it doesn't exist
+            if word_id not in self.word_history:
+                self.word_history[word_id] = LegacyWordAttempt(
+                    word_id=word_id,
+                    word_text=word_id,  # Use word_id as placeholder text
+                    attempts=1,
+                    first_attempt_correct=True,
+                    completed_correctly=True
+                )
+            else:
+                self.word_history[word_id].completed_correctly = True
+            
             # Persist to data store if available (STORY-002-02 integration)
             if self.data_store:
                 # Get current progress data from SessionTracker
                 progress_data = {
                     'student_id': self.session_tracker.student_id,
-                    'sessions': self.session_tracker.sessions,
-                    'mastered_words': list(self.mastered_words),
-                    'needs_practice': list(self.session_tracker.needs_practice)
+                    'completed_sessions': self.session_tracker.completed_sessions,
+                    'mastered_words': list(self.mastered_words)
                 }
                 self.data_store.save(self.session_tracker.student_id, progress_data)
             
@@ -767,6 +784,15 @@ class ProgressTracker:
         """
         return len(self.mastered_words)
     
+    def get_completed_count(self) -> int:
+        """
+        Get the count of words that were eventually spelled correctly.
+        
+        Returns:
+            Number of words completed correctly (regardless of attempts)
+        """
+        return sum(1 for wa in self.word_history.values() if wa.completed_correctly)
+    
     def get_total_words(self) -> int:
         """
         Get the total number of words in the word list.
@@ -789,9 +815,8 @@ class ProgressTracker:
         if self.data_store and self.session_tracker:
             progress_data = {
                 'student_id': self.session_tracker.student_id,
-                'sessions': self.session_tracker.sessions,
+                'completed_sessions': self.session_tracker.completed_sessions,
                 'mastered_words': list(self.mastered_words),
-                'needs_practice': list(self.session_tracker.needs_practice),
                 'total_words_in_list': self.total_words_in_list
             }
             self.data_store.save(self.session_tracker.student_id, progress_data)
@@ -799,13 +824,14 @@ class ProgressTracker:
     def get_progress_text(self) -> str:
         """
         Get the progress text in "X/Y words" format.
+        Shows completed words (attempted correctly at least once) / total words.
         
         Returns:
             Formatted progress string (e.g., "23/50 words")
         """
-        mastered = self.get_mastered_count()
+        completed = self.get_completed_count()
         total = self.get_total_words()
-        return f"{mastered}/{total} words"
+        return f"{completed}/{total} words"
     
     def get_mastered_words(self) -> Set[str]:
         """

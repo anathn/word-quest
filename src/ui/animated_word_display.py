@@ -46,7 +46,7 @@ class AnimatedWordDisplay:
         )
         
         # Get font from typography
-        self.font = self.typography.style_headline.font
+        self.font = self.typography.style_word_display.font
         
         # Create letter animator
         self.animator: Optional[LetterAnimator] = None
