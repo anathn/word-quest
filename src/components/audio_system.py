@@ -295,7 +295,8 @@ class AudioSystem:
                 pygame.mixer.init()
             
             # Construct file paths (try .ogg first, then .wav)
-            assets_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'audio')
+            # Assets are in /home/nathan/repo/word-quest/assets/audio/
+            assets_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'assets', 'audio')
             ogg_path = os.path.join(assets_dir, f'{sfx_name}.ogg')
             wav_path = os.path.join(assets_dir, f'{sfx_name}.wav')
             

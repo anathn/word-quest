@@ -251,9 +251,52 @@ class Game:
             logger.error(f"Failed to show parent dashboard: {e}", exc_info=True)
     
     def _start_game(self) -> None:
-        """Start the spelling game (placeholder for game screen)."""
-        logger.info("Start game clicked - game screen to be implemented")
-        # TODO: Push game screen
+        """Start the spelling game."""
+        logger.info("Starting spelling challenge game")
+        try:
+            # Import the spelling challenge screen and its factory
+            from src.screens.spelling_challenge import create_spelling_challenge_screen
+            from src.components.progress_tracker import ProgressTracker
+            
+            # Create progress tracker with data store if available
+            progress_tracker = None
+            if hasattr(self, 'data_store') and self.data_store:
+                progress_tracker = ProgressTracker(data_store=self.data_store)
+            
+            # Create spelling challenge screen using the factory
+            # which will get word_manager, audio_system, and typography as needed
+            challenge_screen = create_spelling_challenge_screen(
+                screen=self.screen,
+                progress_tracker=progress_tracker
+            )
+            
+            # Add callback to return to main menu
+            challenge_screen.on_back_to_menu = lambda: self.screen_manager.pop_screen()
+            
+            # Add callback for planet completion to show planet results screen
+            def on_planet_complete(planet_result):
+                logger.info(f"Planet complete!", extra={'planet_result': planet_result})
+                # Push the planet results screen to show completion stats
+                from src.screens.planet_results import PlanetResultsScreen
+                results_screen = PlanetResultsScreen(
+                    screen=self.screen,
+                    planet_result=planet_result,
+                    typography=challenge_screen.typography,
+                    audio_system=challenge_screen.audio_system
+                )
+                results_screen.on_back_to_menu = lambda: self.screen_manager.pop_screen()
+                self.screen_manager.push_screen(results_screen)
+            
+            challenge_screen.on_planet_complete = on_planet_complete
+            
+            # Push the spelling challenge screen
+            self.screen_manager.push_screen(challenge_screen)
+            
+            logger.info("Spelling challenge screen activated successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to start spelling challenge: {e}", exc_info=True)
+            # Optionally show an error message to the user
     
     def _handle_escape(self) -> None:
         """

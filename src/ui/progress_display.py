@@ -1,7 +1,7 @@
 """
-Progress Display Component (STORY-002-03)
+Progress Display Component
 
-Displays the words mastered counter in X/Y format with real-time updates.
+Displays the words completed counter in X/Y format with real-time updates.
 """
 
 import pygame
@@ -11,10 +11,10 @@ from src.components.progress_tracker import ProgressTracker
 
 class ProgressDisplay:
     """
-    Renders the words mastered counter UI component.
+    Renders the words completed counter UI component.
     
     Displays progress as "X/Y words" format with real-time updates
-    and visual feedback when a new word is mastered.
+    and visual feedback when a new word is completed.
     """
     
     # Colors
@@ -41,12 +41,12 @@ class ProgressDisplay:
         self.position = position
         self.font = pygame.font.Font(None, font_size)
         
-        # Flash animation state (STORY-002-03)
+        # Flash animation state
         self._flash_start_time: Optional[float] = None
         self._flash_duration = 0.5  # 500ms flash
         
-        # Track last mastered count to detect changes
-        self._last_mastered_count: Optional[int] = None
+        # Track last completed count to detect changes
+        self._last_completed_count: Optional[int] = None
     
     def set_position(self, position: Tuple[int, int]):
         """
@@ -57,14 +57,14 @@ class ProgressDisplay:
         """
         self.position = position
     
-    def trigger_mastery_flash(self):
+    def trigger_completion_flash(self):
         """
-        Trigger the green flash animation when a word is mastered.
+        Trigger the green flash animation when a word is completed.
         """
         self._flash_start_time = pygame.time.get_ticks() / 1000.0
     
     def _is_flashing(self) -> bool:
-        """Check if the mastery flash is currently active."""
+        """Check if the completion flash is currently active."""
         if self._flash_start_time is None:
             return False
         
@@ -124,14 +124,14 @@ class ProgressDisplay:
         Checks for progress changes and triggers animations as needed.
         This should be called each frame during the game loop.
         """
-        # Check if a new word was mastered
-        current_mastered = self.tracker.get_mastered_count()
+        # Check if a new word was completed
+        current_completed = self.tracker.get_completed_count()
         
-        if self._last_mastered_count is not None and current_mastered > self._last_mastered_count:
-            # A word was mastered, trigger flash
-            self.trigger_mastery_flash()
+        if self._last_completed_count is not None and current_completed > self._last_completed_count:
+            # A word was completed, trigger flash
+            self.trigger_completion_flash()
         
-        self._last_mastered_count = current_mastered
+        self._last_completed_count = current_completed
 
 
 # Factory function

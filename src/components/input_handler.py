@@ -9,6 +9,7 @@ from typing import Optional, Callable, List
 from dataclasses import dataclass
 from enum import Enum
 import time
+import pygame
 
 
 class InputState(Enum):
@@ -62,6 +63,27 @@ class InputHandler:
         self.on_invalid_input: Optional[Callable] = None
         self.on_submit: Optional[Callable] = None
         self.on_complete: Optional[Callable] = None
+    
+    def handle_event(self, event) -> Optional[InputEvent]:
+        """
+        Handle a pygame event.
+        
+        This is a convenience method that extracts key information from
+        pygame events and delegates to handle_keydown().
+        
+        Args:
+            event: Pygame event object
+            
+        Returns:
+            InputEvent if input was processed, None otherwise
+        """
+        if event.type == pygame.KEYDOWN:
+            # Get key name (e.g., 'K_a', 'K_BACKSPACE')
+            key_name = pygame.key.name(event.key)
+            # Get unicode character
+            unicode_char = event.unicode if event.unicode else None
+            return self.handle_keydown(key_name, unicode_char)
+        return None
     
     def handle_keydown(self, key: str, unicode_char: Optional[str] = None) -> Optional[InputEvent]:
         """
@@ -427,6 +449,69 @@ class InputDisplay:
         offset_x = math.sin(angle) * self.shake_intensity * (1 - progress)  # Fade out intensity
         
         return (offset_x, 0)
+
+    def render(self, screen, position: tuple = None, font_size: int = 48):
+        """
+        Render the input display on the screen.
+        
+        Args:
+            screen: Pygame surface to render on
+            position: Optional position (x, y) for center placement, defaults to center
+            font_size: Font size for letter rendering (default 48)
+        """
+        # Get current shake offset
+        shake_offset = self.get_shake_offset()
+        
+        # Calculate default center position
+        if position is None:
+            screen_rect = screen.get_rect()
+            # Center horizontally, slightly below middle vertically
+            position = (screen_rect.centerx, screen_rect.centery)
+        
+        x, y = position
+        
+        # Create font for rendering letters
+        font = pygame.font.Font(None, font_size)
+        
+        # Calculate starting X position (centered)
+        total_width = self.max_length * (font_size + self.letter_spacing)
+        current_x = x - total_width // 2
+        
+        # Render each letter
+        for i, letter in enumerate(self.letters):
+            # Get animation progress for this letter
+            anim = self.animating_letters[i] if i < len(self.animating_letters) else None
+            alpha = 255
+            if anim and anim.get('type') == 'fade_in':
+                alpha = int(255 * anim.get('progress', 1.0))
+            
+            # Render letter
+            letter_text = letter.upper()
+            letter_surf = font.render(letter_text, True, (255, 255, 255))
+            
+            # Apply shake offset if active
+            letter_x = current_x + shake_offset[0]
+            letter_y = y + shake_offset[1]
+            
+            # Create surf with alpha if needed
+            if alpha < 255:
+                letter_surf.set_alpha(alpha)
+            
+            screen.blit(letter_surf, (letter_x, letter_y))
+            
+            current_x += font_size + self.letter_spacing
+        
+        # Render underscore placeholders for remaining slots
+        for _ in range(self.max_length - len(self.letters)):
+            underscore_surf = font.render('_', True, (100, 100, 100))
+            screen.blit(underscore_surf, (current_x, y))
+            current_x += font_size + self.letter_spacing
+        
+        # Render cursor
+        if self.cursor_visible:
+            cursor_x = current_x
+            cursor_rect = pygame.Rect(cursor_x, y - font_size // 3, 2, font_size * 2 // 3)
+            pygame.draw.rect(screen, (255, 255, 255), cursor_rect)
 
 
 # Factory function
