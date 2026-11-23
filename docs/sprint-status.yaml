@@ -263,13 +263,13 @@ epics:
     name: "Progress Tracking"
     priority: P0
     description: "Data collection, storage, and visualization"
-    status: "completed"
-    progress_percent: 100
+    status: "in-progress"
+    progress_percent: 87
     dependencies: ["EPIC-001"]
     blockers: []
-    notes: "ALL STORIES COMPLETE. STORY-002-01 through STORY-002-06 all approved. Epic production-ready. 558 total tests passing (513 previous + 45 new for STORY-002-06)."
+    notes: "STORY-002-01 through STORY-002-06 approved. STORY-002-07 adds per-word auto-save and crash recovery and is ready for review."
     target_sprint: 1
-    estimated_points: 26
+    estimated_points: 31
     completed_points: 27
     stories:
       - id: STORY-002-01
@@ -494,17 +494,37 @@ epics:
           - Performance: Excellent (<10ms render time)
           - Recommendation: READY TO MERGE
 
+      - id: STORY-002-07
+        title: "Per-word auto-save and crash recovery"
+        description: "Persist each completed word and resume interrupted planets"
+        priority: P0
+        status: "review"
+        assignee: "agent"
+        started_date: "2026-11-22"
+        completed_date: "2026-11-22"
+        branch: "EPIC-002-STORY-007"
+        story_file: "docs/stories/STORY-002-07.md"
+        acceptance_criteria:
+          - "Save after every completed word"
+          - "Resume at the next unfinished word"
+          - "Preserve session, planet, and galaxy progress"
+          - "Use atomic progress-file writes"
+        complexity: "High"
+        points: 5
+        blockers: []
+        notes: "Implementation complete. Per-word checkpoints, atomic writes, session/planet restoration, and galaxy progression are covered by automated tests. Full suite: 2,164 tests and 8 subtests passing."
+
   - id: EPIC-003
     name: "Parent Dashboard"
     priority: P0
     description: "Parent-facing management and monitoring"
     status: "in-progress"
-    progress_percent: 65
+    progress_percent: 88
     dependencies: ["EPIC-002"]
     blockers: []
-    notes: "ALL 6 STORIES COMPLETE. STORY-003-01 through STORY-003-06 all approved and merged. EPIC-003 complete and production-ready."
+    notes: "STORY-003-01 through STORY-003-06 approved and merged. STORY-003-07 adds a complete bundled galaxy and is ready for review."
     target_sprint: 2
-    estimated_points: 21
+    estimated_points: 24
     completed_points: 21
     stories:
       - id: STORY-003-01
@@ -723,6 +743,26 @@ epics:
         blockers: []
         notes: "STORY COMPLETE AND APPROVED. Merged to main via PR #21 (commit 5742efc). Email notification configuration implemented. All tests passing. Code review passed."
         review_document: "docs/reviews/STORY-003-06-review-2026-07-12.md"
+
+      - id: STORY-003-07
+        title: "Bundled galaxy word content"
+        description: "Ship 60 ready-to-play words across 12 planets"
+        priority: P0
+        status: "review"
+        assignee: "agent"
+        started_date: "2026-11-22"
+        completed_date: "2026-11-22"
+        branch: "EPIC-002-STORY-007"
+        story_file: "docs/stories/STORY-003-07.md"
+        acceptance_criteria:
+          - "At least 50 bundled words"
+          - "60 words for one complete galaxy"
+          - "Four difficulty levels"
+          - "Definitions and context sentences for every word"
+        complexity: "Medium"
+        points: 3
+        blockers: []
+        notes: "Implementation complete. Bundled content provides 60 words across 12 planets and four equal difficulty levels. Full suite passing."
 
   - id: EPIC-004
     name: "Motivation Systems"

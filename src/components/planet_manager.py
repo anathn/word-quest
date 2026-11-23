@@ -307,6 +307,27 @@ class PlanetManager:
     def get_word_results(self) -> List[WordResult]:
         """Get all word results."""
         return self.word_results.copy()
+
+    def restore_progress(self, word_results: List[Dict], next_word_index: int) -> None:
+        """Restore completed words from a crash-recovery checkpoint."""
+        restored = []
+        valid_word_ids = {word.id for word in self.words}
+        for result in word_results:
+            if result.get('word_id') not in valid_word_ids:
+                continue
+            restored.append(WordResult(
+                word_id=result['word_id'],
+                word_text=result.get('word_text', ''),
+                correct=bool(result.get('correct', False)),
+                attempts=max(1, int(result.get('attempts', 1)))
+            ))
+
+        self.word_results = restored[:self.WORDS_PER_PLANET]
+        self.current_word_index = min(
+            max(int(next_word_index), len(self.word_results)),
+            len(self.words)
+        )
+        self.is_complete = len(self.word_results) >= self.WORDS_PER_PLANET
     
     def is_planet_complete(self) -> bool:
         """Check if the planet is complete."""

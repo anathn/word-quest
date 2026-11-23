@@ -191,7 +191,8 @@ class TestPlanetIntegration(unittest.TestCase):
         # Note: ProgressTracker._complete_planet is called automatically when 5 words are recorded
         
         # Verify session data
-        session = self.progress_tracker.current_session
+        session = self.progress_tracker.sessions[-1]
+        self.assertIsNone(self.progress_tracker.current_session)
         self.assertEqual(len(session.planets_completed), 1)
         planet_data = session.planets_completed[0]
         self.assertEqual(planet_data.first_attempt_correct, 3)

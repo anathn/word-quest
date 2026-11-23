@@ -123,6 +123,10 @@ python main.py
 - **Planets**: Each planet = 5-word set
 - **Solar Systems**: 3 planets = 1 solar system (15 words)
 - **Galaxies**: 4 solar systems = 1 galaxy (60 words)
+- **Bundled Content**: A fresh install includes one complete 60-word galaxy
+  across four difficulty levels in `src/data/word_lists.json`
+- **Custom Content**: Parent CSV imports and lists under `data/word_lists/`
+  are optional overrides
 
 ### Mastery Requirements
 - **Pass**: 4/5 words correct on first attempt → unlock next planet

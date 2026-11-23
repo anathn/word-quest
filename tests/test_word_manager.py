@@ -185,7 +185,17 @@ class TestWordManager(unittest.TestCase):
     def test_get_total_word_count(self):
         """Test total word count."""
         count = self.manager.get_total_word_count()
-        self.assertGreater(count, 0)
+        self.assertEqual(count, 60)
+
+    def test_bundled_content_fills_one_galaxy(self):
+        """Bundled content provides 12 complete five-word planets."""
+        self.assertEqual(self.manager.get_planet_count(), 12)
+        self.assertEqual(
+            self.manager.get_all_planet_ids(),
+            [f"planet-{number}" for number in range(1, 13)]
+        )
+        for planet_id in self.manager.get_all_planet_ids():
+            self.assertEqual(len(self.manager.get_words_for_planet(planet_id)), 5)
     
     def test_get_difficulty_distribution(self):
         """Test difficulty distribution calculation."""
@@ -195,6 +205,8 @@ class TestWordManager(unittest.TestCase):
         self.assertIn(1, distribution)
         self.assertIn(2, distribution)
         self.assertIn(3, distribution)
+        self.assertIn(4, distribution)
+        self.assertEqual(distribution, {1: 15, 2: 15, 3: 15, 4: 15})
         
         # Sum should equal total count
         self.assertEqual(sum(distribution.values()), self.manager.get_total_word_count())
@@ -230,6 +242,10 @@ class TestWordManager(unittest.TestCase):
         # Difficulty 3 words should have 1 starter letter
         diff3_word = self.manager.get_word_by_id("w011")  # accomplish
         self.assertEqual(diff3_word.get_starter_letters(), "a")
+
+        # Difficulty 4 challenge words have no starter letters
+        diff4_word = self.manager.get_word_by_id("w046")  # responsibility
+        self.assertEqual(diff4_word.get_starter_letters(), "")
 
 
 class TestWordManagerSingleton(unittest.TestCase):

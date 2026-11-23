@@ -133,6 +133,8 @@ class ProgressTracker:
         self.current_planet_id: Optional[str] = None
         self.current_planet_name: Optional[str] = None
         self.planet_word_results: List[Dict] = []
+        self.planet_word_order: List[str] = []
+        self._active_checkpoint: Optional[Dict] = None
         
         # Galaxy tracking (STORY-001-06)
         self.galaxy_progress = GalaxyProgress()
@@ -169,13 +171,131 @@ class ProgressTracker:
                 # Load total words count from persistence (avoid reset to 0)
                 if 'total_words_in_list' in load_result.data:
                     self.total_words_in_list = load_result.data['total_words_in_list']
+                galaxy = load_result.data.get('galaxy_progress', {})
+                self.galaxy_progress.total_planets = int(
+                    galaxy.get('total_planets', 0)
+                )
+                self.galaxy_progress.completed_planets = int(
+                    galaxy.get('completed_planets', 0)
+                )
+                self.galaxy_progress.current_planet_number = int(
+                    galaxy.get('current_planet_number', 1)
+                )
+                self.galaxy_progress.unlocked_planets = int(
+                    galaxy.get('unlocked_planets', 0)
+                )
+                self._restore_checkpoint(load_result.data.get('active_checkpoint'))
         
         # Callbacks for analytics
         self.on_hint_used: Optional[Callable[[Dict], None]] = None
         self.on_word_complete: Optional[Callable[[Dict], None]] = None
         self.on_planet_complete: Optional[Callable[[Dict], None]] = None
+
+    def _restore_checkpoint(self, checkpoint: Optional[Dict]) -> None:
+        """Restore in-progress session and planet state from disk."""
+        if not checkpoint or not checkpoint.get('planet_id'):
+            return
+
+        self._active_checkpoint = checkpoint
+        self.current_planet_id = checkpoint['planet_id']
+        self.current_planet_name = checkpoint.get('planet_name', checkpoint['planet_id'])
+        self.planet_word_results = list(checkpoint.get('word_results', []))
+        self.planet_word_order = list(checkpoint.get('word_ids', []))
+
+        galaxy = checkpoint.get('galaxy_progress', {})
+        self.galaxy_progress.total_planets = int(galaxy.get('total_planets', 0))
+        self.galaxy_progress.completed_planets = int(galaxy.get('completed_planets', 0))
+        self.galaxy_progress.current_planet_number = int(
+            galaxy.get('current_planet_number', 1)
+        )
+        self.galaxy_progress.unlocked_planets = int(galaxy.get('unlocked_planets', 0))
+
+        session_data = checkpoint.get('session')
+        if session_data:
+            restored = self.session_tracker.restore_session(session_data)
+            self.current_session = SessionData(
+                session_id=restored.session_id,
+                start_time=restored.start_time.timestamp(),
+                words_attempted=len(restored.words),
+                words_correct=sum(1 for word in restored.words if word.correct),
+                current_planet_id=self.current_planet_id
+            )
+            self.sessions.append(self.current_session)
+
+    def get_active_checkpoint(self) -> Optional[Dict]:
+        """Return a copy of the active crash-recovery checkpoint."""
+        return self._active_checkpoint.copy() if self._active_checkpoint else None
+
+    def set_planet_word_order(self, word_ids: List[str]) -> None:
+        """Record the exact planet word order used for crash recovery."""
+        self.planet_word_order = list(word_ids)
+
+    def save_checkpoint(self) -> bool:
+        """Persist the active planet after a completed word."""
+        if (
+            not self.data_store
+            or not self.current_planet_id
+            or not self.session_tracker.current_session
+        ):
+            return False
+
+        load_result = self.data_store.load(self.session_tracker.student_id)
+        progress_data = load_result.data or self.session_tracker._create_empty_progress()
+        checkpoint = {
+            'version': 1,
+            'updated_at': datetime.now().isoformat(),
+            'planet_id': self.current_planet_id,
+            'planet_name': self.current_planet_name,
+            'word_ids': list(self.planet_word_order),
+            'word_results': list(self.planet_word_results),
+            'next_word_index': len(self.planet_word_results),
+            'session': self.session_tracker.current_session.to_dict(),
+            'galaxy_progress': {
+                'total_planets': self.galaxy_progress.total_planets,
+                'completed_planets': self.galaxy_progress.completed_planets,
+                'current_planet_number': self.galaxy_progress.current_planet_number,
+                'unlocked_planets': self.galaxy_progress.unlocked_planets
+            }
+        }
+        progress_data['active_checkpoint'] = checkpoint
+        progress_data['mastered_words'] = sorted(self.mastered_words)
+        progress_data['total_words_in_list'] = self.total_words_in_list
+        result = self.data_store.save(self.session_tracker.student_id, progress_data)
+        if result.success:
+            self._active_checkpoint = checkpoint
+        return result.success
+
+    def clear_checkpoint(self) -> bool:
+        """Clear crash-recovery data after a planet is safely completed."""
+        self._active_checkpoint = None
+        if not self.data_store:
+            return True
+        load_result = self.data_store.load(self.session_tracker.student_id)
+        progress_data = load_result.data or self.session_tracker._create_empty_progress()
+        progress_data.pop('active_checkpoint', None)
+        return self.data_store.save(
+            self.session_tracker.student_id, progress_data
+        ).success
+
+    def _persist_progress_fields(self) -> bool:
+        """Merge summary fields into the canonical progress document."""
+        if not self.data_store:
+            return False
+        load_result = self.data_store.load(self.session_tracker.student_id)
+        progress_data = load_result.data or self.session_tracker._create_empty_progress()
+        progress_data['mastered_words'] = sorted(self.mastered_words)
+        progress_data['total_words_in_list'] = self.total_words_in_list
+        progress_data['galaxy_progress'] = {
+            'total_planets': self.galaxy_progress.total_planets,
+            'completed_planets': self.galaxy_progress.completed_planets,
+            'current_planet_number': self.galaxy_progress.current_planet_number,
+            'unlocked_planets': self.galaxy_progress.unlocked_planets
+        }
+        return self.data_store.save(
+            self.session_tracker.student_id, progress_data
+        ).success
     
-    def start_session(self, session_id: str) -> SessionData:
+    def start_session(self, session_id: Optional[str] = None) -> SessionData:
         """
         Start a new practice session.
         
@@ -185,14 +305,12 @@ class ProgressTracker:
         Returns:
             The new SessionData object
         """
+        tracked_session = self.session_tracker.start_session(session_id=session_id)
         self.current_session = SessionData(
-            session_id=session_id,
-            start_time=time.time()
+            session_id=tracked_session.session_id,
+            start_time=tracked_session.start_time.timestamp()
         )
         self.sessions.append(self.current_session)
-        
-        # Initialize SessionTracker (STORY-002-01)
-        self.session_tracker.start_session(session_id=session_id)
         
         # Initialize badge tracking for session (STORY-004-03)
         if self.badge_manager:
@@ -213,7 +331,9 @@ class ProgressTracker:
             self.current_session = None
             
             # Complete session in SessionTracker (STORY-002-01)
-            self.session_tracker.complete_session()
+            completed_session = self.session_tracker.complete_session(
+                planet=self.current_planet_id
+            )
             
             # End badge tracking session and persist (STORY-004-03)
             if self.badge_manager:
@@ -222,6 +342,8 @@ class ProgressTracker:
             # End sticker tracking session and persist (STORY-004-06)
             if self.sticker_manager:
                 self.sticker_manager.end_session()
+            return completed_session
+        return None
     
     def start_word(self, word_id: str, word_text: str):
         """
@@ -520,9 +642,11 @@ class ProgressTracker:
             planet_id: Unique identifier for the planet
             planet_name: Display name for the planet
         """
-        self.current_planet_id = planet_id
-        self.current_planet_name = planet_name
-        self.planet_word_results.clear()
+        if self.current_planet_id != planet_id:
+            self.current_planet_id = planet_id
+            self.current_planet_name = planet_name
+            self.planet_word_results.clear()
+            self.planet_word_order.clear()
         
         if self.current_session:
             self.current_session.current_planet_id = planet_id
@@ -545,6 +669,9 @@ class ProgressTracker:
             'first_attempt': attempts == 1
         }
         self.planet_word_results.append(result)
+
+        # Persist immediately so a crash loses at most the unfinished word.
+        self.save_checkpoint()
         
         # Check if planet is complete (5 words)
         if len(self.planet_word_results) >= 5:
@@ -640,11 +767,20 @@ class ProgressTracker:
                 self.galaxy_progress.completed_planets + 1,
                 self.galaxy_progress.total_planets
             )
+
+        # A completed planet is a completed practice session. Keep the
+        # checkpoint if the final session save failed so it can be recovered.
+        pending_before = len(self.session_tracker.pending_sessions)
+        self.end_session()
+        self._persist_progress_fields()
+        if len(self.session_tracker.pending_sessions) == pending_before:
+            self.clear_checkpoint()
         
         # Reset planet tracking
         self.current_planet_id = None
         self.current_planet_name = None
         self.planet_word_results.clear()
+        self.planet_word_order.clear()
     
     def reset(self):
         """Reset the tracker (useful for testing)."""
@@ -704,13 +840,7 @@ class ProgressTracker:
             
             # Persist to data store if available (STORY-002-02 integration)
             if self.data_store:
-                # Get current progress data from SessionTracker
-                progress_data = {
-                    'student_id': self.session_tracker.student_id,
-                    'completed_sessions': self.session_tracker.completed_sessions,
-                    'mastered_words': list(self.mastered_words)
-                }
-                self.data_store.save(self.session_tracker.student_id, progress_data)
+                self._persist_progress_fields()
             
             return True
         
@@ -813,13 +943,7 @@ class ProgressTracker:
         
         # Persist total words count if data_store available (STORY-002-02)
         if self.data_store and self.session_tracker:
-            progress_data = {
-                'student_id': self.session_tracker.student_id,
-                'completed_sessions': self.session_tracker.completed_sessions,
-                'mastered_words': list(self.mastered_words),
-                'total_words_in_list': self.total_words_in_list
-            }
-            self.data_store.save(self.session_tracker.student_id, progress_data)
+            self._persist_progress_fields()
     
     def get_progress_text(self) -> str:
         """
@@ -1089,6 +1213,8 @@ class ProgressTracker:
             total: Total planet count
         """
         self.galaxy_progress.total_planets = total
+        if total > 0 and self.galaxy_progress.unlocked_planets == 0:
+            self.galaxy_progress.unlocked_planets = 1
 
 
 # Factory function

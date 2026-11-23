@@ -59,6 +59,7 @@ class Game:
         # Initialize managers
         self.screen_manager = ScreenManager(screen)
         self.data_store = DataStore()
+        self.progress_tracker = None
         self.player_preferences_manager: Optional[PlayerPreferencesManager] = None
         
         # Audio managers (lazy loaded for performance)
@@ -262,6 +263,7 @@ class Game:
             progress_tracker = None
             if hasattr(self, 'data_store') and self.data_store:
                 progress_tracker = ProgressTracker(data_store=self.data_store)
+                self.progress_tracker = progress_tracker
             
             # Create spelling challenge screen using the factory
             # which will get word_manager, audio_system, and typography as needed
@@ -341,9 +343,11 @@ class Game:
         except Exception as e:
             logger.warning(f"Error stopping music: {e}")
             
-        # Save all data
+        # Preserve any in-progress planet and retry pending session saves.
         try:
-            self.data_store.save_all()
+            if self.progress_tracker:
+                self.progress_tracker.save_checkpoint()
+                self.progress_tracker.session_tracker.flush_pending_sessions()
             if self.player_preferences_manager:
                 self.player_preferences_manager.save_settings()
         except Exception as e:

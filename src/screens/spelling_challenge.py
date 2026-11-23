@@ -174,6 +174,10 @@ class SpellingChallengeScreen(Screen):
         
         # Initialize UI components that need screen dimensions
         self._initialize_ui_components()
+
+        # Start a new session unless ProgressTracker restored an interrupted one.
+        if self.progress_tracker and not self.progress_tracker.current_session:
+            self.progress_tracker.start_session()
         
         # Start presenting the first word
         try:
@@ -204,15 +208,69 @@ class SpellingChallengeScreen(Screen):
     
     def start_new_word(self):
         """Start presenting a new word to spell."""
-        # Get the next word from word manager
         if not self.word_manager:
             logger.warning("Word manager not available")
             return
         
         logger.info(f"Starting new word - word_manager has {len(self.word_manager.all_words)} words")
-        
-        # Get a random word for the challenge
-        word = self.word_manager.get_random_word() if self.word_manager else None
+
+        if not self.planet_manager:
+            checkpoint = (
+                self.progress_tracker.get_active_checkpoint()
+                if self.progress_tracker else None
+            )
+            planet_number = (
+                self.progress_tracker.get_current_planet_number()
+                if self.progress_tracker else 1
+            )
+            planet_id = (
+                checkpoint.get('planet_id')
+                if checkpoint else f"planet-{planet_number}"
+            )
+            planet_info = self.word_manager.get_planet_info(planet_id)
+            if not planet_info:
+                planet_ids = self.word_manager.get_all_planet_ids()
+                if not planet_ids:
+                    logger.warning("No planet word lists available")
+                    return
+                planet_id = planet_ids[0]
+                planet_info = self.word_manager.get_planet_info(planet_id)
+
+            planet_words = self.word_manager.get_words_for_planet(planet_id)
+            if checkpoint and checkpoint.get('word_ids'):
+                words_by_id = {word.id: word for word in planet_words}
+                ordered = [
+                    words_by_id[word_id]
+                    for word_id in checkpoint['word_ids']
+                    if word_id in words_by_id
+                ]
+                ordered.extend(word for word in planet_words if word not in ordered)
+                planet_words = ordered
+
+            self.current_planet_id = planet_id
+            self.current_planet_name = planet_info['planet_name']
+            self.planet_manager = create_planet_manager(
+                planet_id, self.current_planet_name, planet_words
+            )
+
+            if checkpoint and checkpoint.get('planet_id') == planet_id:
+                self.planet_manager.restore_progress(
+                    checkpoint.get('word_results', []),
+                    checkpoint.get('next_word_index', 0)
+                )
+
+            if self.progress_tracker:
+                self.progress_tracker.set_total_planets(
+                    self.word_manager.get_planet_count()
+                )
+                self.progress_tracker.start_planet(
+                    planet_id, self.current_planet_name
+                )
+                self.progress_tracker.set_planet_word_order(
+                    [word.id for word in self.planet_manager.words]
+                )
+
+        word = self.planet_manager.get_current_word()
         if not word:
             logger.warning("No words available")
             return
@@ -224,7 +282,8 @@ class SpellingChallengeScreen(Screen):
         # Present the word with screen dimensions for star field
         screen_width = self.screen_rect.width if self.screen_rect else 800
         screen_height = self.screen_rect.height if self.screen_rect else 600
-        self.present_word(word, planet_id="planet-1", planet_name="Mercury", 
+        self.present_word(word, planet_id=self.current_planet_id,
+                         planet_name=self.current_planet_name,
                          screen_width=screen_width, screen_height=screen_height)
     
     def present_word(self, word, planet_id: Optional[str] = None, planet_name: Optional[str] = None, screen_width: int = 800, screen_height: int = 600):
@@ -261,9 +320,10 @@ class SpellingChallengeScreen(Screen):
             # Get all words for this planet from word_manager
             planet_words = self.word_manager.get_words_for_planet(planet_id)
             self.planet_manager = create_planet_manager(planet_id, self.current_planet_name, planet_words)
-            
-            # Set up planet completion callback
-            self.planet_manager.on_planet_complete = self._on_planet_complete
+            if self.progress_tracker:
+                self.progress_tracker.set_planet_word_order(
+                    [planet_word.id for planet_word in planet_words]
+                )
         
         # Extract starter letters based on difficulty
         self.starter_letters = list(word.get_starter_letters())
@@ -502,11 +562,12 @@ class SpellingChallengeScreen(Screen):
     def _on_auto_advance(self):
         """Handle auto-advance after correct answer."""
         logger.info("_on_auto_advance called!")
+        new_streak = 0
+        attempts = 1
         
         # Record word result for planet tracking (STORY-001-05)
         if self.planet_manager and self.current_word:
             # Get attempts from input handler
-            attempts = 1  # Default to 1, will be updated if hints were used
             if self.hint_manager:
                 hint_analytics = self.hint_manager.get_analytics()
                 attempts = hint_analytics.get('hints_used', 0) + 1  # hints + original attempt
@@ -526,6 +587,15 @@ class SpellingChallengeScreen(Screen):
                 self._last_mastered_count = self.progress_tracker.get_mastered_count()
             
             self.progress_tracker.complete_word(True)
+
+            # Auto-save the completed word and planet position to disk.
+            if self.current_word and self.current_planet_id:
+                self.progress_tracker.record_planet_word_result(
+                    word_id=self.current_word.id,
+                    word_text=self.current_word.text,
+                    correct=True,
+                    attempts=attempts
+                )
             
             # Trigger completion flash if a new word was completed
             if self.progress_display:
@@ -557,9 +627,13 @@ class SpellingChallengeScreen(Screen):
         
         if self.on_word_complete:
             self.on_word_complete(True)  # True = success
-        
-        # Start the next word
-        self.start_new_word()
+
+        if self.planet_manager and self.planet_manager.is_planet_complete():
+            self._on_planet_complete(self.planet_manager.get_completion_status())
+        else:
+            if self.planet_manager:
+                self.planet_manager.get_next_word()
+            self.start_new_word()
     
     def _on_hint_requested(self):
         """Handle hint request after incorrect answer."""
@@ -736,16 +810,6 @@ class SpellingChallengeScreen(Screen):
         Args:
             planet_result: PlanetResult from PlanetManager
         """
-        # Also record in progress tracker
-        if self.progress_tracker and self.current_planet_id:
-            for word_result in planet_result.word_results:
-                self.progress_tracker.record_planet_word_result(
-                    word_id=word_result.word_id,
-                    word_text=word_result.word_text,
-                    correct=word_result.correct,
-                    attempts=word_result.attempts
-                )
-        
         # Notify callback
         if self.on_planet_complete:
             self.on_planet_complete(planet_result)

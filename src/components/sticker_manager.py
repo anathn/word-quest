@@ -291,10 +291,11 @@ class StickerManager:
         
         try:
             sticker_list = [sticker.to_dict() for sticker in self.unlocked_stickers.values()]
-            progress_data = {
-                'student_id': self.student_id,
-                'unlocked_stickers': sticker_list
-            }
+            load_result = self.data_store.load(self.student_id)
+            progress_data = (
+                load_result.data if isinstance(load_result.data, dict) else {}
+            )
+            progress_data['unlocked_stickers'] = sticker_list
             self.data_store.save(self.student_id, progress_data)
         except Exception as e:
             logger.error(f"Error saving unlocked stickers: {e}")

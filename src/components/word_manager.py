@@ -194,7 +194,7 @@ class WordManager:
         Get all words of a specific difficulty level.
         
         Args:
-            difficulty: The difficulty level (1-3)
+            difficulty: The difficulty level (1-4)
             
         Returns:
             List of SpellingWord objects
