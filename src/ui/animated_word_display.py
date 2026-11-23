@@ -6,6 +6,7 @@ fade-in, bounce effects, and distinct styles for different letter types.
 """
 
 from typing import Optional, List, Tuple, Callable
+from dataclasses import replace
 import pygame
 
 from .letter_animator import LetterAnimator, AnimationConfig, create_letter_animator
@@ -45,8 +46,20 @@ class AnimatedWordDisplay:
             starter_count=self.DEFAULT_STARTER_COUNT
         )
         
-        # Get font from typography
-        self.font = self.typography.style_word_display.font
+        # Resolve the configured font through Typography. TextStyle describes
+        # a font but does not itself contain a pygame Font instance.
+        style = self.typography.style_word_display
+        try:
+            style = replace(style, font_size=self.config.font_size)
+        except TypeError:
+            # Lightweight test doubles may not use the TextStyle dataclass.
+            pass
+        get_font = getattr(self.typography, "get_font", None)
+        self.font = (
+            get_font(style) if callable(get_font) else getattr(style, "font", None)
+        )
+        if self.font is None:
+            self.font = pygame.font.Font(None, self.config.font_size)
         
         # Create letter animator
         self.animator: Optional[LetterAnimator] = None

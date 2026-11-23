@@ -25,6 +25,7 @@ from src.screens.spelling_challenge import (
     create_spelling_challenge_screen
 )
 from src.components.word_manager import SpellingWord
+from src.ui.typography import Typography
 
 
 class MockAudioSystem:
@@ -307,6 +308,25 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         self.screen.present_word(word)
         
         self.assertEqual(self.screen.get_word_text(), "because")
+
+    def test_present_word_with_real_typography_initializes_display(self):
+        """Real Typography should create the animated display without errors."""
+        screen = SpellingChallengeScreen(
+            screen=pygame.Surface((1024, 768)),
+            word_manager=self.word_manager,
+            audio_system=self.audio_system,
+            typography=Typography()
+        )
+
+        result = screen.present_word(self.word_manager.words[0])
+
+        self.assertTrue(result)
+        self.assertIsNotNone(screen.presentation)
+        self.assertIsNotNone(screen.animated_word_display)
+        self.assertIsInstance(screen.animated_word_display.font, pygame.font.Font)
+        self.assertEqual(screen.state, ChallengeState.READY_FOR_INPUT)
+        screen.update()
+        screen.draw()
     
     def test_get_definition(self):
         """Test getting the word definition."""

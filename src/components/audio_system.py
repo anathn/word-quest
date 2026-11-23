@@ -136,19 +136,21 @@ class AudioSystem:
             return self._speak_pyttsx3(text, on_complete)
         elif self.tts_engine_type == 'gtts':
             return self._speak_gtts(text, on_complete)
-        
+
+        # Audio marked available but no usable engine — unlock callers.
+        if on_complete:
+            on_complete()
         return False
     
     def _speak_pyttsx3(self, text: str, on_complete: Optional[Callable] = None) -> bool:
         """Speak using pyttsx3 engine."""
         try:
-            def on_end_callback(_):
-                if on_complete:
-                    on_complete()
-            
             self.tts_engine.say(text)
-            self.tts_engine.connect('end-phrase', on_end_callback)
+            # runAndWait blocks until speech finishes; call completion after.
+            # Do not rely on engine-specific end events — they are inconsistent.
             self.tts_engine.runAndWait()
+            if on_complete:
+                on_complete()
             return True
         except Exception as e:
             print(f"pyttsx3 speak error: {e}")

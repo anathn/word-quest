@@ -159,9 +159,6 @@ class SpellingChallengeScreen(Screen):
         
         # Animated word display (STORY-005-05)
         self.animated_word_display: Optional[AnimatedWordDisplay] = None
-        
-        # TTS Manager for visual indicator (STORY-006-02)
-        self.tts_manager: Optional[TTSManager] = None
     
     def on_enter(self):
         """Called when screen becomes active - start gameplay music and initialize UI."""
@@ -183,7 +180,7 @@ class SpellingChallengeScreen(Screen):
         try:
             self.start_new_word()
         except Exception as e:
-            logger.error(f"Failed to start first word: {e}")
+            logger.exception(f"Failed to start first word: {e}")
             # Screen still renders, just with no word presented
     
     def _initialize_ui_components(self):
@@ -398,24 +395,29 @@ class SpellingChallengeScreen(Screen):
                 logger.warning(f"Could not initialize streak_display: {e}")
         
         # Initialize animated word display (STORY-005-05) - outside progress_tracker check
-        if not self.animated_word_display:
-            logger.info(f"Creating animated_word_display with typography={self.typography is not None}")
-            self.animated_word_display = create_animated_word_display(
-                typography=self.typography,
-                font_size=48,
-                letter_spacing=20,
-                starter_count=len(self.starter_letters)
-            )
-            logger.info("animated_word_display created successfully")
-        else:
-            logger.info("Using existing animated_word_display")
-        
-        # Set the word and show starter letters
-        logger.info(f"Setting word: {word.text}, starter_count: {len(self.starter_letters)}")
-        self.animated_word_display.set_word(word.text, starter_count=len(self.starter_letters))
-        self.animated_word_display.show_starter_letters()
-        self.animated_word_display.start_animation()
-        logger.info(f"animated_word_display initialized: {self.animated_word_display is not None}")
+        try:
+            if not self.animated_word_display:
+                logger.info(f"Creating animated_word_display with typography={self.typography is not None}")
+                self.animated_word_display = create_animated_word_display(
+                    typography=self.typography,
+                    font_size=48,
+                    letter_spacing=20,
+                    starter_count=len(self.starter_letters)
+                )
+                logger.info("animated_word_display created successfully")
+            else:
+                logger.info("Using existing animated_word_display")
+
+            # Set the word and show starter letters
+            logger.info(f"Setting word: {word.text}, starter_count: {len(self.starter_letters)}")
+            self.animated_word_display.set_word(word.text, starter_count=len(self.starter_letters))
+            self.animated_word_display.show_starter_letters()
+            self.animated_word_display.start_animation()
+            logger.info(f"animated_word_display initialized: {self.animated_word_display is not None}")
+        except Exception as e:
+            # Keep presenting definition/input blanks even if letter animation fails.
+            logger.exception(f"Failed to initialize animated word display: {e}")
+            self.animated_word_display = None
         
         # Check if progress_tracker is available
         logger.info(f"progress_tracker available: {self.progress_tracker is not None}")
@@ -460,12 +462,17 @@ class SpellingChallengeScreen(Screen):
         
         # Speak the word
         def on_speech_complete():
+            if self.state != ChallengeState.PRESENTING:
+                return
             self.state = ChallengeState.READY_FOR_INPUT
             if self.on_word_presented:
                 self.on_word_presented(self.presentation)
         
         self.state = ChallengeState.PRESENTING
         self.audio_system.speak(word.text, on_complete=on_speech_complete)
+        # Allow typing even if TTS is still speaking or failed to flip state.
+        if self.state == ChallengeState.PRESENTING:
+            on_speech_complete()
         
         # Track performance
         render_time = (time.time() - start_time) * 1000  # Convert to ms
@@ -1143,6 +1150,9 @@ class SpellingChallengeScreen(Screen):
                 self.input_display.update(current_time)
             except:
                 pass  # Input display may not be fully initialized
+
+        if self.animated_word_display:
+            self.animated_word_display.update()
     
     def draw(self) -> None:
         """
@@ -1182,15 +1192,15 @@ class SpellingChallengeScreen(Screen):
                     def_style = self.typography.style_definition
                     def_surface = self.typography.render_text(f"Definition: {self.get_definition()}", def_style)
                     self.screen.blit(def_surface, (40, 125))
-            except:
-                pass  # Skip text rendering if styles not available
+            except Exception as e:
+                logger.exception(f"Failed to render word title/definition: {e}")
         
         # Draw animated word display (the word letters)
         if self.animated_word_display:
             try:
                 self.animated_word_display.render(self.screen, (self.screen_rect.centerx, 200))
-            except:
-                pass  # Skip rendering if there's an issue
+            except Exception as e:
+                logger.exception(f"Failed to render animated word display: {e}")
         
         # Draw input/answer area (center)
         if self.input_display:
