@@ -205,12 +205,16 @@ class FeedbackController:
         logger = logging.getLogger(__name__)
         
         if not self.animation_active:
-            logger.info(f"Feedback update: animation_active=False, state={self.state}")
             return
         
         # Calculate animation progress
         elapsed = current_time - self.feedback_start_time
-        logger.info(f"Feedback update: state={self.state}, elapsed={elapsed:.2f}s, duration={self.config.success_display_duration}s, auto_advance_triggered={self._auto_advance_triggered}")
+        logger.debug(
+            "Feedback update: state=%s, elapsed=%.2fs, auto_advance_triggered=%s",
+            self.state,
+            elapsed,
+            self._auto_advance_triggered,
+        )
         
         if self.state == FeedbackState.SHOWING_SUCCESS:
             # Check for auto-advance BEFORE fade out

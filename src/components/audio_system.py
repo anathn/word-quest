@@ -46,6 +46,8 @@ class AudioSystem:
         self._playback_queue = queue.Queue()
         self._playback_thread = None
         self._stop_playback = False
+        self._tts_lock = threading.Lock()
+        self._tts_thread: Optional[threading.Thread] = None
         self._current_callback: Optional[Callable] = None
         self.caption_manager = caption_manager
         
@@ -143,20 +145,33 @@ class AudioSystem:
         return False
     
     def _speak_pyttsx3(self, text: str, on_complete: Optional[Callable] = None) -> bool:
-        """Speak using pyttsx3 engine."""
-        try:
-            self.tts_engine.say(text)
-            # runAndWait blocks until speech finishes; call completion after.
-            # Do not rely on engine-specific end events — they are inconsistent.
-            self.tts_engine.runAndWait()
-            if on_complete:
-                on_complete()
-            return True
-        except Exception as e:
-            print(f"pyttsx3 speak error: {e}")
-            if on_complete:
-                on_complete()
-            return False
+        """Speak using pyttsx3 on a worker thread (non-blocking)."""
+        self._stop_playback = False
+
+        def worker():
+            engine = None
+            try:
+                import pyttsx3
+                # Re-init per utterance: on Windows the driver often dies after
+                # the first runAndWait, which is why only the first word spoke.
+                with self._tts_lock:
+                    if self._stop_playback:
+                        return
+                    engine = pyttsx3.init()
+                    engine.setProperty('rate', self.speech_rate)
+                    engine.setProperty('volume', self.volume)
+                    self.tts_engine = engine
+                    engine.say(text)
+                    engine.runAndWait()
+            except Exception as e:
+                print(f"pyttsx3 speak error: {e}")
+            finally:
+                if on_complete:
+                    on_complete()
+
+        self._tts_thread = threading.Thread(target=worker, daemon=True)
+        self._tts_thread.start()
+        return True
     
     def _speak_gtts(self, text: str, on_complete: Optional[Callable] = None) -> bool:
         """Speak using gTTS engine (requires internet)."""
@@ -219,7 +234,7 @@ class AudioSystem:
         if self.tts_engine and self.tts_engine_type == 'pyttsx3':
             try:
                 self.tts_engine.stop()
-            except:
+            except Exception:
                 pass
     
     def set_volume(self, volume: float):
