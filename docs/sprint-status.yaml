@@ -1,5 +1,5 @@
 # Word Quest Sprint Status
-# Last Updated: 2026-07-20
+# Last Updated: 2026-11-22
 # Based on PRD v1.0
 # Note: EPIC-999 (Foundation) added as critical prerequisite
 
@@ -8,9 +8,10 @@ current_sprint:
   name: "MVP Foundation"
   start_date: "2026-07-06"
   end_date: "2026-07-20"
-  last_updated: "2026-07-27"
+  last_updated: "2026-11-22"
   goal: "Build core spelling mechanics and progress tracking foundation"
   completed_stories:
+    - "STORY-999-01"  # Game entry point (merged PR #43, 2026-07-21)
     - "STORY-001-01"  # Word presentation (PR #3)
     - "STORY-001-02"  # Keyboard input validation
     - "STORY-001-03"  # Feedback system (PR approved)
@@ -34,6 +35,8 @@ current_sprint:
     - "STORY-004-04"  # Captain Cosmos character (merged PR #26, 2026-07-14)
     - "STORY-004-05"  # Rocket customization (merged PR #27, 2026-07-14)
     - "STORY-004-06"  # Sticker collection (merged PR #28, 2026-07-14)
+    - "STORY-005-05"  # Letter animations (merged PR #40, 2026-07-19)
+    - "STORY-005-06"  # Planet bloom (merged PR #41, 2026-07-20)
   in_progress_stories: []
   ready_for_review_stories: []
   planned_stories: []
@@ -45,11 +48,11 @@ epics:
     name: "Foundation (Critical Pre-requisite)"
     priority: P0
     description: "Game entry point and runnable application"
-    status: "in-progress"
+    status: "completed"
     progress_percent: 100
     dependencies: []
     blockers: []
-    notes: "EPIC implementation complete (STORY-999-01), awaiting final code review approval after fixing critical and medium issues identified in review 2026-07-20."
+    notes: "Implementation approved and merged via PR #43 on 2026-07-21."
     target_sprint: "Immediate"
     estimated_points: 5
     completed_points: 5
@@ -58,14 +61,14 @@ epics:
         title: "Game Entry Point and Runnable Application"
         description: "Create functional entry point for Word Quest"
         priority: P0
-        status: "review"
+        status: "approved"
         assignee: "agent"
         started_date: "2026-07-20"
-        completed_date: null
-        branch: "EPIC-999-STORY-999-01"
-        pr: null
+        completed_date: "2026-07-21"
+        branch: "epic-999-foundation"
+        pr: 43
         blockers: []
-        notes: "Code review 2026-07-20 completed. All critical and medium issues FIXED: (1) Removed duplicate player_preferences property in src/game.py, (2) Fixed SOUNDS_DIR path to use 'sounds' instead of 'audio' to match story spec, (3) Centralized logging configuration in src/logging_config.py, (4) Added error handling for missing main menu screen, (5) Implemented first-run check with TODO for setup wizard. Ready for re-review."
+        notes: "Approved after re-review and merged via PR #43 on 2026-07-21. Follow-up work remains for the first-run setup wizard."
         acceptance_criteria:
           - "Game launches successfully on Linux/macOS with `python -m src`"
           - "Game launches successfully on Windows with `python -m src`"
@@ -861,14 +864,14 @@ epics:
     name: "Visual & Audio Polish"
     priority: P1
     description: "Game aesthetics and feedback"
-    status: "in-progress"
-    progress_percent: 80  # 4/6 stories complete (merged), 1 ready for review (STORY-005-05), 1 implementation complete awaiting review (STORY-005-06)
+    status: "completed"
+    progress_percent: 100
     dependencies: ["EPIC-001"]
     blockers: []
-    notes: "5/6 stories in progress. STORY-005-01 through STORY-005-04 approved and merged. STORY-005-05 all code review issues fixed 2026-07-19, 101 tests passing, ready for re-review. STORY-005-06 ALL ISSUES FIXED 2026-07-19 - critical type bug fixed, 61 celebration_renderer tests created, 11 integration tests created, accessibility skip/intensity features implemented. Total 97 tests passing. READY FOR MERGE APPROVAL. Epic at 90% completion, pending STORY-005-05 and STORY-005-06 merge approval."
+    notes: "All six stories are approved and merged. STORY-005-05 merged via PR #40 on 2026-07-19; STORY-005-06 merged via PR #41 on 2026-07-20."
     target_sprint: 3
     estimated_points: 31
-    completed_points: 26  # STORY-005-01(5) + STORY-005-02(8) + STORY-005-03(3) + STORY-005-04(5) = 21 merged; STORY-005-05(5) ready for review; STORY-005-06(5) ready for merge approval
+    completed_points: 31
     stories:
       - id: STORY-005-01
         title: "Space theme visuals"
@@ -1104,12 +1107,13 @@ epics:
         title: "Letter animations"
         description: "Appearing letters with effects"
         priority: P1
-        status: "ready_for_re_review"
+        status: "approved"
         assignee: "agent"
         started_date: "2026-07-19"
         reviewed_date: "2026-07-19"
         branch: "EPIC-005-STORY-005"
-        completed_date: null
+        completed_date: "2026-07-19"
+        pr: 40
         review_document: "docs/reviews/STORY-005-05-review-2026-07-19.md"
         acceptance_criteria:
           - "Fade-in effect"
@@ -1118,7 +1122,7 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "ALL CODE REVIEW ISSUES RESOLVED 2026-07-19: Screen integration complete, animation intensity settings added to player_preferences.py, deprecated update() method fixed. 101 tests passing. Ready for re-review and merge approval. See review document for full details."
+        notes: "Approved and merged via PR #40 on 2026-07-19 with passing CI. Low-priority accessibility wiring and manual visual QA remain documented follow-ups."
         implementation_notes: |
           FILES CREATED:
           - src/ui/animation_utils.py - Easing functions (ease_in_out, ease_out_bounce, ease_out_back, etc.)
@@ -1176,21 +1180,20 @@ epics:
              - Added DeprecationWarning to update() method
              - Clear documentation directing to update_advanced()
           
-          NEXT STEPS:
-          - Request re-review from Code Review Agent
-          - Manual testing and visual QA
-          - Once approved, merge to main
-          
-          RECOMMENDATION: READY FOR RE-REVIEW
+          MERGE RESULT:
+          - Merged via PR #40 on 2026-07-19 with passing CI
+          - Manual visual QA and preference wiring remain follow-up work
 
       - id: STORY-005-06
         title: "Planet bloom on completion"
         description: "Visual reward when planet cleared"
         priority: P1
-        status: "in-progress"
+        status: "approved"
         assignee: "agent"
         started_date: "2026-07-19"
+        completed_date: "2026-07-20"
         branch: "EPIC-005-STORY-006"
+        pr: 41
         acceptance_criteria:
           - "Planet surface blooms with flowers/crystals"
           - "Sparkle effect"
@@ -1198,9 +1201,9 @@ epics:
         complexity: "Medium"
         points: 5
         blockers: []
-        notes: "ALL CODE REVIEW ISSUES RESOLVED 2026-07-19. READY FOR MERGE APPROVAL. Critical type bug fixed, test_celebration_renderer.py created with 61 tests, integration tests created (11 tests in test_celebration_integration.py), accessibility features (skip_celebration, set_intensity_mode) implemented, rocket integration has defensive checks. Total 97 tests passing. See review: docs/reviews/STORY-005-06-review-2026-07-19.md"
-        implementation_notes: |  
-          REVIEWS STATUS: ALL ISSUES RESOLVED 2026-07-19 - READY FOR MERGE APPROVAL
+        notes: "Approved and merged via PR #41 on 2026-07-20 with passing CI. The documented 3.5-second total celebration timing was accepted as a variance from the 2-3 second target."
+        implementation_notes: |
+          MERGE STATUS: MERGED VIA PR #41 ON 2026-07-20
           
           CODE REVIEW REPORT: docs/reviews/STORY-005-06-review-2026-07-19.md
           

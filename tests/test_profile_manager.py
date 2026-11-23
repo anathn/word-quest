@@ -9,6 +9,7 @@ import os
 import json
 import tempfile
 from datetime import datetime
+import src.profiles.profile_manager as profile_manager_module
 from src.profiles.profile_manager import ProfileManager
 from src.models.student_profile import StudentProfile
 
@@ -317,6 +318,16 @@ class TestDeleteProfile:
 
 class TestPersistence:
     """Tests for data persistence."""
+
+    def test_persistence_without_fcntl(self, temp_profile_file, monkeypatch):
+        """Test persistence on platforms without POSIX file locking."""
+        monkeypatch.setattr(profile_manager_module, "fcntl", None)
+
+        manager = ProfileManager(data_path=temp_profile_file)
+        manager.create_profile("Windows User", "astronaut")
+
+        profiles = ProfileManager(data_path=temp_profile_file).get_all_profiles()
+        assert [profile.name for profile in profiles] == ["Windows User"]
     
     def test_profile_persists_across_instances(self, temp_profile_file):
         """Test that profiles persist across ProfileManager instances."""
