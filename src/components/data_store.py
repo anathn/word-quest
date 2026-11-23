@@ -122,9 +122,14 @@ class DataStore:
             # Ensure JSON is serializable
             json_str = json.dumps(data, indent=2, default=str)
             
-            # Write to file
-            with open(file_path, 'w') as f:
+            # Write to a sibling temporary file, then atomically replace the
+            # destination so a crash cannot leave a partially written file.
+            temp_path = file_path.with_suffix(file_path.suffix + '.tmp')
+            with open(temp_path, 'w', encoding='utf-8') as f:
                 f.write(json_str)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temp_path, file_path)
             
             self.logger.info(f"Successfully saved progress for {student_id}")
             
@@ -136,6 +141,11 @@ class DataStore:
             )
             
         except (IOError, OSError) as e:
+            temp_path = file_path.with_suffix(file_path.suffix + '.tmp')
+            try:
+                temp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
             self.logger.error(f"Save failed for {student_id}: {e}")
             return SaveResult(
                 success=False,

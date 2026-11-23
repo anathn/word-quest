@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-07-04",
+  "last_updated": "2026-11-22",
   "word_lists": [
     {
       "id": "planet-1",
@@ -140,6 +140,429 @@
           "context_sentence": "I like to walk around my neighborhood.",
           "difficulty": 3,
           "starter_letters": 1
+        }
+      ]
+    },
+    {
+      "id": "planet-4",
+      "name": "Mars - Everyday Words",
+      "difficulty": 1,
+      "words": [
+        {
+          "id": "w016",
+          "text": "school",
+          "definition": "a place where students learn",
+          "context_sentence": "Our school has a large library.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w017",
+          "text": "family",
+          "definition": "a group of people related to one another",
+          "context_sentence": "My family eats dinner together.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w018",
+          "text": "answer",
+          "definition": "a response to a question",
+          "context_sentence": "I raised my hand to share the answer.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w019",
+          "text": "enough",
+          "definition": "as much as is needed",
+          "context_sentence": "We have enough paper for the project.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w020",
+          "text": "every",
+          "definition": "each one in a group",
+          "context_sentence": "Every student chose a book.",
+          "difficulty": 1,
+          "starter_letters": 3
+        }
+      ]
+    },
+    {
+      "id": "planet-5",
+      "name": "Jupiter - Growing Words",
+      "difficulty": 1,
+      "words": [
+        {
+          "id": "w021",
+          "text": "again",
+          "definition": "one more time",
+          "context_sentence": "Please read the sentence again.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w022",
+          "text": "learn",
+          "definition": "to gain knowledge or skill",
+          "context_sentence": "We learn something new each day.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w023",
+          "text": "thought",
+          "definition": "an idea in the mind",
+          "context_sentence": "I had a thoughtful idea for the story.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w024",
+          "text": "write",
+          "definition": "to form words with letters",
+          "context_sentence": "I will write a note to my teacher.",
+          "difficulty": 1,
+          "starter_letters": 3
+        },
+        {
+          "id": "w025",
+          "text": "country",
+          "definition": "a nation with its own government",
+          "context_sentence": "Our country has many different landscapes.",
+          "difficulty": 1,
+          "starter_letters": 3
+        }
+      ]
+    },
+    {
+      "id": "planet-6",
+      "name": "Saturn - Intermediate Words",
+      "difficulty": 2,
+      "words": [
+        {
+          "id": "w026",
+          "text": "favorite",
+          "definition": "liked more than others",
+          "context_sentence": "Science is my favorite subject.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w027",
+          "text": "remember",
+          "definition": "to keep something in your mind",
+          "context_sentence": "Remember to bring your homework.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w028",
+          "text": "surprise",
+          "definition": "an unexpected event",
+          "context_sentence": "The class planned a surprise for our teacher.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w029",
+          "text": "separate",
+          "definition": "to keep or move apart",
+          "context_sentence": "Separate the red blocks from the blue blocks.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w030",
+          "text": "probably",
+          "definition": "very likely to happen",
+          "context_sentence": "It will probably rain this afternoon.",
+          "difficulty": 2,
+          "starter_letters": 2
+        }
+      ]
+    },
+    {
+      "id": "planet-7",
+      "name": "Uranus - Skillful Words",
+      "difficulty": 2,
+      "words": [
+        {
+          "id": "w031",
+          "text": "calendar",
+          "definition": "a chart showing days, weeks, and months",
+          "context_sentence": "I marked the field trip on the calendar.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w032",
+          "text": "library",
+          "definition": "a place where books are kept for reading",
+          "context_sentence": "We borrowed two books from the library.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w033",
+          "text": "sentence",
+          "definition": "a group of words expressing a complete thought",
+          "context_sentence": "Begin each sentence with a capital letter.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w034",
+          "text": "straight",
+          "definition": "without a curve or bend",
+          "context_sentence": "Use a ruler to draw a straight line.",
+          "difficulty": 2,
+          "starter_letters": 2
+        },
+        {
+          "id": "w035",
+          "text": "early",
+          "definition": "before the expected time",
+          "context_sentence": "We arrived early for the concert.",
+          "difficulty": 2,
+          "starter_letters": 2
+        }
+      ]
+    },
+    {
+      "id": "planet-8",
+      "name": "Neptune - Advanced Words",
+      "difficulty": 3,
+      "words": [
+        {
+          "id": "w036",
+          "text": "necessary",
+          "definition": "needed for a purpose",
+          "context_sentence": "Water is necessary for plants to grow.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w037",
+          "text": "knowledge",
+          "definition": "facts and skills gained through learning",
+          "context_sentence": "Reading builds our knowledge of the world.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w038",
+          "text": "disappear",
+          "definition": "to pass out of sight",
+          "context_sentence": "The clouds seemed to disappear.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w039",
+          "text": "excellent",
+          "definition": "extremely good",
+          "context_sentence": "You did an excellent job on the project.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w040",
+          "text": "difficult",
+          "definition": "needing effort or skill",
+          "context_sentence": "The puzzle was difficult but fun.",
+          "difficulty": 3,
+          "starter_letters": 1
+        }
+      ]
+    },
+    {
+      "id": "planet-9",
+      "name": "Pluto - Expert Words",
+      "difficulty": 3,
+      "words": [
+        {
+          "id": "w041",
+          "text": "imagination",
+          "definition": "the ability to form ideas and pictures in the mind",
+          "context_sentence": "Use your imagination to create a new planet.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w042",
+          "text": "community",
+          "definition": "people who live or work in the same area",
+          "context_sentence": "Our community planted trees in the park.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w043",
+          "text": "exercise",
+          "definition": "activity that keeps the body healthy",
+          "context_sentence": "Riding a bicycle is good exercise.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w044",
+          "text": "language",
+          "definition": "a system people use to communicate",
+          "context_sentence": "Words are an important part of language.",
+          "difficulty": 3,
+          "starter_letters": 1
+        },
+        {
+          "id": "w045",
+          "text": "natural",
+          "definition": "existing in or produced by nature",
+          "context_sentence": "Sunlight is a natural source of energy.",
+          "difficulty": 3,
+          "starter_letters": 1
+        }
+      ]
+    },
+    {
+      "id": "planet-10",
+      "name": "Comet - Challenge Words",
+      "difficulty": 4,
+      "words": [
+        {
+          "id": "w046",
+          "text": "responsibility",
+          "definition": "a duty or task you are expected to handle",
+          "context_sentence": "Feeding the class pet is my responsibility.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w047",
+          "text": "extraordinary",
+          "definition": "very unusual or remarkable",
+          "context_sentence": "The astronaut had an extraordinary adventure.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w048",
+          "text": "communication",
+          "definition": "the sharing of information or ideas",
+          "context_sentence": "Clear communication helps teams work together.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w049",
+          "text": "opportunity",
+          "definition": "a chance to do something",
+          "context_sentence": "The contest gave me an opportunity to write.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w050",
+          "text": "perseverance",
+          "definition": "continuing even when something is difficult",
+          "context_sentence": "Her perseverance helped her finish the race.",
+          "difficulty": 4,
+          "starter_letters": 0
+        }
+      ]
+    },
+    {
+      "id": "planet-11",
+      "name": "Nebula - Challenge Words",
+      "difficulty": 4,
+      "words": [
+        {
+          "id": "w051",
+          "text": "pronunciation",
+          "definition": "the way a word is spoken",
+          "context_sentence": "The dictionary shows the word's pronunciation.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w052",
+          "text": "multiplication",
+          "definition": "the process of adding equal groups",
+          "context_sentence": "We practiced multiplication in math class.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w053",
+          "text": "electricity",
+          "definition": "energy that powers lights and machines",
+          "context_sentence": "The solar panels make electricity.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w054",
+          "text": "transportation",
+          "definition": "a way of moving people or goods",
+          "context_sentence": "Buses provide transportation around the city.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w055",
+          "text": "independent",
+          "definition": "able to act or work on your own",
+          "context_sentence": "She became an independent reader.",
+          "difficulty": 4,
+          "starter_letters": 0
+        }
+      ]
+    },
+    {
+      "id": "planet-12",
+      "name": "Supernova - Challenge Words",
+      "difficulty": 4,
+      "words": [
+        {
+          "id": "w056",
+          "text": "investigation",
+          "definition": "a careful search for facts",
+          "context_sentence": "Our science investigation tested the soil.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w057",
+          "text": "organization",
+          "definition": "an ordered group or arrangement",
+          "context_sentence": "Good organization keeps my desk neat.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w058",
+          "text": "encyclopedia",
+          "definition": "a reference work containing information on many subjects",
+          "context_sentence": "I used an encyclopedia to research whales.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w059",
+          "text": "temperature",
+          "definition": "a measure of how hot or cold something is",
+          "context_sentence": "The temperature dropped after sunset.",
+          "difficulty": 4,
+          "starter_letters": 0
+        },
+        {
+          "id": "w060",
+          "text": "unfortunately",
+          "definition": "in a way that is unlucky or regrettable",
+          "context_sentence": "Unfortunately, the game was canceled by rain.",
+          "difficulty": 4,
+          "starter_letters": 0
         }
       ]
     }

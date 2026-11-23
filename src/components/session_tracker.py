@@ -28,6 +28,21 @@ class WordAttempt:
     time_seconds: float
     timestamp: datetime = field(default_factory=datetime.now)
 
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'WordAttempt':
+        """Restore a word attempt from persisted checkpoint data."""
+        timestamp = data.get('timestamp')
+        return cls(
+            word=data.get('word', ''),
+            word_id=data.get('word_id', ''),
+            correct=bool(data.get('correct', False)),
+            first_attempt_correct=bool(data.get('first_attempt_correct', False)),
+            total_attempts=int(data.get('total_attempts', 0)),
+            hints_used=int(data.get('hints_used', 0)),
+            time_seconds=float(data.get('time_seconds', 0.0)),
+            timestamp=datetime.fromisoformat(timestamp) if timestamp else datetime.now()
+        )
+
 
 @dataclass
 class SessionSummary:
@@ -143,6 +158,20 @@ class SessionSummary:
             ]
         }
 
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'SessionSummary':
+        """Restore a session summary from persisted checkpoint data."""
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+        return cls(
+            session_id=data['session_id'],
+            student_id=data['student_id'],
+            start_time=datetime.fromisoformat(start_time) if start_time else datetime.now(),
+            end_time=datetime.fromisoformat(end_time) if end_time else None,
+            planet_completed=data.get('planet_completed'),
+            words=[WordAttempt.from_dict(word) for word in data.get('words', [])]
+        )
+
 
 class SessionTracker:
     """
@@ -238,6 +267,22 @@ class SessionTracker:
         self._last_activity = datetime.now()
         
         return self.current_session
+
+    def restore_session(self, session_data: Dict) -> SessionSummary:
+        """Restore an unfinished session after an interrupted game."""
+        session = SessionSummary.from_dict(session_data)
+        session.end_time = None
+        session.planet_completed = None
+        self.current_session = session
+        self._current_word = None
+        self._current_word_id = None
+        self._word_start_time = None
+        self._word_attempts = 0
+        self._word_hints_used = 0
+        self._word_first_attempt_correct = None
+        self._word_final_correct = False
+        self._last_activity = datetime.now()
+        return session
     
     def start_word(self, word_id: str, word_text: str):
         """
