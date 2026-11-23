@@ -411,6 +411,9 @@ class SpellingChallengeScreen(Screen):
             # Set the word and show starter letters
             logger.info(f"Setting word: {word.text}, starter_count: {len(self.starter_letters)}")
             self.animated_word_display.set_word(word.text, starter_count=len(self.starter_letters))
+            # Keep long words (e.g. responsibility) on-screen.
+            max_word_width = max(200, screen_width - 80)
+            self.animated_word_display.fit_to_width(max_word_width)
             self.animated_word_display.show_starter_letters()
             self.animated_word_display.start_animation()
             logger.info(f"animated_word_display initialized: {self.animated_word_display is not None}")
@@ -1234,7 +1237,12 @@ class SpellingChallengeScreen(Screen):
         # Draw animated word display (the word letters)
         if self.animated_word_display:
             try:
-                self.animated_word_display.render(self.screen, (self.screen_rect.centerx, 200))
+                # Position is the word center so long words don't run off the right edge.
+                self.animated_word_display.render(
+                    self.screen,
+                    (self.screen_rect.centerx, 200),
+                    centered=True,
+                )
             except Exception as e:
                 logger.exception(f"Failed to render animated word display: {e}")
         

@@ -343,6 +343,33 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         self.audio_system.stop.assert_called()
         self.assertEqual(self.audio_system.speak_calls[-1], "because")
 
+    def test_long_word_display_stays_on_screen(self):
+        """Long animated words should be centered and fit within the screen."""
+        from src.ui.animated_word_display import create_animated_word_display
+
+        display = create_animated_word_display(
+            Typography(), font_size=48, letter_spacing=20, starter_count=2
+        )
+        display.set_word("responsibility", starter_count=2)
+        display.fit_to_width(720)
+        self.assertLessEqual(display.get_width(), 720)
+
+        surface = pygame.Surface((800, 600))
+        display.show_starter_letters()
+        display.start_animation()
+        for _ in range(20):
+            display.update()
+        display.render(surface, (400, 200), centered=True)
+
+        painted = [
+            x
+            for x in range(800)
+            if any(surface.get_at((x, y))[:3] != (0, 0, 0) for y in range(170, 250))
+        ]
+        self.assertTrue(painted)
+        self.assertGreaterEqual(min(painted), 0)
+        self.assertLess(max(painted), 800)
+
     def test_present_word_with_real_typography_initializes_display(self):
         """Real Typography should create the animated display without errors."""
         screen = SpellingChallengeScreen(
