@@ -469,7 +469,10 @@ class SpellingChallengeScreen(Screen):
                 self.on_word_presented(self.presentation)
         
         self.state = ChallengeState.PRESENTING
-        self.audio_system.speak(word.text, on_complete=on_speech_complete)
+        # Clear queued chatter so the target word is spoken next.
+        if self.audio_system:
+            self.audio_system.stop()
+            self.audio_system.speak(word.text, on_complete=on_speech_complete)
         # Allow typing even if TTS is still speaking or failed to flip state.
         if self.state == ChallengeState.PRESENTING:
             on_speech_complete()
@@ -817,9 +820,36 @@ class SpellingChallengeScreen(Screen):
         Args:
             planet_result: PlanetResult from PlanetManager
         """
+        logger.info(
+            "Planet complete: %s unlock_next=%s",
+            getattr(planet_result, "planet_id", None),
+            getattr(planet_result, "unlock_next", None),
+        )
+
         # Notify callback
         if self.on_planet_complete:
             self.on_planet_complete(planet_result)
+
+        if self.captain:
+            try:
+                self.captain.on_planet_complete()
+            except Exception as e:
+                logger.exception(f"Captain planet-complete voice failed: {e}")
+
+        # Drop the finished planet so start_new_word() loads the next one.
+        self.planet_manager = None
+        self.current_planet_id = None
+        self.current_planet_name = None
+
+        # ProgressTracker ends the session on planet completion; start a fresh one.
+        if self.progress_tracker and not self.progress_tracker.current_session:
+            self.progress_tracker.start_session()
+
+        if getattr(planet_result, "unlock_next", False):
+            self.start_new_word()
+        else:
+            logger.info("Planet did not unlock next; staying on completion state")
+            self.state = ChallengeState.IDLE
     
     def _request_hint(self):
         """Handle student clicking the 'Need Help?' button."""

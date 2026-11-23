@@ -33,12 +33,17 @@ class MockAudioSystem:
     
     def __init__(self):
         self.speak_calls = []
+        self.sfx_calls = []
         self.audio_available = True
     
     def speak(self, text, on_complete=None):
         self.speak_calls.append(text)
         if on_complete:
             on_complete()
+        return True
+
+    def play_sfx(self, sfx_name, volume=1.0):
+        self.sfx_calls.append((sfx_name, volume))
         return True
     
     def is_audio_available(self):
@@ -85,22 +90,24 @@ class TestFeedbackController(unittest.TestCase):
         self.assertTrue(self.controller.is_feedback_active())
     
     def test_success_triggers_audio(self):
-        """Test that success feedback plays audio."""
+        """Test that success feedback plays SFX (not TTS)."""
+        self.audio_system.sfx_calls = []
         self.audio_system.speak_calls = []
         self.controller.show_feedback(True)
         
-        # Should speak the success message
-        self.assertGreater(len(self.audio_system.speak_calls), 0)
-        self.assertIn("Great job!", self.audio_system.speak_calls[0])
+        self.assertGreater(len(self.audio_system.sfx_calls), 0)
+        self.assertEqual(self.audio_system.sfx_calls[0][0], "success_chime")
+        self.assertEqual(self.audio_system.speak_calls, [])
     
     def test_retry_triggers_audio(self):
-        """Test that retry feedback plays audio."""
+        """Test that retry feedback plays SFX (not TTS)."""
+        self.audio_system.sfx_calls = []
         self.audio_system.speak_calls = []
         self.controller.show_feedback(False)
         
-        # Should speak the retry message
-        self.assertGreater(len(self.audio_system.speak_calls), 0)
-        self.assertIn("Try again!", self.audio_system.speak_calls[0])
+        self.assertGreater(len(self.audio_system.sfx_calls), 0)
+        self.assertEqual(self.audio_system.sfx_calls[0][0], "retry_tone")
+        self.assertEqual(self.audio_system.speak_calls, [])
     
     def test_retry_triggers_hint_request(self):
         """Test that retry feedback triggers hint request."""

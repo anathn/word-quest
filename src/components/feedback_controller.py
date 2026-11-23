@@ -159,38 +159,18 @@ class FeedbackController:
     def _play_success_sound(self):
         """Play success chime audio."""
         try:
-            # Try to play actual chime first
             if self.audio_system and hasattr(self.audio_system, 'play_sfx'):
-                if self.audio_system.play_sfx('success_chime', self.config.success_volume):
-                    return  # Success, exit early
-            
-            # Fallback to TTS if SFX unavailable
-            def on_complete():
-                pass
-            
-            self.audio_system.speak(
-                self.config.success_message,
-                on_complete=on_complete
-            )
+                # Prefer SFX only. Do not fall back to TTS — that steals the
+                # speech queue from the next spelling word on Windows.
+                self.audio_system.play_sfx('success_chime', self.config.success_volume)
         except Exception as e:
             print(f"Error playing success sound: {e}")
     
     def _play_retry_sound(self):
         """Play retry tone audio."""
         try:
-            # Try to play actual tone first
             if self.audio_system and hasattr(self.audio_system, 'play_sfx'):
-                if self.audio_system.play_sfx('retry_tone', self.config.retry_volume):
-                    return  # Success, exit early
-            
-            # Fallback to TTS if SFX unavailable
-            def on_complete():
-                pass
-            
-            self.audio_system.speak(
-                self.config.retry_message,
-                on_complete=on_complete
-            )
+                self.audio_system.play_sfx('retry_tone', self.config.retry_volume)
         except Exception as e:
             print(f"Error playing retry sound: {e}")
     

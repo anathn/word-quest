@@ -25,6 +25,7 @@ from src.screens.spelling_challenge import (
     create_spelling_challenge_screen
 )
 from src.components.word_manager import SpellingWord
+from src.components.planet_manager import PlanetResult, PlanetStatus
 from src.ui.typography import Typography
 
 
@@ -308,6 +309,39 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         self.screen.present_word(word)
         
         self.assertEqual(self.screen.get_word_text(), "because")
+
+    def test_planet_complete_advances_to_next_planet(self):
+        """After 5 words, planet completion must start the next planet."""
+        self.screen.start_new_word = Mock()
+        self.screen.planet_manager = MagicMock()
+        self.screen.current_planet_id = "planet-1"
+        self.screen.current_planet_name = "Starter"
+
+        result = PlanetResult(
+            planet_id="planet-1",
+            planet_name="Starter",
+            total_words=5,
+            correct_words=5,
+            first_attempt_correct=5,
+            status=PlanetStatus.COMPLETED,
+            unlock_next=True,
+        )
+
+        self.screen._on_planet_complete(result)
+
+        self.assertIsNone(self.screen.planet_manager)
+        self.assertIsNone(self.screen.current_planet_id)
+        self.screen.start_new_word.assert_called_once()
+
+    def test_present_word_clears_tts_queue_before_speaking(self):
+        """New words should preempt leftover Captain/feedback speech."""
+        self.audio_system.stop = Mock(wraps=self.audio_system.stop)
+        word = self.word_manager.get_word_by_id("w001")
+
+        self.screen.present_word(word)
+
+        self.audio_system.stop.assert_called()
+        self.assertEqual(self.audio_system.speak_calls[-1], "because")
 
     def test_present_word_with_real_typography_initializes_display(self):
         """Real Typography should create the animated display without errors."""

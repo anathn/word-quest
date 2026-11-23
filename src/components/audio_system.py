@@ -144,33 +144,91 @@ class AudioSystem:
             on_complete()
         return False
     
-    def _speak_pyttsx3(self, text: str, on_complete: Optional[Callable] = None) -> bool:
-        """Speak using pyttsx3 on a worker thread (non-blocking)."""
-        self._stop_playback = False
+    def _ensure_tts_worker(self) -> None:
+        """Start a single long-lived pyttsx3 worker if needed."""
+        if self._tts_thread and self._tts_thread.is_alive():
+            return
 
-        def worker():
-            engine = None
+        self._stop_playback = False
+        self._tts_thread = threading.Thread(
+            target=self._tts_worker_loop,
+            name="wordquest-tts",
+            daemon=True,
+        )
+        self._tts_thread.start()
+
+    def _tts_worker_loop(self) -> None:
+        """Own the SAPI/COM engine on one thread for the process lifetime."""
+        import sys
+
+        pythoncom = None
+        if sys.platform == "win32":
             try:
-                import pyttsx3
-                # Re-init per utterance: on Windows the driver often dies after
-                # the first runAndWait, which is why only the first word spoke.
-                with self._tts_lock:
-                    if self._stop_playback:
-                        return
-                    engine = pyttsx3.init()
-                    engine.setProperty('rate', self.speech_rate)
-                    engine.setProperty('volume', self.volume)
-                    self.tts_engine = engine
+                import pythoncom as _pythoncom
+                pythoncom = _pythoncom
+                pythoncom.CoInitialize()
+            except Exception as e:
+                print(f"TTS COM init warning: {e}")
+
+        engine = None
+        try:
+            import pyttsx3
+
+            def make_engine():
+                eng = pyttsx3.init()
+                eng.setProperty("rate", self.speech_rate)
+                eng.setProperty("volume", self.volume)
+                return eng
+
+            engine = make_engine()
+            self.tts_engine = engine
+
+            while True:
+                item = self._playback_queue.get()
+                if item is None:
+                    break
+
+                text, on_complete = item
+                if self._stop_playback:
+                    if on_complete:
+                        on_complete()
+                    continue
+
+                try:
+                    if engine is None:
+                        engine = make_engine()
+                        self.tts_engine = engine
                     engine.say(text)
                     engine.runAndWait()
-            except Exception as e:
-                print(f"pyttsx3 speak error: {e}")
-            finally:
-                if on_complete:
-                    on_complete()
+                except Exception as e:
+                    print(f"pyttsx3 speak error: {e}")
+                    # Driver often dies after an error; rebuild for next item.
+                    try:
+                        engine = make_engine()
+                        self.tts_engine = engine
+                        engine.say(text)
+                        engine.runAndWait()
+                    except Exception as retry_error:
+                        print(f"pyttsx3 retry failed: {retry_error}")
+                        engine = None
+                finally:
+                    if on_complete:
+                        try:
+                            on_complete()
+                        except Exception as cb_error:
+                            print(f"TTS on_complete error: {cb_error}")
+        finally:
+            if pythoncom is not None:
+                try:
+                    pythoncom.CoUninitialize()
+                except Exception:
+                    pass
 
-        self._tts_thread = threading.Thread(target=worker, daemon=True)
-        self._tts_thread.start()
+    def _speak_pyttsx3(self, text: str, on_complete: Optional[Callable] = None) -> bool:
+        """Queue speech on the dedicated pyttsx3 worker (non-blocking)."""
+        self._stop_playback = False
+        self._ensure_tts_worker()
+        self._playback_queue.put((text, on_complete))
         return True
     
     def _speak_gtts(self, text: str, on_complete: Optional[Callable] = None) -> bool:
@@ -229,13 +287,20 @@ class AudioSystem:
             return False
     
     def stop(self):
-        """Stop any currently playing audio."""
+        """Stop any currently playing audio and clear queued speech."""
         self._stop_playback = True
+        # Drop pending utterances so a new word can speak promptly.
+        try:
+            while True:
+                self._playback_queue.get_nowait()
+        except queue.Empty:
+            pass
         if self.tts_engine and self.tts_engine_type == 'pyttsx3':
             try:
                 self.tts_engine.stop()
             except Exception:
                 pass
+        self._stop_playback = False
     
     def set_volume(self, volume: float):
         """
