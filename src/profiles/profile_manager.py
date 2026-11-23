@@ -12,13 +12,17 @@ to prevent path traversal attacks. File locking is used to prevent
 corruption from concurrent access.
 """
 
-import fcntl
 import json
 import os
 import uuid
 import pathlib
 from typing import List, Optional, Tuple
 from datetime import datetime
+
+try:
+    import fcntl
+except ImportError:  # Windows does not provide the POSIX fcntl module.
+    fcntl = None
 
 from src.models.student_profile import StudentProfile
 from src.models.rocket_colors import DEFAULT_ROCKET_COLOR
@@ -99,11 +103,13 @@ class ProfileManager:
             json.JSONDecodeError: If the JSON is malformed
         """
         with open(self.data_path, "r", encoding="utf-8") as f:
-            fcntl.flock(f.fileno(), fcntl.LOCK_SH)  # Shared lock for reading
+            if fcntl is not None:
+                fcntl.flock(f.fileno(), fcntl.LOCK_SH)
             try:
                 data = json.load(f)
             finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                if fcntl is not None:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
             return data
     
     def _save_data(self, data: dict):
@@ -123,13 +129,15 @@ class ProfileManager:
         # Write to temp file first (atomic rename)
         temp_path = self.data_path + ".tmp"
         with open(temp_path, "w", encoding="utf-8") as f:
-            fcntl.flock(f.fileno(), fcntl.LOCK_EX)  # Exclusive lock
+            if fcntl is not None:
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
             try:
                 json.dump(data, f, indent=2, ensure_ascii=False)
                 f.flush()
                 os.fsync(f.fileno())  # Ensure written to disk
             finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                if fcntl is not None:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
         
         # Atomic rename (prevents partial reads)
         pathlib.Path(temp_path).replace(self.data_path)
