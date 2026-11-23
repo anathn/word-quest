@@ -826,10 +826,6 @@ class SpellingChallengeScreen(Screen):
             getattr(planet_result, "unlock_next", None),
         )
 
-        # Notify callback
-        if self.on_planet_complete:
-            self.on_planet_complete(planet_result)
-
         if self.captain:
             try:
                 self.captain.on_planet_complete()
@@ -846,10 +842,20 @@ class SpellingChallengeScreen(Screen):
             self.progress_tracker.start_session()
 
         if getattr(planet_result, "unlock_next", False):
-            self.start_new_word()
+            try:
+                self.start_new_word()
+            except Exception as e:
+                logger.exception(f"Failed to start next planet word: {e}")
         else:
             logger.info("Planet did not unlock next; staying on completion state")
             self.state = ChallengeState.IDLE
+
+        # Show results UI last so a callback failure cannot block advancement.
+        if self.on_planet_complete:
+            try:
+                self.on_planet_complete(planet_result)
+            except Exception as e:
+                logger.exception(f"Planet complete UI callback failed: {e}")
     
     def _request_hint(self):
         """Handle student clicking the 'Need Help?' button."""

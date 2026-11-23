@@ -203,7 +203,10 @@ class FeedbackController:
                 self._auto_advance_triggered = True
                 if self.on_auto_advance:
                     logger.info("Calling on_auto_advance callback")
-                    self.on_auto_advance()
+                    try:
+                        self.on_auto_advance()
+                    except Exception:
+                        logger.exception("on_auto_advance callback failed")
                 else:
                     logger.warning("on_auto_advance callback is None!")
             

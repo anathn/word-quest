@@ -277,18 +277,30 @@ class Game:
             
             # Add callback for planet completion to show planet results screen
             def on_planet_complete(planet_result):
-                logger.info(f"Planet complete!", extra={'planet_result': planet_result})
-                # Push the planet results screen to show completion stats
+                logger.info("Planet complete: %s", getattr(planet_result, "planet_id", None))
                 from src.screens.planet_results import PlanetResultsScreen
+
+                def resume_after_results():
+                    # Return to the spelling challenge (next word already prepared).
+                    self.screen_manager.pop_screen()
+
                 results_screen = PlanetResultsScreen(
+                    challenge_screen.typography,
+                    challenge_screen.audio_system,
                     screen=self.screen,
-                    planet_result=planet_result,
-                    typography=challenge_screen.typography,
-                    audio_system=challenge_screen.audio_system
                 )
+                results_screen.show_results(planet_result)
+                if hasattr(challenge_screen, "progress_tracker") and challenge_screen.progress_tracker:
+                    results_screen.set_planet_info(
+                        max(challenge_screen.progress_tracker.get_current_planet_number() - 1, 1),
+                        challenge_screen.progress_tracker.get_total_planets() or 12,
+                    )
+                results_screen.on_continue = resume_after_results
+                results_screen.on_retry = resume_after_results
+                results_screen.on_practice = resume_after_results
                 results_screen.on_back_to_menu = lambda: self.screen_manager.pop_screen()
                 self.screen_manager.push_screen(results_screen)
-            
+
             challenge_screen.on_planet_complete = on_planet_complete
             
             # Push the spelling challenge screen
