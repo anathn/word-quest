@@ -311,7 +311,7 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         self.assertEqual(self.screen.get_word_text(), "because")
 
     def test_planet_complete_advances_to_next_planet(self):
-        """After 5 words, planet completion must start the next planet."""
+        """Planet completion defers the next word until Continue is clicked."""
         self.screen.start_new_word = Mock()
         self.screen.planet_manager = MagicMock()
         self.screen.current_planet_id = "planet-1"
@@ -331,7 +331,12 @@ class TestSpellingChallengeScreen(unittest.TestCase):
 
         self.assertIsNone(self.screen.planet_manager)
         self.assertIsNone(self.screen.current_planet_id)
+        self.assertTrue(self.screen._pending_next_planet)
+        self.screen.start_new_word.assert_not_called()
+
+        self.screen.resume_after_planet_results()
         self.screen.start_new_word.assert_called_once()
+        self.assertFalse(self.screen._pending_next_planet)
 
     def test_present_word_clears_tts_queue_before_speaking(self):
         """New words should preempt leftover Captain/feedback speech."""

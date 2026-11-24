@@ -107,6 +107,7 @@ class SpellingChallengeScreen(Screen):
         self.current_planet_id: Optional[str] = None
         self.current_planet_name: Optional[str] = None
         self.planet_manager: Optional[PlanetManager] = None
+        self._pending_next_planet: bool = False
         
         # Input handling
         self.input_handler: Optional[InputHandler] = None
@@ -629,19 +630,20 @@ class SpellingChallengeScreen(Screen):
                 if bonus:
                     self._start_bonus_animation(bonus, new_streak)
         
-        # Captain Cosmos feedback (STORY-004-04)
-        if self.captain:
-            # Trigger Captain response for correct answer
+        # Captain Cosmos feedback (STORY-004-04). Skip TTS chatter when this
+        # answer finishes the planet — the results screen owns that speech.
+        planet_done = bool(
+            self.planet_manager and self.planet_manager.is_planet_complete()
+        )
+        if self.captain and not planet_done:
             self.captain.on_correct_answer()
-            
-            # Check for streak milestones
             if new_streak in [3, 5, 10]:
                 self.captain.on_streak_milestone(new_streak)
         
         if self.on_word_complete:
             self.on_word_complete(True)  # True = success
 
-        if self.planet_manager and self.planet_manager.is_planet_complete():
+        if planet_done:
             self._on_planet_complete(self.planet_manager.get_completion_status())
         else:
             if self.planet_manager:
@@ -829,36 +831,40 @@ class SpellingChallengeScreen(Screen):
             getattr(planet_result, "unlock_next", None),
         )
 
-        if self.captain:
-            try:
-                self.captain.on_planet_complete()
-            except Exception as e:
-                logger.exception(f"Captain planet-complete voice failed: {e}")
-
-        # Drop the finished planet so start_new_word() loads the next one.
+        # Drop the finished planet so a later start_new_word() loads the next one.
+        # Do NOT start the next word yet — that would speak it under the results
+        # screen and push "Great job" into the following word's timing.
         self.planet_manager = None
         self.current_planet_id = None
         self.current_planet_name = None
-
-        # ProgressTracker ends the session on planet completion; start a fresh one.
-        if self.progress_tracker and not self.progress_tracker.current_session:
-            self.progress_tracker.start_session()
-
-        if getattr(planet_result, "unlock_next", False):
-            try:
-                self.start_new_word()
-            except Exception as e:
-                logger.exception(f"Failed to start next planet word: {e}")
-        else:
+        self._pending_next_planet = bool(getattr(planet_result, "unlock_next", False))
+        if not self._pending_next_planet:
             logger.info("Planet did not unlock next; staying on completion state")
             self.state = ChallengeState.IDLE
 
-        # Show results UI last so a callback failure cannot block advancement.
+        # Show results UI; Continue will start the next word.
         if self.on_planet_complete:
             try:
                 self.on_planet_complete(planet_result)
             except Exception as e:
                 logger.exception(f"Planet complete UI callback failed: {e}")
+
+    def resume_after_planet_results(self) -> None:
+        """Called when the results Continue button is clicked."""
+        if self.audio_system:
+            self.audio_system.stop()
+
+        if self.progress_tracker and not self.progress_tracker.current_session:
+            self.progress_tracker.start_session()
+
+        if self._pending_next_planet:
+            self._pending_next_planet = False
+            try:
+                self.start_new_word()
+            except Exception as e:
+                logger.exception(f"Failed to start next planet word: {e}")
+        else:
+            self.state = ChallengeState.IDLE
     
     def _request_hint(self):
         """Handle student clicking the 'Need Help?' button."""

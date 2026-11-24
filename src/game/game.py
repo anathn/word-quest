@@ -281,8 +281,12 @@ class Game:
                 from src.screens.planet_results import PlanetResultsScreen
 
                 def resume_after_results():
-                    # Return to the spelling challenge (next word already prepared).
+                    # Immediate transition: stop leftover TTS, leave results, then
+                    # start the next word so encouragement never bleeds into it.
+                    if challenge_screen.audio_system:
+                        challenge_screen.audio_system.stop()
                     self.screen_manager.pop_screen()
+                    challenge_screen.resume_after_planet_results()
 
                 results_screen = PlanetResultsScreen(
                     challenge_screen.typography,

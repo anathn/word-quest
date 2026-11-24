@@ -8,6 +8,7 @@ and handling audio fallback scenarios.
 
 import threading
 import queue
+import time
 from typing import Optional, Callable, Any
 import json
 import os
@@ -48,6 +49,7 @@ class AudioSystem:
         self._stop_playback = False
         self._tts_lock = threading.Lock()
         self._tts_thread: Optional[threading.Thread] = None
+        self._sapi_voice = None
         self._current_callback: Optional[Callable] = None
         self.caption_manager = caption_manager
         
@@ -173,6 +175,7 @@ class AudioSystem:
             try:
                 import win32com.client
                 sapi = win32com.client.Dispatch("SAPI.SpVoice")
+                self._sapi_voice = sapi
             except Exception as e:
                 print(f"SAPI unavailable, falling back to pyttsx3: {e}")
 
@@ -180,6 +183,10 @@ class AudioSystem:
             import pyttsx3
         except Exception:
             pyttsx3 = None
+
+        # SVSFPurgeBeforeSpeak | SVSFlagsAsync for interruptible speech wait loop
+        SAPI_ASYNC_PURGE = 3
+        SAPI_PURGE = 2
 
         while True:
             item = self._playback_queue.get()
@@ -194,8 +201,14 @@ class AudioSystem:
 
             try:
                 if sapi is not None:
-                    # SAPI speaks reliably across multiple utterances on Windows.
-                    sapi.Speak(str(text))
+                    # Async+purge so stop() can interrupt the current utterance.
+                    sapi.Speak(str(text), SAPI_ASYNC_PURGE)
+                    # Wait until done or stop requested.
+                    while sapi.Status.RunningState == 2:  # SRSEIsSpeaking
+                        if self._stop_playback:
+                            sapi.Speak("", SAPI_PURGE)
+                            break
+                        time.sleep(0.02)
                 elif pyttsx3 is not None:
                     # CRITICAL: reuse of one pyttsx3 engine only speaks once on
                     # Windows; create a fresh engine for every utterance.
@@ -297,12 +310,18 @@ class AudioSystem:
                 self._playback_queue.get_nowait()
         except queue.Empty:
             pass
+        if self._sapi_voice is not None:
+            try:
+                # SVSFPurgeBeforeSpeak clears the current/queued SAPI speech.
+                self._sapi_voice.Speak("", 2)
+            except Exception:
+                pass
         if self.tts_engine and self.tts_engine_type == 'pyttsx3':
             try:
                 self.tts_engine.stop()
             except Exception:
                 pass
-        self._stop_playback = False
+        # Leave _stop_playback True until the next speak() clears it.
     
     def set_volume(self, volume: float):
         """
