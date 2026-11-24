@@ -204,6 +204,32 @@ class SpellingChallengeScreen(Screen):
         # Initialize planet manager (done when word is presented)
         # self.planet_manager = None
     
+    def _select_next_planet_id(self) -> str:
+        """Choose the next playable planet, preferring unmastered content."""
+        planet_ids = self.word_manager.get_all_planet_ids()
+        if not planet_ids:
+            return "planet-1"
+
+        preferred_number = 1
+        if self.progress_tracker:
+            preferred_number = self.progress_tracker.get_current_planet_number() or 1
+        preferred_id = f"planet-{preferred_number}"
+        if preferred_id in planet_ids:
+            return preferred_id
+
+        mastered = (
+            self.progress_tracker.mastered_words
+            if self.progress_tracker else set()
+        )
+        for planet_id in planet_ids:
+            words = self.word_manager.get_words_for_planet(planet_id)
+            if any(word.id not in mastered for word in words):
+                return planet_id
+
+        # All content mastered — wrap using a valid index.
+        index = (max(preferred_number, 1) - 1) % len(planet_ids)
+        return planet_ids[index]
+
     def start_new_word(self):
         """Start presenting a new word to spell."""
         if not self.word_manager:
@@ -217,14 +243,9 @@ class SpellingChallengeScreen(Screen):
                 self.progress_tracker.get_active_checkpoint()
                 if self.progress_tracker else None
             )
-            planet_number = (
-                self.progress_tracker.get_current_planet_number()
-                if self.progress_tracker else 1
-            )
-            planet_id = (
-                checkpoint.get('planet_id')
-                if checkpoint else f"planet-{planet_number}"
-            )
+            planet_id = checkpoint.get('planet_id') if checkpoint else None
+            if not planet_id:
+                planet_id = self._select_next_planet_id()
             planet_info = self.word_manager.get_planet_info(planet_id)
             if not planet_info:
                 planet_ids = self.word_manager.get_all_planet_ids()
