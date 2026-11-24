@@ -13,7 +13,7 @@ Tests cover:
 import unittest
 import sys
 import os
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
@@ -411,19 +411,24 @@ class TestResetAndShuffle(unittest.TestCase):
     
     def test_shuffle_words_randomizes_order(self):
         """Test that shuffle_words randomizes word order."""
-        original_words = self.mock_words.copy()
+        original_words = list(self.mock_words)
         manager = PlanetManager("planet-1", "Mercury", original_words)
-        
-        # Shuffle multiple times and check order changes
-        manager.shuffle_words()
-        shuffled1 = manager.words.copy()
-        
-        manager.shuffle_words()
-        shuffled2 = manager.words.copy()
-        
-        # At least one shuffle should produce different order
-        # (high probability with random.shuffle)
-        self.assertNotEqual(shuffled1, original_words)
+
+        # deterministic: random.shuffle is used on the managed word list
+        with patch("src.components.planet_manager.random.shuffle") as mock_shuffle:
+            manager.shuffle_words()
+            mock_shuffle.assert_called_once_with(manager.words)
+
+        # behavioral: retry until order changes so the test is not flaky
+        # (a single random.shuffle can leave a 5-item list unchanged)
+        changed = False
+        for _ in range(100):
+            manager.words = list(original_words)
+            manager.shuffle_words()
+            if manager.words != original_words:
+                changed = True
+                break
+        self.assertTrue(changed, "shuffle_words never changed word order")
 
 
 class TestGetCurrentWord(unittest.TestCase):
