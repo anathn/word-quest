@@ -6,6 +6,7 @@ fade-in, bounce effects, and distinct styles for different letter types.
 """
 
 from typing import Optional, List, Tuple, Callable
+from dataclasses import replace
 import pygame
 
 from .letter_animator import LetterAnimator, AnimationConfig, create_letter_animator
@@ -44,9 +45,24 @@ class AnimatedWordDisplay:
             letter_spacing=self.DEFAULT_LETTER_SPACING,
             starter_count=self.DEFAULT_STARTER_COUNT
         )
+        # Remember the requested metrics so long-word fitting can reset.
+        self._base_font_size = self.config.font_size
+        self._base_letter_spacing = self.config.letter_spacing
         
-        # Get font from typography
-        self.font = self.typography.style_word_display.font
+        # Resolve the configured font through Typography. TextStyle describes
+        # a font but does not itself contain a pygame Font instance.
+        style = self.typography.style_word_display
+        try:
+            style = replace(style, font_size=self.config.font_size)
+        except TypeError:
+            # Lightweight test doubles may not use the TextStyle dataclass.
+            pass
+        get_font = getattr(self.typography, "get_font", None)
+        self.font = (
+            get_font(style) if callable(get_font) else getattr(style, "font", None)
+        )
+        if self.font is None:
+            self.font = pygame.font.Font(None, self.config.font_size)
         
         # Create letter animator
         self.animator: Optional[LetterAnimator] = None
@@ -104,17 +120,28 @@ class AnimatedWordDisplay:
                 self.is_animating = False
                 self.animation_complete = True
                 
-    def render(self, screen: pygame.Surface, position: Tuple[int, int]):
+    def render(
+        self,
+        screen: pygame.Surface,
+        position: Tuple[int, int],
+        centered: bool = True,
+    ):
         """
         Render the word at the given position.
         
         Args:
             screen: Pygame surface to render to
-            position: (x, y) position for the first letter
+            position: (x, y) anchor — word center when centered=True,
+                      otherwise the first letter origin
+            centered: Center the full word on position (default True)
         """
         if self.animator:
-            self.animator.render(screen, position)
-            self.position = position
+            x, y = position
+            if centered:
+                x = x - self.get_width() // 2
+            origin = (x, y)
+            self.animator.render(screen, origin)
+            self.position = origin
             
     def show_all_instantly(self):
         """Show all letters immediately without animation."""
@@ -234,6 +261,62 @@ class AnimatedWordDisplay:
             return self.animator.get_letter_count()
         return 0
         
+    def fit_to_width(self, max_width: int, min_font_size: int = 28, min_spacing: int = 4) -> None:
+        """
+        Shrink font size / letter spacing until the word fits in max_width.
+        
+        Safe to call after set_word() and before start_animation().
+        """
+        if not self.current_word or max_width <= 0:
+            return
+
+        word = self.current_word
+        starters = self.starter_count
+        font_size = self._base_font_size
+        spacing = self._base_letter_spacing
+
+        # Always rebuild from base metrics so short words after long ones
+        # do not stay permanently shrunk.
+        self.config.font_size = font_size
+        self.config.letter_spacing = spacing
+        style = self.typography.style_word_display
+        try:
+            style = replace(style, font_size=font_size)
+        except TypeError:
+            pass
+        get_font = getattr(self.typography, "get_font", None)
+        self.font = (
+            get_font(style) if callable(get_font) else getattr(style, "font", None)
+        )
+        if self.font is None:
+            self.font = pygame.font.Font(None, font_size)
+        self.set_word(word, starter_count=starters)
+
+        if self.get_width() <= max_width:
+            return
+
+        while self.get_width() > max_width and (font_size > min_font_size or spacing > min_spacing):
+            if spacing > min_spacing:
+                spacing = max(min_spacing, spacing - 2)
+            if font_size > min_font_size and self.get_width() > max_width:
+                font_size = max(min_font_size, font_size - 2)
+
+            self.config.font_size = font_size
+            self.config.letter_spacing = spacing
+            style = self.typography.style_word_display
+            try:
+                style = replace(style, font_size=font_size)
+            except TypeError:
+                pass
+            get_font = getattr(self.typography, "get_font", None)
+            self.font = (
+                get_font(style) if callable(get_font) else getattr(style, "font", None)
+            )
+            if self.font is None:
+                self.font = pygame.font.Font(None, font_size)
+
+            self.set_word(word, starter_count=starters)
+
     def get_width(self) -> int:
         """
         Get the total width of the word display.

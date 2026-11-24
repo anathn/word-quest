@@ -46,6 +46,8 @@ class AudioSystem:
         self._playback_queue = queue.Queue()
         self._playback_thread = None
         self._stop_playback = False
+        self._tts_lock = threading.Lock()
+        self._tts_thread: Optional[threading.Thread] = None
         self._current_callback: Optional[Callable] = None
         self.caption_manager = caption_manager
         
@@ -136,25 +138,100 @@ class AudioSystem:
             return self._speak_pyttsx3(text, on_complete)
         elif self.tts_engine_type == 'gtts':
             return self._speak_gtts(text, on_complete)
-        
+
+        # Audio marked available but no usable engine — unlock callers.
+        if on_complete:
+            on_complete()
         return False
     
-    def _speak_pyttsx3(self, text: str, on_complete: Optional[Callable] = None) -> bool:
-        """Speak using pyttsx3 engine."""
+    def _ensure_tts_worker(self) -> None:
+        """Start a single long-lived pyttsx3 worker if needed."""
+        if self._tts_thread and self._tts_thread.is_alive():
+            return
+
+        self._stop_playback = False
+        self._tts_thread = threading.Thread(
+            target=self._tts_worker_loop,
+            name="wordquest-tts",
+            daemon=True,
+        )
+        self._tts_thread.start()
+
+    def _tts_worker_loop(self) -> None:
+        """Speak queued utterances on one Windows COM-aware worker thread."""
+        import sys
+
+        pythoncom = None
+        sapi = None
+        if sys.platform == "win32":
+            try:
+                import pythoncom as _pythoncom
+                pythoncom = _pythoncom
+                pythoncom.CoInitialize()
+            except Exception as e:
+                print(f"TTS COM init warning: {e}")
+            try:
+                import win32com.client
+                sapi = win32com.client.Dispatch("SAPI.SpVoice")
+            except Exception as e:
+                print(f"SAPI unavailable, falling back to pyttsx3: {e}")
+
         try:
-            def on_end_callback(_):
+            import pyttsx3
+        except Exception:
+            pyttsx3 = None
+
+        while True:
+            item = self._playback_queue.get()
+            if item is None:
+                break
+
+            text, on_complete = item
+            if self._stop_playback:
                 if on_complete:
                     on_complete()
-            
-            self.tts_engine.say(text)
-            self.tts_engine.connect('end-phrase', on_end_callback)
-            self.tts_engine.runAndWait()
-            return True
-        except Exception as e:
-            print(f"pyttsx3 speak error: {e}")
-            if on_complete:
-                on_complete()
-            return False
+                continue
+
+            try:
+                if sapi is not None:
+                    # SAPI speaks reliably across multiple utterances on Windows.
+                    sapi.Speak(str(text))
+                elif pyttsx3 is not None:
+                    # CRITICAL: reuse of one pyttsx3 engine only speaks once on
+                    # Windows; create a fresh engine for every utterance.
+                    engine = pyttsx3.init()
+                    engine.setProperty("rate", self.speech_rate)
+                    engine.setProperty("volume", self.volume)
+                    self.tts_engine = engine
+                    engine.say(text)
+                    engine.runAndWait()
+                    try:
+                        engine.stop()
+                    except Exception:
+                        pass
+                else:
+                    print("No TTS backend available for queued speech")
+            except Exception as e:
+                print(f"TTS speak error: {e}")
+            finally:
+                if on_complete:
+                    try:
+                        on_complete()
+                    except Exception as cb_error:
+                        print(f"TTS on_complete error: {cb_error}")
+
+        if pythoncom is not None:
+            try:
+                pythoncom.CoUninitialize()
+            except Exception:
+                pass
+
+    def _speak_pyttsx3(self, text: str, on_complete: Optional[Callable] = None) -> bool:
+        """Queue speech on the dedicated pyttsx3 worker (non-blocking)."""
+        self._stop_playback = False
+        self._ensure_tts_worker()
+        self._playback_queue.put((text, on_complete))
+        return True
     
     def _speak_gtts(self, text: str, on_complete: Optional[Callable] = None) -> bool:
         """Speak using gTTS engine (requires internet)."""
@@ -212,13 +289,20 @@ class AudioSystem:
             return False
     
     def stop(self):
-        """Stop any currently playing audio."""
+        """Stop any currently playing audio and clear queued speech."""
         self._stop_playback = True
+        # Drop pending utterances so a new word can speak promptly.
+        try:
+            while True:
+                self._playback_queue.get_nowait()
+        except queue.Empty:
+            pass
         if self.tts_engine and self.tts_engine_type == 'pyttsx3':
             try:
                 self.tts_engine.stop()
-            except:
+            except Exception:
                 pass
+        self._stop_playback = False
     
     def set_volume(self, volume: float):
         """
@@ -261,6 +345,18 @@ class AudioSystem:
         """
         return self.speak("Test audio.", on_complete=lambda: None)
     
+    def play_victory_fanfare(self) -> bool:
+        """Play planet-complete celebration audio if available."""
+        return self.play_sfx("transition") or self.play_sfx("victory_fanfare")
+
+    def play_encouraging_tone(self) -> bool:
+        """Play retry encouragement audio if available."""
+        return self.play_sfx("retry_tone") or self.play_sfx("transition")
+
+    def play_gentle_tone(self) -> bool:
+        """Play gentle help audio if available."""
+        return self.play_sfx("retry_tone") or self.play_sfx("transition")
+
     def play_sfx(self, sfx_name: str, volume: float = 1.0) -> bool:
         """
         Play a sound effect from asset file.

@@ -159,38 +159,18 @@ class FeedbackController:
     def _play_success_sound(self):
         """Play success chime audio."""
         try:
-            # Try to play actual chime first
             if self.audio_system and hasattr(self.audio_system, 'play_sfx'):
-                if self.audio_system.play_sfx('success_chime', self.config.success_volume):
-                    return  # Success, exit early
-            
-            # Fallback to TTS if SFX unavailable
-            def on_complete():
-                pass
-            
-            self.audio_system.speak(
-                self.config.success_message,
-                on_complete=on_complete
-            )
+                # Prefer SFX only. Do not fall back to TTS — that steals the
+                # speech queue from the next spelling word on Windows.
+                self.audio_system.play_sfx('success_chime', self.config.success_volume)
         except Exception as e:
             print(f"Error playing success sound: {e}")
     
     def _play_retry_sound(self):
         """Play retry tone audio."""
         try:
-            # Try to play actual tone first
             if self.audio_system and hasattr(self.audio_system, 'play_sfx'):
-                if self.audio_system.play_sfx('retry_tone', self.config.retry_volume):
-                    return  # Success, exit early
-            
-            # Fallback to TTS if SFX unavailable
-            def on_complete():
-                pass
-            
-            self.audio_system.speak(
-                self.config.retry_message,
-                on_complete=on_complete
-            )
+                self.audio_system.play_sfx('retry_tone', self.config.retry_volume)
         except Exception as e:
             print(f"Error playing retry sound: {e}")
     
@@ -205,12 +185,16 @@ class FeedbackController:
         logger = logging.getLogger(__name__)
         
         if not self.animation_active:
-            logger.info(f"Feedback update: animation_active=False, state={self.state}")
             return
         
         # Calculate animation progress
         elapsed = current_time - self.feedback_start_time
-        logger.info(f"Feedback update: state={self.state}, elapsed={elapsed:.2f}s, duration={self.config.success_display_duration}s, auto_advance_triggered={self._auto_advance_triggered}")
+        logger.debug(
+            "Feedback update: state=%s, elapsed=%.2fs, auto_advance_triggered=%s",
+            self.state,
+            elapsed,
+            self._auto_advance_triggered,
+        )
         
         if self.state == FeedbackState.SHOWING_SUCCESS:
             # Check for auto-advance BEFORE fade out
@@ -219,7 +203,10 @@ class FeedbackController:
                 self._auto_advance_triggered = True
                 if self.on_auto_advance:
                     logger.info("Calling on_auto_advance callback")
-                    self.on_auto_advance()
+                    try:
+                        self.on_auto_advance()
+                    except Exception:
+                        logger.exception("on_auto_advance callback failed")
                 else:
                     logger.warning("on_auto_advance callback is None!")
             

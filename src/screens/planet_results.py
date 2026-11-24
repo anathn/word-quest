@@ -8,17 +8,17 @@ mastery threshold (4/5 correct unlocks next planet, 2-3/5 retries, 0-1/5 needs h
 from typing import Optional, Callable, List, Dict
 from dataclasses import dataclass
 from enum import Enum
+import logging
 import time
 import pygame
 
 from src.components.planet_manager import PlanetManager, PlanetStatus, PlanetResult
 from src.components.audio_system import AudioSystem
 from src.ui.typography import Typography
+from src.ui.screen_manager import Screen
 from src.audio.music_manager import get_music_manager, MusicState
-from src.ui.planet_sprite import PlanetSprite
-from src.ui.planet_bloom import PlanetBloom, create_planet_bloom
-from src.ui.sparkle_effect import SparkleEffect, create_sparkle_effect
-from src.ui.celebration_renderer import CelebrationRenderer, create_celebration_renderer
+
+logger = logging.getLogger(__name__)
 
 
 class ResultsState(Enum):
@@ -38,87 +38,81 @@ class WordResultDisplay:
     is_mastered: bool  # First-attempt correct
 
 
-class PlanetResultsScreen:
+class PlanetResultsScreen(Screen):
     """
     Screen for displaying planet completion results.
-    
-    Features:
-    - Show results for all 5 words in the planet
-    - Display mastery status (completed/retry/needs_help)
-    - Provide appropriate next action button
-    - Play appropriate audio feedback
-    - Support accessibility (visual + audio)
-    - Trigger planet transition on successful completion (STORY-001-06)
     """
-    
-    def __init__(self, typography: Typography, audio_system: AudioSystem):
+
+    def __init__(
+        self,
+        typography: Typography,
+        audio_system: AudioSystem,
+        screen: Optional[pygame.Surface] = None,
+    ):
         """
         Initialize the planet results screen.
-        
+
         Args:
             typography: Typography instance for text rendering
             audio_system: AudioSystem instance for audio feedback
+            screen: Optional pygame surface (required for live gameplay)
         """
+        if screen is None:
+            # Unit tests construct without a display surface.
+            if not pygame.get_init():
+                pygame.init()
+            screen = pygame.Surface((800, 600))
+        super().__init__(screen)
+
         self.typography = typography
         self.audio_system = audio_system
-        
+
         self.state = ResultsState.IDLE
         self.planet_result: Optional[PlanetResult] = None
         self.word_displays: List[WordResultDisplay] = []
         self.results_start_time = 0
-        
-        # Planet info for transition (STORY-001-06)
+
         self.current_planet_number: int = 0
         self.total_planets: int = 12
-        
-        # Callbacks
+
         self.on_continue: Optional[Callable[[], None]] = None
         self.on_retry: Optional[Callable[[], None]] = None
         self.on_practice: Optional[Callable[[], None]] = None
-        self.on_transition_to_next_planet: Optional[Callable[[str, str, int, int, float], None]] = None  # from_planet, to_planet, from_num, to_num, progress
-        
-        # UI element positions (will be set by game)
+        self.on_transition_to_next_planet: Optional[Callable] = None
+        self.on_back_to_menu: Optional[Callable[[], None]] = None
+
         self.title_position = (400, 100)
         self.results_position = (400, 250)
         self.button_position = (400, 500)
-        
-        # Planet bloom celebration (STORY-005-06)
-        self.planet_sprite: Optional[PlanetSprite] = None
-        self.planet_bloom: Optional[PlanetBloom] = None
-        self.sparkles: Optional[SparkleEffect] = None
-        self.celebration: Optional[CelebrationRenderer] = None
+        self._button_rect = pygame.Rect(0, 0, 320, 56)
+
+        self.planet_sprite = None
+        self.planet_bloom = None
+        self.sparkles = None
+        self.celebration = None
         self.bloom_planet_number = 1
         self.bloom_triggered = False
-        
-        # Music manager (STORY-005-04)
+
         self.music_manager = get_music_manager()
-    
+
     def on_enter(self):
-        """Called when screen becomes active - play celebration music for success."""
+        """Called when screen becomes active."""
         try:
             self.music_manager.initialize()
-            # Play celebration music if planet was completed successfully
-            if self.planet_result and self.planet_result.words_correct >= 4:
-                self.music_manager.play(MusicState.CELEBRATION)
-            else:
-                # Still play celebration for motivation even on retry
-                self.music_manager.play(MusicState.CELEBRATION)
+            self.music_manager.play(MusicState.CELEBRATION)
         except Exception as e:
-            # Music initialization failed - continue without music
-            print(f"Warning: Could not initialize music in planet results: {e}")
-    
+            logger.warning(f"Could not initialize music in planet results: {e}")
+
+        if self.planet_result is None:
+            # Allow construction-then-show_results before push.
+            return
+
     def show_results(self, planet_result: PlanetResult):
-        """
-        Display planet results.
-        
-        Args:
-            planet_result: PlanetResult from PlanetManager
-        """
+        """Display planet results."""
         self.planet_result = planet_result
         self.state = ResultsState.SHOWING_RESULTS
         self.results_start_time = time.time()
-        
-        # Build word display list
+
         self.word_displays = [
             WordResultDisplay(
                 word_text=wr.word_text,
@@ -126,340 +120,255 @@ class PlanetResultsScreen:
                 attempts=wr.attempts,
                 is_mastered=wr.first_attempt
             )
-            for wr in planet_result.word_results
+            for wr in (planet_result.word_results or [])
         ]
-        
-        # Play appropriate audio based on result
+
         self._play_result_audio()
-        
-        # Trigger bloom celebration if planet completed (STORY-005-06)
+
         if planet_result.status == PlanetStatus.COMPLETED:
-            self._trigger_bloom_celebration()
-        
-        # Transition to awaiting action after showing results
+            try:
+                self._trigger_bloom_celebration()
+            except Exception as e:
+                logger.warning(f"Bloom celebration skipped: {e}")
+
         self.state = ResultsState.AWAITING_ACTION
-    
+        self._layout_button()
+
+    def _layout_button(self):
+        cx, cy = self.button_position
+        self._button_rect = pygame.Rect(0, 0, 360, 56)
+        self._button_rect.center = (self.screen_rect.centerx, cy)
+
     def _trigger_bloom_celebration(self):
-        """Trigger planet bloom celebration animation (STORY-005-06)."""
-        if not self.planet_result:
-            return
-        
-        # Initialize celebration components
-        # Get planet number from planet name or default to 1
+        """Optional celebration; never required for progress."""
+        from src.ui.planet_sprite import PlanetSprite
+        from src.ui.planet_bloom import create_planet_bloom
+        from src.ui.sparkle_effect import create_sparkle_effect
+        from src.ui.celebration_renderer import create_celebration_renderer
+
         planet_name = self.planet_result.planet_name if self.planet_result else "Planet 1"
         planet_num_str = planet_name.replace("Planet", "").strip() if planet_name else "1"
         try:
             self.bloom_planet_number = int(planet_num_str)
         except ValueError:
             self.bloom_planet_number = 1
-        
-        # Create planet sprite for bloom (this is a decorative planet for the celebration)
+
         self.planet_sprite = PlanetSprite(self.bloom_planet_number, 120)
         self.planet_bloom = create_planet_bloom(self.planet_sprite, self.bloom_planet_number)
-        self.sparkles = create_sparkle_effect((400, 350))  # Center-bottom of screen
+        self.sparkles = create_sparkle_effect((self.screen_rect.centerx, 350))
         self.celebration = create_celebration_renderer(
             planet_bloom=self.planet_bloom,
             sparkles=self.sparkles,
             rocket=None
         )
-        
-        # Start celebration
-        self.celebration.start_celebration((400, 350))
+        self.celebration.start_celebration((self.screen_rect.centerx, 350))
         self.bloom_triggered = True
-        self.state = ResultsState.CELEBRATING
-    
+
     def _play_result_audio(self):
         """Play audio feedback based on planet result."""
-        if not self.planet_result:
+        if not self.planet_result or not self.audio_system:
             return
-        
+
         status = self.planet_result.status
-        
-        if status == PlanetStatus.COMPLETED:
-            # Victory fanfare
-            self.audio_system.play_victory_fanfare()
-            self.audio_system.speak("Planet complete! Great job!")
-        elif status == PlanetStatus.RETRY:
-            # Encouraging tone
-            self.audio_system.play_encouraging_tone()
-            self.audio_system.speak(f"Good effort! {self.planet_result.first_attempt_correct} out of 5 words mastered.")
-        else:  # NEEDS_HELP
-            # Gentle, supportive message
-            self.audio_system.play_gentle_tone()
-            self.audio_system.speak(f"Let's practice more. {self.planet_result.first_attempt_correct} out of 5 words mastered.")
-    
+        try:
+            if status == PlanetStatus.COMPLETED:
+                fanfare = getattr(self.audio_system, "play_victory_fanfare", None)
+                if callable(fanfare):
+                    fanfare()
+                else:
+                    self.audio_system.play_sfx("transition")
+                self.audio_system.speak("Planet complete! Great job!")
+            elif status == PlanetStatus.RETRY:
+                tone = getattr(self.audio_system, "play_encouraging_tone", None)
+                if callable(tone):
+                    tone()
+                self.audio_system.speak(
+                    f"Good effort! {self.planet_result.first_attempt_correct} out of 5 words mastered."
+                )
+            else:
+                tone = getattr(self.audio_system, "play_gentle_tone", None)
+                if callable(tone):
+                    tone()
+                self.audio_system.speak(
+                    f"Let's practice more. {self.planet_result.first_attempt_correct} out of 5 words mastered."
+                )
+        except Exception as e:
+            logger.warning(f"Result audio failed: {e}")
+
     def get_title_text(self) -> str:
-        """Get the title text for the results screen."""
         if not self.planet_result:
             return ""
-        
         status = self.planet_result.status
-        
         if status == PlanetStatus.COMPLETED:
             return "Planet Complete!"
-        elif status == PlanetStatus.RETRY:
+        if status == PlanetStatus.RETRY:
             return "Good Effort!"
-        else:  # NEEDS_HELP
-            return "Let's Practice More"
-    
+        return "Let's Practice More"
+
     def get_summary_text(self) -> str:
-        """Get the summary text for the results screen."""
         if not self.planet_result:
             return ""
-        
         status = self.planet_result.status
         correct = self.planet_result.first_attempt_correct
         total = self.planet_result.total_words
-        
         if status == PlanetStatus.COMPLETED:
             return f"You mastered {correct} out of {total} words on the first try!"
-        elif status == PlanetStatus.RETRY:
+        if status == PlanetStatus.RETRY:
             return f"You mastered {correct} out of {total} words. Let's try again!"
-        else:  # NEEDS_HELP
-            return f"You mastered {correct} out of {total} words. Let's practice more!"
-    
+        return f"You mastered {correct} out of {total} words. Let's practice more!"
+
     def get_action_button_text(self) -> str:
-        """Get the text for the action button."""
         if not self.planet_result:
             return "Continue"
-        
         status = self.planet_result.status
-        
         if status == PlanetStatus.COMPLETED:
             return "Continue to Next Planet"
-        elif status == PlanetStatus.RETRY:
+        if status == PlanetStatus.RETRY:
             return "Try Again"
-        else:  # NEEDS_HELP
-            return "Practice More"
-    
+        return "Practice More"
+
     def get_action_button_color(self) -> tuple:
-        """Get the color for the action button."""
         if not self.planet_result:
-            return (255, 255, 255)  # White
-        
+            return (255, 255, 255)
         status = self.planet_result.status
-        
         if status == PlanetStatus.COMPLETED:
-            return (34, 139, 34)  # Forest green
-        elif status == PlanetStatus.RETRY:
-            return (255, 140, 0)  # Dark orange
-        else:  # NEEDS_HELP
-            return (30, 144, 255)  # Dodger blue
-    
+            return (34, 139, 34)
+        if status == PlanetStatus.RETRY:
+            return (255, 140, 0)
+        return (30, 144, 255)
+
     def handle_action_button_click(self):
-        """Handle action button click."""
         if not self.planet_result:
             return
-        
         status = self.planet_result.status
-        
         if status == PlanetStatus.COMPLETED:
-            # Trigger transition to next planet (STORY-001-06)
             if self.on_transition_to_next_planet and self.planet_result.unlock_next:
-                # Calculate planet numbers
                 from_planet_num = self.current_planet_number
                 to_planet_num = from_planet_num + 1
-                progress = to_planet_num / self.total_planets
-                
+                progress = to_planet_num / max(self.total_planets, 1)
                 self.on_transition_to_next_planet(
                     self.planet_result.planet_name,
-                    f"Planet {self.planet_result.planet_name}",  # to_planet name
+                    f"Planet {to_planet_num}",
                     from_planet_num,
                     to_planet_num,
-                    progress
+                    progress,
                 )
             elif self.on_continue:
                 self.on_continue()
         elif status == PlanetStatus.RETRY:
             if self.on_retry:
                 self.on_retry()
-        else:  # NEEDS_HELP
+        else:
             if self.on_practice:
                 self.on_practice()
-    
+
     def get_word_results_display(self) -> List[WordResultDisplay]:
-        """Get the list of word results for display."""
         return self.word_displays.copy()
-    
+
     def is_mastered(self) -> bool:
-        """Check if the planet was mastered (4+ first-attempt correct)."""
         return self.planet_result is not None and self.planet_result.status == PlanetStatus.COMPLETED
-    
+
     def needs_retry(self) -> bool:
-        """Check if the planet needs to be retried (2-3 first-attempt correct)."""
         return self.planet_result is not None and self.planet_result.status == PlanetStatus.RETRY
-    
+
     def needs_help(self) -> bool:
-        """Check if the student needs help (0-1 first-attempt correct)."""
         return self.planet_result is not None and self.planet_result.status == PlanetStatus.NEEDS_HELP
-    
+
     def should_unlock_next(self) -> bool:
-        """Check if the next planet should be unlocked."""
         return self.planet_result is not None and self.planet_result.unlock_next
-    
+
     def should_notify_parent(self) -> bool:
-        """Check if parent notification should be triggered."""
         return self.planet_result is not None and self.planet_result.notify_parent
-    
+
     def get_progress_percent(self) -> float:
-        """Get the mastery percentage."""
         if not self.planet_result or self.planet_result.total_words == 0:
             return 0.0
         return self.planet_result.first_attempt_correct / self.planet_result.total_words
-    
+
     def set_planet_info(self, planet_number: int, total_planets: int):
-        """
-        Set planet information for transition tracking.
-        
-        Args:
-            planet_number: Current planet number (1-indexed)
-            total_planets: Total planets in the galaxy
-        """
         self.current_planet_number = planet_number
         self.total_planets = total_planets
-    
-    def update(self, current_time: float):
-        """
-        Update screen state (call each frame).
-        
-        Args:
-            current_time: Current time in seconds
-        """
-        # Update bloom celebration if active (STORY-005-06)
-        if self.state == ResultsState.CELEBRATING:
-            if self.celebration:
-                # Convert current_time to delta_time (approximate)
-                delta_time = 1/60.0  # Assuming 60 FPS
-                self.celebration.update(delta_time)
-                
-                # Check if celebration is complete
+
+    def handle_event(self, event: pygame.event.Event) -> None:
+        if event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_SPACE):
+            self.handle_action_button_click()
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            if self.on_back_to_menu:
+                self.on_back_to_menu()
+            elif self.on_continue:
+                self.on_continue()
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self._button_rect.collidepoint(event.pos):
+                self.handle_action_button_click()
+
+    def update(self, current_time: float = None) -> None:
+        """ScreenManager calls update() with no args; tests may pass a timestamp."""
+        if self.state == ResultsState.CELEBRATING and self.celebration:
+            try:
+                self.celebration.update(1 / 60.0)
                 if self.celebration.is_complete():
                     self.state = ResultsState.AWAITING_ACTION
-    
-    def render(self, screen: pygame.Surface):
-        """
-        Render the results screen.
-        
-        Args:
-            screen: Pygame surface to render on
-        """
-        if not self.planet_result:
-            return
-        
-        # Render bloom celebration if active (STORY-005-06)
-        if self.state == ResultsState.CELEBRATING and self.celebration:
-            # Draw dark overlay
-            overlay = pygame.Surface(screen.get_size())
-            overlay.fill((26, 26, 62))  # Deep space blue
-            overlay.set_alpha(200)
-            screen.blit(overlay, (0, 0))
-            
-            # Render celebration
-            self.celebration.render(screen)
-            
-            # Draw "Planet Complete!" text
-            if self.typography:
-                font = self.typography.get_font_large()
-                text = font.render("Planet Complete!", True, (255, 255, 255))
-                text_rect = text.get_rect(center=(400, 150))
-                screen.blit(text, text_rect)
-            
-            return
-        
-        # Standard results rendering
-        self._render_results_content(screen)
-    
-    def _render_results_content(self, screen: pygame.Surface):
-        """
-        Render standard results content.
-        
-        Args:
-            screen: Pygame surface to render on
-        """
-        # Render title
-        if self.typography:
-            font = self.typography.get_font_large()
-            title_text = self.get_title_text()
-            title = font.render(title_text, True, (255, 255, 255))
-            title_rect = title.get_rect(center=self.title_position)
-            screen.blit(title, title_rect)
-            
-            # Render summary
-            font_small = self.typography.get_font_small()
-            summary = self.get_summary_text()
-            summary_surface = font_small.render(summary, True, (255, 255, 255))
-            summary_rect = summary_surface.get_rect(center=(400, 200))
-            screen.blit(summary_surface, summary_rect)
-            
-            # Render word results
-            y_offset = 250
-            for i, word_result in enumerate(self.word_displays):
-                # Word text
-                word_text = font_small.render(word_result.word_text, True, 
-                                               (76, 175, 80) if word_result.is_correct else (244, 67, 54))
-                word_rect = word_text.get_rect(center=(300, y_offset))
-                screen.blit(word_text, word_rect)
-                
-                # Attempt count
-                attempts_text = font_small.render(f"x{word_result.attempts}", True, (189, 189, 189))
-                attempts_rect = attempts_text.get_rect(center=(500, y_offset))
-                screen.blit(attempts_text, attempts_rect)
-                
-                y_offset += 40
-            
-            # Render action button background
-            button_rect = pygame.Rect(self.button_position[0] - 100, 
-                                      self.button_position[1] - 25,
-                                      200, 50)
-            pygame.draw.rect(screen, self.get_action_button_color(), button_rect, border_radius=10)
-            
-            # Render button text
-            button_text = font.render(self.get_action_button_text(), True, (255, 255, 255))
-            button_text_rect = button_text.get_rect(center=self.button_position)
-            screen.blit(button_text, button_text_rect)
-    
+            except Exception:
+                self.state = ResultsState.AWAITING_ACTION
+
     def get_performance_ms(self) -> float:
-        """
-        Get time elapsed since results display started.
-        
-        Returns:
-            Time in milliseconds since show_results was called
-        """
         if self.results_start_time == 0:
             return 0.0
-        import time
         return (time.time() - self.results_start_time) * 1000
 
-
     def reset(self):
-        """
-        Reset the screen to idle state.
-        
-        Clears all result data and returns to initial state.
-        """
         self.state = ResultsState.IDLE
         self.planet_result = None
         self.word_displays.clear()
         self.results_start_time = 0
-        
-        # Reset bloom celebration
         self.planet_sprite = None
         self.planet_bloom = None
         self.sparkles = None
         self.celebration = None
         self.bloom_triggered = False
 
+    def draw(self) -> None:
+        self.screen.fill((26, 26, 62))
+        if not self.planet_result:
+            return
 
-# Factory function
-def create_planet_results_screen(typography: Typography, audio_system: AudioSystem) -> PlanetResultsScreen:
-    """
-    Create a PlanetResultsScreen instance.
-    
-    Args:
-        typography: Typography instance
-        audio_system: AudioSystem instance
-        
-    Returns:
-        Configured PlanetResultsScreen instance
-    """
-    return PlanetResultsScreen(typography, audio_system)
+        font = pygame.font.Font(None, 48)
+        small = pygame.font.Font(None, 32)
+
+        title = font.render(self.get_title_text(), True, (255, 255, 255))
+        self.screen.blit(title, title.get_rect(center=(self.screen_rect.centerx, 100)))
+
+        summary = small.render(self.get_summary_text(), True, (220, 220, 220))
+        self.screen.blit(summary, summary.get_rect(center=(self.screen_rect.centerx, 160)))
+
+        y = 220
+        for word_result in self.word_displays:
+            color = (76, 175, 80) if word_result.is_correct else (244, 67, 54)
+            label = small.render(word_result.word_text, True, color)
+            self.screen.blit(label, label.get_rect(center=(self.screen_rect.centerx, y)))
+            y += 36
+
+        self._layout_button()
+        pygame.draw.rect(self.screen, self.get_action_button_color(), self._button_rect, border_radius=8)
+        btn = small.render(self.get_action_button_text(), True, (255, 255, 255))
+        self.screen.blit(btn, btn.get_rect(center=self._button_rect.center))
+
+    # Back-compat alias used by older call sites / tests
+    def render(self, screen: pygame.Surface):
+        previous = self.screen
+        self.screen = screen
+        self.screen_rect = screen.get_rect()
+        try:
+            self.draw()
+        finally:
+            self.screen = previous
+            self.screen_rect = previous.get_rect()
+
+def create_planet_results_screen(
+    typography: Typography,
+    audio_system: AudioSystem,
+    screen: Optional[pygame.Surface] = None,
+) -> PlanetResultsScreen:
+    """Factory for PlanetResultsScreen."""
+    return PlanetResultsScreen(typography, audio_system, screen=screen)
+
