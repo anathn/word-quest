@@ -168,6 +168,15 @@ class ProgressTracker:
                 # Load mastered words from persistence
                 if 'mastered_words' in load_result.data:
                     self.mastered_words = set(load_result.data['mastered_words'])
+                    # Hydrate session history so the X/Y counter reflects lifetime progress.
+                    for word_id in self.mastered_words:
+                        self.word_history[word_id] = LegacyWordAttempt(
+                            word_id=word_id,
+                            word_text=word_id,
+                            attempts=1,
+                            first_attempt_correct=True,
+                            completed_correctly=True,
+                        )
                 # Load total words count from persistence (avoid reset to 0)
                 if 'total_words_in_list' in load_result.data:
                     self.total_words_in_list = load_result.data['total_words_in_list']
@@ -184,6 +193,7 @@ class ProgressTracker:
                 self.galaxy_progress.unlocked_planets = int(
                     galaxy.get('unlocked_planets', 0)
                 )
+                self._normalize_galaxy_progress()
                 self._restore_checkpoint(load_result.data.get('active_checkpoint'))
         
         # Callbacks for analytics
@@ -761,12 +771,24 @@ class ProgressTracker:
         
         # Update galaxy progress if planet was completed (STORY-001-06)
         if planet_result.unlock_next:
-            self.galaxy_progress.completed_planets += 1
-            self.galaxy_progress.current_planet_number = self.galaxy_progress.completed_planets + 1
-            self.galaxy_progress.unlocked_planets = min(
+            total = max(self.galaxy_progress.total_planets, 1)
+            self.galaxy_progress.completed_planets = min(
                 self.galaxy_progress.completed_planets + 1,
-                self.galaxy_progress.total_planets
+                total,
             )
+            # Advance within the real planet range instead of growing forever
+            # past planet-12 (which previously fell back to planet-1 and froze
+            # the word counter on already-completed words).
+            self.galaxy_progress.current_planet_number = (
+                (self.galaxy_progress.completed_planets % total) + 1
+                if self.galaxy_progress.completed_planets >= total
+                else self.galaxy_progress.completed_planets + 1
+            )
+            self.galaxy_progress.unlocked_planets = min(
+                max(self.galaxy_progress.unlocked_planets, self.galaxy_progress.completed_planets + 1),
+                total,
+            )
+            self._normalize_galaxy_progress()
 
         # A completed planet is a completed practice session. Keep the
         # checkpoint if the final session save failed so it can be recovered.
@@ -916,12 +938,37 @@ class ProgressTracker:
     
     def get_completed_count(self) -> int:
         """
-        Get the count of words that were eventually spelled correctly.
+        Get the count of unique words completed correctly.
         
-        Returns:
-            Number of words completed correctly (regardless of attempts)
+        Includes persisted mastered words and anything completed this session,
+        so the on-screen X/Y counter keeps rising across planets/restarts.
         """
-        return sum(1 for wa in self.word_history.values() if wa.completed_correctly)
+        completed_ids = {
+            word_id
+            for word_id, attempt in self.word_history.items()
+            if attempt.completed_correctly
+        }
+        return len(completed_ids | self.mastered_words)
+
+    def _normalize_galaxy_progress(self) -> None:
+        """Keep galaxy indices inside the configured planet count."""
+        total = self.galaxy_progress.total_planets
+        if total <= 0:
+            return
+        self.galaxy_progress.completed_planets = max(
+            0, min(self.galaxy_progress.completed_planets, total)
+        )
+        self.galaxy_progress.unlocked_planets = max(
+            1, min(self.galaxy_progress.unlocked_planets or 1, total)
+        )
+        if (
+            self.galaxy_progress.current_planet_number < 1
+            or self.galaxy_progress.current_planet_number > total
+        ):
+            self.galaxy_progress.current_planet_number = min(
+                self.galaxy_progress.completed_planets + 1,
+                total,
+            )
     
     def get_total_words(self) -> int:
         """
