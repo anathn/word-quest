@@ -85,6 +85,9 @@ class PlanetResultsScreen(Screen):
         self.results_position = (400, 250)
         self.button_position = (400, 500)
         self._button_rect = pygame.Rect(0, 0, 320, 56)
+        self._button_hover = False
+        self._button_pressed = False
+        self._action_consumed = False
 
         self.planet_sprite = None
         self.planet_bloom = None
@@ -171,6 +174,8 @@ class PlanetResultsScreen(Screen):
 
         status = self.planet_result.status
         try:
+            # Clear any leftover gameplay speech so encouragement is immediate.
+            self.audio_system.stop()
             if status == PlanetStatus.COMPLETED:
                 fanfare = getattr(self.audio_system, "play_victory_fanfare", None)
                 if callable(fanfare):
@@ -238,8 +243,18 @@ class PlanetResultsScreen(Screen):
         return (30, 144, 255)
 
     def handle_action_button_click(self):
-        if not self.planet_result:
+        if not self.planet_result or self._action_consumed:
             return
+        self._action_consumed = True
+        self._button_pressed = True
+
+        # Stop encouragement immediately so Continue feels instant.
+        if self.audio_system:
+            try:
+                self.audio_system.stop()
+            except Exception:
+                pass
+
         status = self.planet_result.status
         if status == PlanetStatus.COMPLETED:
             if self.on_transition_to_next_planet and self.planet_result.unlock_next:
@@ -290,7 +305,9 @@ class PlanetResultsScreen(Screen):
         self.total_planets = total_planets
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        if event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_SPACE):
+        if event.type == pygame.MOUSEMOTION:
+            self._button_hover = self._button_rect.collidepoint(event.pos)
+        elif event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_SPACE):
             self.handle_action_button_click()
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             if self.on_back_to_menu:
@@ -299,7 +316,10 @@ class PlanetResultsScreen(Screen):
                 self.on_continue()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self._button_rect.collidepoint(event.pos):
+                self._button_pressed = True
                 self.handle_action_button_click()
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            self._button_pressed = False
 
     def update(self, current_time: float = None) -> None:
         """ScreenManager calls update() with no args; tests may pass a timestamp."""
@@ -349,7 +369,16 @@ class PlanetResultsScreen(Screen):
             y += 36
 
         self._layout_button()
-        pygame.draw.rect(self.screen, self.get_action_button_color(), self._button_rect, border_radius=8)
+        color = self.get_action_button_color()
+        if self._button_pressed:
+            color = tuple(max(0, c - 40) for c in color)
+        elif self._button_hover:
+            color = tuple(min(255, c + 30) for c in color)
+        pygame.draw.rect(self.screen, color, self._button_rect, border_radius=8)
+        # Simple pressed inset so the click is obvious even if transition is brief.
+        if self._button_pressed:
+            inset = self._button_rect.inflate(-6, -6)
+            pygame.draw.rect(self.screen, tuple(max(0, c - 60) for c in color), inset, border_radius=6)
         btn = small.render(self.get_action_button_text(), True, (255, 255, 255))
         self.screen.blit(btn, btn.get_rect(center=self._button_rect.center))
 
