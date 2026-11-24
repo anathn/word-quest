@@ -310,8 +310,22 @@ class TestSpellingChallengeScreen(unittest.TestCase):
         
         self.assertEqual(self.screen.get_word_text(), "because")
 
+    def test_select_next_planet_id_clamps_invalid_galaxy_index(self):
+        """Out-of-range galaxy planet numbers must not fall back only to planet-1 forever."""
+        self.screen.progress_tracker = MagicMock()
+        self.screen.progress_tracker.get_current_planet_number.return_value = 16
+        self.screen.progress_tracker.mastered_words = set()
+        self.word_manager.get_all_planet_ids = MagicMock(
+            return_value=[f"planet-{i}" for i in range(1, 13)]
+        )
+        self.word_manager.get_words_for_planet = MagicMock(return_value=self.word_manager.words)
+
+        planet_id = self.screen._select_next_planet_id()
+
+        self.assertIn(planet_id, [f"planet-{i}" for i in range(1, 13)])
+
     def test_planet_complete_advances_to_next_planet(self):
-        """After 5 words, planet completion must start the next planet."""
+        """Planet completion defers the next word until Continue is clicked."""
         self.screen.start_new_word = Mock()
         self.screen.planet_manager = MagicMock()
         self.screen.current_planet_id = "planet-1"
@@ -331,7 +345,12 @@ class TestSpellingChallengeScreen(unittest.TestCase):
 
         self.assertIsNone(self.screen.planet_manager)
         self.assertIsNone(self.screen.current_planet_id)
+        self.assertTrue(self.screen._pending_next_planet)
+        self.screen.start_new_word.assert_not_called()
+
+        self.screen.resume_after_planet_results()
         self.screen.start_new_word.assert_called_once()
+        self.assertFalse(self.screen._pending_next_planet)
 
     def test_present_word_clears_tts_queue_before_speaking(self):
         """New words should preempt leftover Captain/feedback speech."""
