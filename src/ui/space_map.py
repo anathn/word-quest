@@ -79,7 +79,6 @@ class SpaceMapDisplay:
     def _update_surfaces(self):
         """Update all cached surfaces."""
         self._render_title()
-        self._render_instructions()
         self._update_planet_sprites()
         self._update_path()
         self._update_rocket()
@@ -87,13 +86,15 @@ class SpaceMapDisplay:
     def _render_title(self):
         """Render the map title."""
         try:
-            font = self.theme.get_font('title', self.FONT_SIZE_TITLE)
-            self._title_surface = font.render("SPACE MAP", True, self.theme.colors['text_primary'])
+            font = self.theme.get_font(self.FONT_SIZE_TITLE)
+            title_color = self.theme.get_color("font_primary", (255, 255, 255))
+            self._title_surface = font.render("SPACE MAP", True, title_color)
             
-            font_small = self.theme.get_font('body', self.FONT_SIZE_LABEL)
+            font_small = self.theme.get_font(self.FONT_SIZE_LABEL)
+            instr_color = self.theme.get_color("font_secondary", (200, 200, 220))
             self._instructions_surface = font_small.render(
-                "Arrow keys or click to navigate",
-                True, self.theme.colors['text_secondary']
+                "Arrow keys or click to navigate · Esc / Main Menu to leave",
+                True, instr_color
             )
         except KeyError as e:
             # Theme configuration issue

@@ -83,6 +83,27 @@ class TestGame:
         game.quit()
         assert game._running is False
 
+    def test_space_map_opens_and_returns_to_menu(self):
+        """SPACE MAP on the main menu opens the map and can return."""
+        from src.screens.main_menu import MainMenuScreen
+
+        screen = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        game = Game(screen)
+        menu = game.screen_manager.current_screen
+        assert isinstance(menu, MainMenuScreen)
+        assert callable(menu.on_space_map)
+        assert any(b.text == "SPACE MAP" for b in menu._buttons)
+
+        game._show_space_map()
+        assert len(game.screen_manager.screen_stack) == 2
+        wrapper = game.screen_manager.current_screen
+        assert hasattr(wrapper, "map_ui")
+        assert len(wrapper.map_ui.map_state.planets) == 12
+
+        wrapper.map_ui._return_to_menu()
+        assert len(game.screen_manager.screen_stack) == 1
+        assert isinstance(game.screen_manager.current_screen, MainMenuScreen)
+
 
 class TestEntryPoint:
     """Test main entry point."""

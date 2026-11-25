@@ -148,6 +148,7 @@ class Game:
             # Wire up callbacks
             initial_screen.on_parent_dashboard = self._show_parent_dashboard
             initial_screen.on_start_game = self._start_game
+            initial_screen.on_space_map = self._show_space_map
             
             self.screen_manager.push_screen(initial_screen)
         except ImportError as e:
@@ -173,13 +174,17 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self._running = False
-                    
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self._handle_escape()
-                    elif event.key == pygame.K_p and is_testing():
-                        # Pause toggle (debug only)
-                        self._paused = not self._paused
+                    continue
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    # Handle Escape once — do not forward it to the screen
+                    # revealed after a pop (that would quit from main menu).
+                    self._handle_escape()
+                    continue
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_p and is_testing():
+                    # Pause toggle (debug only)
+                    self._paused = not self._paused
                         
                 # Pass all events to current screen
                 self.screen_manager.handle_event(event)
@@ -251,6 +256,66 @@ class Game:
         except Exception as e:
             logger.error(f"Failed to show parent dashboard: {e}", exc_info=True)
     
+    def _show_space_map(self) -> None:
+        """Show the personal space map (STORY-007-01)."""
+        logger.info("Space map button clicked - showing space map")
+        try:
+            from src.screens.space_map import create_space_map_screen
+            from src.components.progress_tracker import ProgressTracker
+            from src.ui.typography import get_typography
+            from src.ui.screen_manager import Screen
+
+            progress_tracker = self.progress_tracker
+            if progress_tracker is None:
+                progress_tracker = ProgressTracker(data_store=self.data_store)
+                self.progress_tracker = progress_tracker
+
+            map_screen = create_space_map_screen(
+                screen=self.screen,
+                progress_tracker=progress_tracker,
+                audio_system=getattr(self, "audio_system", None),
+                typography=get_typography(),
+            )
+
+            class SpaceMapWrapper(Screen):
+                def __init__(self, map_ui, screen, on_done):
+                    super().__init__(screen)
+                    self.map_ui = map_ui
+                    self.on_done = on_done
+                    self._finished = False
+
+                def on_enter(self):
+                    self.map_ui.on_enter()
+
+                def on_exit(self):
+                    self.map_ui.on_exit()
+
+                def _finish(self):
+                    if self._finished:
+                        return
+                    self._finished = True
+                    self.on_done()
+
+                def handle_event(self, event):
+                    self.map_ui.handle_event(event)
+
+                def draw(self) -> None:
+                    self.map_ui.draw()
+
+                def update(self):
+                    self.map_ui.update(1.0 / FPS)
+
+            def leave_map():
+                if len(self.screen_manager.screen_stack) > 1:
+                    self.screen_manager.pop_screen()
+
+            map_screen.on_return_to_menu = leave_map
+            wrapper = SpaceMapWrapper(map_screen, self.screen, on_done=leave_map)
+            self.screen_manager.push_screen(wrapper)
+            logger.info("Space map screen activated")
+        except Exception as e:
+            logger.error(f"Failed to show space map: {e}", exc_info=True)
+
     def _start_game(self) -> None:
         """Start the spelling game."""
         logger.info("Starting spelling challenge game")
