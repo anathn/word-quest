@@ -61,12 +61,13 @@ class TestMainMenuScreen(unittest.TestCase):
         
         menu = create_main_menu(self.screen)
         
-        # Should have 4 buttons: Start Game, Parent Dashboard, Settings, Quit
-        self.assertEqual(len(menu._buttons), 4)
+        # Start Game, Space Map, Parent Dashboard, Settings, Quit
+        self.assertEqual(len(menu._buttons), 5)
         
         # Check button texts
         button_texts = [btn.text for btn in menu._buttons]
         self.assertIn("START GAME", button_texts)
+        self.assertIn("SPACE MAP", button_texts)
         self.assertIn("PARENT DASHBOARD", button_texts)
         self.assertIn("SETTINGS", button_texts)
         self.assertIn("QUIT", button_texts)

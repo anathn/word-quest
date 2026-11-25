@@ -89,6 +89,7 @@ class MainMenuScreen(Screen):
         
         # Callbacks for navigation
         self.on_start_game: Optional[Callable] = None
+        self.on_space_map: Optional[Callable] = None
         self.on_parent_dashboard: Optional[Callable] = None
         self.on_settings: Optional[Callable] = None
         self.on_quit: Optional[Callable] = None
@@ -160,8 +161,8 @@ class MainMenuScreen(Screen):
     
     def _setup_buttons(self):
         """Set up menu buttons."""
-        button_y = self.screen_height // 2
-        button_spacing = 70
+        button_y = self.screen_height // 2 - 20
+        button_spacing = 58
         
         # Primary "Start Game" button
         start_button = MenuButton(
@@ -177,12 +178,23 @@ class MainMenuScreen(Screen):
             is_primary=True
         )
         
+        space_map_button = MenuButton(
+            text="SPACE MAP",
+            rect=pygame.Rect(
+                self.screen_width // 2 - 120,
+                button_y + button_spacing,
+                240, 45
+            ),
+            callback=self._space_map,
+            color=(156, 39, 176)  # Purple
+        )
+        
         # Secondary buttons
         dashboard_button = MenuButton(
             text="PARENT DASHBOARD",
             rect=pygame.Rect(
                 self.screen_width // 2 - 120,
-                button_y + button_spacing,
+                button_y + button_spacing * 2,
                 240, 45
             ),
             callback=self._parent_dashboard,
@@ -193,7 +205,7 @@ class MainMenuScreen(Screen):
             text="SETTINGS",
             rect=pygame.Rect(
                 self.screen_width // 2 - 120,
-                button_y + button_spacing * 2,
+                button_y + button_spacing * 3,
                 240, 45
             ),
             callback=self._settings,
@@ -204,19 +216,33 @@ class MainMenuScreen(Screen):
             text="QUIT",
             rect=pygame.Rect(
                 self.screen_width // 2 - 120,
-                button_y + button_spacing * 3,
+                button_y + button_spacing * 4,
                 240, 40
             ),
             callback=self._quit,
             color=(244, 67, 54)  # Red
         )
         
-        self._buttons = [start_button, dashboard_button, settings_button, quit_button]
+        self._buttons = [
+            start_button,
+            space_map_button,
+            dashboard_button,
+            settings_button,
+            quit_button,
+        ]
     
     def _start_game(self):
         """Handle start game button click."""
         if self.on_start_game:
             self.on_start_game()
+
+    def _space_map(self):
+        """Handle space map button click."""
+        logger.info("Space map button clicked")
+        if self.on_space_map:
+            self.on_space_map()
+        else:
+            logger.warning("on_space_map callback is not set!")
     
     def _parent_dashboard(self):
         """Handle parent dashboard button click."""
